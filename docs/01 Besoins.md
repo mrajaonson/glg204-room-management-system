@@ -1,4 +1,4 @@
-# Projet *Software Tickets* : Expression des besoins V 1.1
+# Projet *Réservation de salles* : Expression des besoins V1.0
 
 
 - [1. Objectif du document](#1-objectif-du-document)
@@ -38,7 +38,7 @@
 
 ## 1. Objectif du document
 
-Ce document contient l'expression des besoins du projet **Software Tickets**.
+Ce document contient l'expression des besoins du projet **Résercation de salles**.
 
 Les besoins ont été exprimés selon le langage de modélisation UML. Les différentes catégories d'usagers du système ont été classés en différents types d' « acteurs ». Les interactions entre les usagers et le système ont été découpées en diagrammes de « cas d'utilisation » (use cases), chaque cas d'utilisation ayant à son tour un diagramme « d'activités » qui permet d'en modéliser la dynamique.
 
@@ -46,63 +46,52 @@ Les besoins ont été exprimés selon le langage de modélisation UML. Les diff�
 
 ### 2.1. Présentation du projet
 
-**NiceSoft** édite un logiciel de publication assistée par ordinateur, et souhaite pouvoir permettre à ses clients de signaler des bugs et de faire des demandes de développements. Les clients en question sont enregistrés et l’entreprise leur est liée par contrat.
+L'objectif est de concevoir une application web de gestion de réservations de salles pour un établissement d'enseignement. Les responsables devront pouvoir gérer les salles qui seront disponibles pour une réservation et les utilisateurs effectuer des réservations.
 
-Il s’agit de créer un logiciel permettant :
--	à des clients de faire une demande d’intervention sur le logiciel (un « ticket ») ;
--	les utilisateurs peuvent ouvrir un ticket, qui peut être un signalement de bug ou une demande de fonctionnalité ;
--	le manager va faire un premier filtre, et acceptera ou rejettera le ticket. S'il l'accepte, il le confie à un programmeur ;
--	le programmeur va expliciter son avancement sur le ticket ;
--	un programmeur peut éventuellement essayer de confier un ticket à un autre programmeur, qui peut accepter ou refuser (ça n'est pas possible quand c'est le manager qui décide).
--	le client et/ou le manager sont avertis des modifications ;
--	si un ticket non clôt est inactif depuis plus d'une semaine, un message est envoyé au manager et au programmeur.
+Il s’agit donc de créer une application permettant :
+- aux responsables de créer, modifier ou supprimer des salles en précisant la localisation, la capacité d'acceuil, les disponibilités et les équipements présents dans une salle (chaises, tables, ordinateurs, tableaux, rétroprojecteurs etc);
+- aux utilisateurs de consulter la liste des salles disponibles selon divers critères comme la date, la capacité ou la présence de certains équipements;
+- aux utilisateurs d'effectuer une réservation de salle;
+- le responsable précisera pour chaque salle si la réservation est soumis à validation ou non;
+- pour le cas d'une réservation sans validation d'un responsable, le premier utilisateur qui effectue une réservation l'emporte, les autres utilisateurs peuvent se mettre en liste d'attente en cas de désistement;
+- pour le cas d'une réservation soumise à validation d'un responsable, les utilisateurs dépose une demande de réservation et un administrateur valide une des demandes;
+- après avoir déposé une demande de réservation, l'utilisateur reçoit un mail de confirmation lorsque sa demande est validée (automatiquement ou après la validation d'un administrateur);
 
 ### 2.2. Situation actuelle
-(rien n’existe)
+
+N/A
 
 ### 2.3. Les contraintes
 
 - Application web
-- (pas grand-chose d’autre)
 
 ### 2.4. Présentation de la société
 
-aucun intérêt
+N/A
 
 ## 3. Acteurs
 
-### 3.1. Client
-Il s’agit d’un utilisateur enregistré du logiciel de PAO.  On connaît en particulier son mail, ce qui permet de le contacter simplement. Il a un compte enregistré quelque part. Dans un premier temps, on lui créera un compte spécifique pour SoftwareTicket.
+### 3.1. Utilisateur
+Il s’agit d’un utilisateur enregistré de l'application, il peut être un enseignant ou un répartiteur.
 
-### 3.2. Programmeur
-C’est un développeur de SoftwareTicket ; il va prendre en charge un ticket accepté et renseigner les informations sur son avancement
+### 3.2. Responsable
+Utilisateur disposant de droits supplémentaires permettant de gérer des salles et des demandes de réservations.
 
-### 3.3. Manager
-C’est un employé de SoftwareTicket qui va pouvoir déléguer le travail à un développeur.
+### 3.2. Administrateur
+Utilisateur disposant de droits supplémentaires permettant de créer et de gérer les autres utilisateurs.
 
-### 3.4. Administrateur
-
-Employé responsable de la création des comptes.
-
-### 3.5. Ordonnanceur
-
-Système qui déclenche les tâches automatiques.
-
-### 3.6. Résumé des Acteurs
+### 3.3. Résumé des Acteurs
 
 ~~~plantuml
 @startuml
 skin rose
-:client:
-:programmeur:
-:manager:
+:utilisateur:
+:responsable:
 :administrateur:
 @enduml
 ~~~
 
-
 ## 4. Cas d’utilisation
-
 
 ### 4.1. Groupe 1 : Gestion des comptes
 
@@ -113,11 +102,11 @@ skin rose
 skin rose
 :administrateur: -> (créer compte)
 
-:utilisateur: <|-- :client:
+:utilisateur: <|-- :enseignant:
 
-:utilisateur: <|-- :programmeur: 
+:utilisateur: <|-- :répartiteur: 
 
-:utilisateur: <|-- :manager: 
+:utilisateur: <|-- :responsable: 
 
 :utilisateur: <|-- :administrateur:
 
