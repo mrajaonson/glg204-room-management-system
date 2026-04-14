@@ -1,4 +1,32 @@
-# Projet *Réservation de salles* : Expression des besoins v0.1
+# Projet *Réservation de salles* : Expression des besoins v0.2
+
+<!-- toc -->
+
+- [1. Objectif du document](#1-objectif-du-document)
+- [2. Présentation](#2-presentation)
+  * [2.1. Présentation du projet](#21-presentation-du-projet)
+  * [2.2. Situation actuelle](#22-situation-actuelle)
+  * [2.3. Les contraintes](#23-les-contraintes)
+  * [2.4. Présentation de la société](#24-presentation-de-la-societe)
+- [3. Acteurs](#3-acteurs)
+  * [3.1. Utilisateur](#31-utilisateur)
+  * [3.2. Responsable](#32-responsable)
+  * [3.3. Administrateur](#33-administrateur)
+  * [3.4. Résumé des Acteurs](#34-resume-des-acteurs)
+- [4. Cas d’utilisation](#4-cas-dutilisation)
+  * [4.1. Groupe 1 : Gestion des comptes](#41-groupe-1--gestion-des-comptes)
+    + [4.1.1. Cas d'utilisation « Demander une création de compte »](#411-cas-dutilisation-%C2%AB-demander-une-creation-de-compte-%C2%BB)
+    + [4.1.2. Cas d'utilisation « Se connecter »](#412-cas-dutilisation-%C2%AB-se-connecter-%C2%BB)
+    + [4.1.2. Cas d'utilisation « Modifier les droits des utilisateurs »](#412-cas-dutilisation-%C2%AB-modifier-les-droits-des-utilisateurs-%C2%BB)
+  * [4.2. Groupe 2 : Gestion des salles](#42-groupe-2--gestion-des-salles)
+    + [4.2.1. Créer une salle](#421-creer-une-salle)
+    + [4.2.2. Consulter la liste des salles](#422-consulter-la-liste-des-salles)
+  * [4.3. Groupe 3 : Gestion des réservations](#43-groupe-3--gestion-des-reservations)
+    + [4.3.1. Réserver une salle](#431-reserver-une-salle)
+    + [4.3.2. Modifier une réservation](#432-modifier-une-reservation)
+    + [4.3.2. Annuler une réservation](#432-annuler-une-reservation)
+
+<!-- tocstop -->
 
 ## 1. Objectif du document
 
