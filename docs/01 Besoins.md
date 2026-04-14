@@ -1,44 +1,8 @@
-# Projet *Réservation de salles* : Expression des besoins V1.0
-
-
-- [1. Objectif du document](#1-objectif-du-document)
-- [2. Présentation](#2-présentation)
-    - [2.1. Présentation du projet](#21-présentation-du-projet)
-    - [2.2. Situation actuelle](#22-situation-actuelle)
-    - [2.3. Les contraintes](#23-les-contraintes)
-    - [2.4. Présentation de la société](#24-présentation-de-la-société)
-- [3. Acteurs](#3-acteurs)
-    - [3.1. Client](#31-client)
-    - [3.2. Programmeur](#32-programmeur)
-    - [3.3. Manager](#33-manager)
-    - [3.4. Administrateur](#34-administrateur)
-    - [3.5. Ordonnanceur](#35-ordonnanceur)
-    - [3.6. Résumé des Acteurs](#36-résumé-des-acteurs)
-- [4. Cas d’utilisation](#4-cas-dutilisation)
-    - [4.1. Groupe 1 : Gestion des comptes](#41-groupe-1--gestion-des-comptes)
-        - [4.1.1. Cas d'utilisation « Créer Compte »](#411-cas-dutilisation--créer-compte-)
-        - [4.1.2. Cas d'utilisation « Se connecter »](#412-cas-dutilisation--se-connecter-)
-    - [4.2. Groupe 2 : Gestion des tickets](#42-groupe-2--gestion-des-tickets)
-        - [4.2.1. Créer un ticket](#421-créer-un-ticket)
-        - [4.2.2. Visualiser un ticket](#422-visualiser-un-ticket)
-        - [4.2.3. Valider un ticket](#423-valider-un-ticket)
-        - [4.2.4. Créer un rapport d'avancement](#424-créer-un-rapport-davancement)
-        - [4.2.5. Clore un ticket](#425-clore-un-ticket)
-        - [4.2.6. Déléguer un ticket](#426-déléguer-un-ticket)
-        - [4.2.7. Accepter ou refuser un ticket](#427-accepter-ou-refuser-un-ticket)
-        - [4.2.8. Consulter le tableau de bord / Client](#428-consulter-le-tableau-de-bord--client)
-        - [4.2.9. Consulter le tableau de bord / Manager](#429-consulter-le-tableau-de-bord--manager)
-        - [4.2.10. Consulter le tableau de bord / Programmeur](#4210-consulter-le-tableau-de-bord--programmeur)
-        - [4.2.10. Consulter le tableau de bord / Client](#4210-consulter-le-tableau-de-bord--client)
-        - [4.2.11. Envoyer rappels](#4211-envoyer-rappels)
-- [5. Annexes](#5-annexes)
-    - [5.1. Terminologie](#51-terminologie)
-    - [5.2. Historique](#52-historique)
-
+# Projet *Réservation de salles* : Expression des besoins v0.1
 
 ## 1. Objectif du document
 
-Ce document contient l'expression des besoins du projet **Résercation de salles**.
+Ce document contient l'expression des besoins du projet **Réservation de salles**.
 
 Les besoins ont été exprimés selon le langage de modélisation UML. Les différentes catégories d'usagers du système ont été classés en différents types d' « acteurs ». Les interactions entre les usagers et le système ont été découpées en diagrammes de « cas d'utilisation » (use cases), chaque cas d'utilisation ayant à son tour un diagramme « d'activités » qui permet d'en modéliser la dynamique.
 
@@ -46,16 +10,19 @@ Les besoins ont été exprimés selon le langage de modélisation UML. Les diff�
 
 ### 2.1. Présentation du projet
 
-L'objectif est de concevoir une application web de gestion de réservations de salles pour un établissement d'enseignement. Les responsables devront pouvoir gérer les salles qui seront disponibles pour une réservation et les utilisateurs effectuer des réservations.
+L'objectif est de concevoir une application de gestion de réservations de salles pour un établissement d'enseignement. Les responsables devront pouvoir gérer les salles qui seront disponibles pour une réservation et les utilisateurs effectueront des réservations.
 
 Il s’agit donc de créer une application permettant :
-- aux responsables de créer, modifier ou supprimer des salles en précisant la localisation, la capacité d'acceuil, les disponibilités et les équipements présents dans une salle (chaises, tables, ordinateurs, tableaux, rétroprojecteurs etc);
+- aux responsables de créer, modifier ou supprimer des salles en précisant la localisation, la capacité d'accueil, les disponibilités et les équipements présents dans une salle (chaises, tables, ordinateurs, tableaux, rétroprojecteurs etc);
 - aux utilisateurs de consulter la liste des salles disponibles selon divers critères comme la date, la capacité ou la présence de certains équipements;
 - aux utilisateurs d'effectuer une réservation de salle;
 - le responsable précisera pour chaque salle si la réservation est soumis à validation ou non;
 - pour le cas d'une réservation sans validation d'un responsable, le premier utilisateur qui effectue une réservation l'emporte, les autres utilisateurs peuvent se mettre en liste d'attente en cas de désistement;
-- pour le cas d'une réservation soumise à validation d'un responsable, les utilisateurs dépose une demande de réservation et un administrateur valide une des demandes;
-- après avoir déposé une demande de réservation, l'utilisateur reçoit un mail de confirmation lorsque sa demande est validée (automatiquement ou après la validation d'un administrateur);
+- pour le cas d'une réservation soumise à validation d'un responsable, les utilisateurs déposent une demande de réservation et un administrateur valide une des demandes;
+- après avoir déposé une demande de réservation, l'utilisateur reçoit un mail de confirmation lorsque sa demande est validée (en instantané ou après la validation d'un responsable);
+- les utilisateurs peuvent modifier ou annuler leurs réservations;
+- en cas d'évènements particuliers, une salle peut ne plus être disponible (travaux, maintenances, évènement prioritaire etc), les réservations devront donc être annulées automatiquement et la liste des salles disponibles mise à jour, un mail d'annulation devra être envoyé;
+- 
 
 ### 2.2. Situation actuelle
 
@@ -72,76 +39,99 @@ N/A
 ## 3. Acteurs
 
 ### 3.1. Utilisateur
-Il s’agit d’un utilisateur enregistré de l'application, il peut être un enseignant ou un répartiteur.
+Il s’agit d’un utilisateur enregistré de l'application, il peut être un enseignant ou un appariteur. Lors de sa première connexion, l'utilisateur effectue une demande de création de compte avec validation de l'adresse mail. Un administrateur valide la demande de création de compte lorsque le mail est validé.
 
 ### 3.2. Responsable
-Utilisateur disposant de droits supplémentaires permettant de gérer des salles et des demandes de réservations.
+Utilisateur disposant de droits supplémentaires permettant de gérer les salles et les demandes de réservations.
 
-### 3.2. Administrateur
-Utilisateur disposant de droits supplémentaires permettant de créer et de gérer les autres utilisateurs.
+### 3.3. Administrateur
+Utilisateur disposant de droits supplémentaires permettant de valider les demandes de création de compte utilisateur et gérer les droits des utilisateurs.
 
-### 3.3. Résumé des Acteurs
+### 3.4. Résumé des Acteurs
 
-~~~plantuml
+```plantuml
 @startuml
 skin rose
-:utilisateur:
+:enseignant:
+:appariteur:
 :responsable:
 :administrateur:
 @enduml
-~~~
+```
 
 ## 4. Cas d’utilisation
 
 ### 4.1. Groupe 1 : Gestion des comptes
 
-*normalement, ce groupe devrait être plus étendu. On le rend très très sommaire*
-
-~~~plantuml
+```plantuml
 @startuml
 skin rose
-:administrateur: -> (créer compte)
 
-:utilisateur: <|-- :enseignant:
+left to right direction
 
-:utilisateur: <|-- :répartiteur: 
+actor "Utilisateur" as U
+actor "Enseignant" as E
+actor "appariteur" as AP
+actor "responsable" as R
+actor "Administrateur" as A
 
-:utilisateur: <|-- :responsable: 
+rectangle "Gestion des comptes" {
+  usecase "Déposer une demande\nde création de compte" as UC_CREER
+  usecase "Remplir le formulaire\nde demande" as UC_FORMULAIRE
+  usecase "Valider l'adresse email" as UC_MAIL
+  usecase "Consulter les demandes\nen attente" as UC_CONSULTER_DEMANDE
+  usecase "Valider une demande\nde compte" as UC_VALIDER
+  usecase "Refuser une demande\nde compte" as UC_REFUSER
+  usecase "Notifier l'utilisateur\npar mail" as UC_NOTIFIER
 
-:utilisateur: <|-- :administrateur:
+}
 
-:utilisateur: -> (se connecter)
+U <|-- E
+U <|-- AP
+U <|-- R
 
-(créer compte) <.. :utilisateur:
+U --> UC_CREER
+UC_CREER ..> UC_FORMULAIRE : <<include>>
+UC_CREER ..> UC_MAIL : <<include>>
+
+A --> UC_CONSULTER_DEMANDE
+A --> UC_VALIDER
+A --> UC_REFUSER
+
+UC_VALIDER ..> UC_NOTIFIER : <<include>>
+UC_REFUSER ..> UC_NOTIFIER : <<include>>
+
 @enduml
-~~~
+```
 
-#### 4.1.1. Cas d'utilisation « Créer Compte »
-
-**remarque** : dans la description des déroulements alternatifs, on peut aussi donner à chaque fois la description complète, au lieu de n'en reprendre qu'une partie.
+#### 4.1.1. Cas d'utilisation « Demander une création de compte »
 
 ##### Résumé
-L'administrateur crée un compte
+L'utilisateur dépose une demande de création un compte et valide son adresse mail. L'administrateur consulte les demandes de création de compte et valide ou refuse une demande.
 
 ##### Acteurs
+- un utilisateur
 - un administrateur
 
 ##### Pré-conditions
 - l'administrateur est connecté
 
 ##### Description
-1. l'administrateur saisit
+1. l'utilisateur saisit
     - le login du compte
     - le mot de passe du compte (en double)
-    - son type (manager,employé, client)
     - le mail associé
 2. le système vérifie :
     - que le login n'est pas vide ;
     - que les mots de passe ne sont pas vides ;
-    - que les deux mots de passe saisis  coïncident ;
+    - que les deux mots de passe saisis coïncident ;
     - que le mail est bien formé.
 3. le système vérifie que le compte n'existe pas déjà
-4. si le login n'est pas vide et que le compte n'existe pas déjà, le compte est créé ; un mail est envoyé à l'utilisateur, l'informant de son mot de passe.
+4. si le login n'est pas vide et que le compte n'existe pas déjà, un mail est envoyé à l'utilisateur pour confirmer son mail 
+5. l'utilisateur valide son mail grâce au lien reçu
+6. l'administrateur consulte la liste des demandes en attente avec un mail valide
+7. l'administreur valide ou refuse les demandes
+8. l'utilisateur reçoit un mail l'indiquant que son compte est validé
 
 ##### Déroulement alternatif : données incorrectes
 
@@ -162,9 +152,7 @@ L'administrateur crée un compte
 
 ##### Diagramme d'activité
 
-*diagramme d'un intérêt discutable*
-
-~~~plantuml
+```plantuml
 @startuml
   skin rose
   title création d'un compte
@@ -180,32 +168,11 @@ L'administrateur crée un compte
       end
     endif  
 @enduml
-~~~
-
-
-##### Maquettes d'écran
-
-C'est prématuré, et ici pas très utile... mais c'est juste pour montrer qu'on peut le faire avec **plantuml** :
-
-~~~plantuml
-@startsalt
-{
-  Identifiant | "turing"
-  Mot de passe (1) | "***          "
-  Mot de passe (2) | "***          "
-  Courriel         | "turing@cambridge.uk"
-  Type compte      | ^client             ^
-  [créer compte]
-}
-@endsalt
-~~~
+```
 
 ##### Remarques
 
-- Qui crée le compte administrateur ? L'idée est qu'il soit créé par défaut ; on ajoutera plus tard une fonctionnalité pour changer son mot de passe.
-
-- Que se passe-t-il si l'email est bien formé mais incorrect ? Il pourrait être utile d'envisager une procédure de validation des comptes.
-
+- lors du premier déploiement du serveur de l'application un administrateur et son mot de passe sont définis dans les fichiers de configuration. Le mot de passe peut ensuite être modifié.
 
 #### 4.1.2. Cas d'utilisation « Se connecter »
 
@@ -227,7 +194,7 @@ L'utilisateur a été créé
 ##### Déroulement alternatif : utilisateur inexistant
 
 2.1 l'utilisateur n'existe pas
-2.2  le système prévient celui-ci qu'il n'a pas pu le connecter (sans plus d'information)
+2.2 le système prévient celui-ci qu'il n'a pas pu le connecter (sans plus d'information)
 
 ##### Déroulement alternatif : mot de passe incorrect
 
@@ -247,357 +214,286 @@ En cas de succès du scénario nominal, l'utilisateur est connecté, avec les dr
 - Il est important de ne pas spécifier à l'utilisateur la raison pour laquelle il n'a pas pu se connecter (compte inexistant **ou** mot de passe incorrect)
 - il sera souhaitable (mais non prioritaire) de *logger* les tentatives (sans les mots de passe, bien entendu) pour aider au support et à la sécurité.
 
-##### Diagramme d'activité
-
-(optionnel)
-
-~~~plantuml
-@startuml
-skin rose
-start
-:saisie login;
-:saisie mot de passe;
-if (login correct) then (oui)
-  if (mot de passe correct) then (oui)
-    :utilisateur connecté;
-    end
-  else (non)
-    :message d'erreur;
-    stop
-  endif
-else (non)
-  :message d'erreur;
-  stop
-endif
-@enduml
-~~~
+#### 4.1.2. Cas d'utilisation « Modifier les droits des utilisateurs »
 
 
-### 4.2. Groupe 2 : Gestion des tickets
-
-
-~~~plantuml
-@startuml
-skin rose
-left to right direction
-title gestion des tickets
-:client:  --> (créer un ticket)
-:client:  --> (visualiser un ticket)
-:programmeur:  --> (visualiser un ticket)
-:manager:  --> (visualiser un ticket)
-
-rectangle "gestion des utilisateurs" {
-  (se connecter)
-}
-actor :ordonnanceur: <<système>>
-
-(créer un ticket) ..> (se connecter) : include
-
-:manager: --> (valider un ticket)
-
-:client: <.. (valider un ticket)
-(valider un ticket) ..> (se connecter) : include
-
-usecase doc as "créer un rapport d'avancement"
-
-doc ..> (se connecter) : include
-
-:programmeur: --> doc
-:programmeur: --> (clore un ticket)
-:programmeur: --> (déléguer un ticket)
-:programmeur: --> (accepter ou refuser un ticket)
-
-
-
-(clore un ticket) ..> (se connecter) : include
-(clore un ticket) ..> doc : extends
-
-(envoyer rappel) <-- :ordonnanceur:
-
- :programmeur: <.. (envoyer rappel)
-
- :programmeur:  --> (consulter tableau de bord programmeur)
- :manager:  --> (consulter tableau de bord manager)
- :client:  --> (consulter tableau de bord client)
-
-@enduml
-~~~
-
-*Note : il y a une version **Visual Paradigm** de ce schéma*
-
-#### 4.2.1. Créer un ticket
 ##### Résumé
 
-Un **Client** se connecte et signale, soit un bug, soit fait une demande d'amélioration pour le logiciel.
+Un administrateur s'authentifie et modifie les droits des utilisateurs.
 
 ##### Acteurs
 
-- un **Client**.
+- un administrateur
+- un utilisateur
 
 ##### Pré-conditions
-Le **Client** est connecté.
+
+L'utilisateur a été modifié
 
 ##### Description
 
-- 1. le client sélectionne le type de ticket (bug/amélioration) qu'il souhaite ;
-- 2. il donne un titre au ticket ;
-- 3. il écrit une description du ticket.
-- 4. le système vérifie que le ticket a un titre et une description
-- 5. le ticket est enregistré
+1. l'administrateur consulte la liste des utilisateurs
+2. il en choisit un (par mail, identifiant)
+3. il modifie les droits (responsable)
 
 ##### Post-conditions
 
-- le ticket est enregistré dans l'état "à valider"
+L'utilisateur est modifié.
 
-##### Remarques
+### 4.2. Groupe 2 : Gestion des salles
 
-- dans un second temps, l'ajout de fichiers (dump de log d'erreur ou photo d'écrans par exemple) pourrait être utiles.
+```plantuml
+@startuml
 
+left to right direction
+skin rose
 
-#### 4.2.2. Visualiser un ticket
+actor "Appariteur" as AP
+
+rectangle "Gestion des salles" {
+
+  usecase "Gérer une salle" as UC_GERER
+
+  usecase "Créer une salle" as UC_CREER
+  usecase "Modifier une salle" as UC_MODIFIER
+  usecase "Supprimer une salle" as UC_SUPPRIMER
+
+  usecase "Gérer les équipements\nd'une salle" as UC_EQUIP
+
+  usecase "Ajouter un équipement" as UC_AJOUT_EQUIP
+  usecase "Modifier un équipement" as UC_MODIF_EQUIP
+  usecase "Supprimer un équipement" as UC_SUPPR_EQUIP
+
+  usecase "Gérer les disponibilités\nd'une salle" as UC_DISPO
+
+  usecase "Ajouter une plage\nde disponibilité" as UC_AJOUT_DISPO
+  usecase "Modifier une plage\nde disponibilité" as UC_MODIF_DISPO
+  usecase "Supprimer une plage\nde disponibilité" as UC_SUPPR_DISPO
+
+}
+
+AP --> UC_GERER
+AP --> UC_EQUIP
+AP --> UC_DISPO
+
+UC_GERER <.. UC_CREER : <<extend>>
+UC_GERER <.. UC_MODIFIER : <<extend>>
+UC_GERER <.. UC_SUPPRIMER : <<extend>>
+
+UC_EQUIP <.. UC_AJOUT_EQUIP : <<extend>>
+UC_EQUIP <.. UC_MODIF_EQUIP : <<extend>>
+UC_EQUIP <.. UC_SUPPR_EQUIP : <<extend>>
+
+UC_DISPO <.. UC_AJOUT_DISPO : <<extend>>
+UC_DISPO <.. UC_MODIF_DISPO : <<extend>>
+UC_DISPO <.. UC_SUPPR_DISPO : <<extend>>
+
+@enduml
+```
+
+#### 4.2.1. Créer une salle
+##### Résumé
+
+Un appariteur se connecte et crée une salle.
+
+##### Acteurs
+- un appariteur.
+
+##### Pré-conditions
+L'appariteur est connecté.
+
+##### Description
+
+1. l'appariteur donne un titre à la salle;
+2. il renseigne la localisation de la salle;
+3. il ajoute une description de la salle;
+4. il ajoute la capacité de la salle;
+5. il ajoute les équipements présents dans la salle;
+6. il définit les disponibilités de la salle;
+7. le système vérifie que la salle a un titre, une localisation, une description, une capacité, une liste des équipements et des disponibilités;
+8. la salle est enregistrée.
+
+##### Post-conditions
+
+- la salle est enregistrée.
+
+#### 4.2.2. Consulter la liste des salles
 
 ##### Résumé
-Un utilisateur visualise les informations d'un ticket
+Un utilisateur consulte la liste des salles de l'établissement.
 
 ##### Acteurs
 
-Un utilisateur ayant accès à un ticket :
+Un utilisateur ayant le droit de consulter la liste des salles:
 
-- un manager (a accès à tous les tickets)
-- un programmeur : a accès à un ticket qu'il gère ;
-- un client : a accès à un ticket qu'il a créé.
+- un enseignant;
+- un appariteur;
+- un responsable.
 
 ##### Pré-conditions
 voir acteurs
 
 ##### Description
 
-- 1. le système liste les tickets auxquels l'utilisateur a accès
-- 2. il en choisit un
-- 3. le système affiche toutes les informations sur le ticket :
-    - son titre
+1. le système affiche la liste de salles (disponible ou non à la réservation)
+2. l'utilisateur en choisit une
+3. le système affiche toutes les informations sur la salle :
+    - son titre,
+    - sa localisation,
     - sa description,
-    - le client qui l'a créé,
-    - sa date de création,
-    - son statut,
-    - le premier programmeur en charge du ticket,
-    - sa date de validation ou d'invalidation ;
-    - s'il a été invalidé, le texte correspondant ;
-    - la liste, dans l'ordre chronologique, des actions sur le ticket :
-        - rapports d'avancement
-            - texte écrit par le développeur
-            - nom du développeur
-            - date
-            - clôture éventuelle
-        - demande de délégation (non affichée au client)
-        - refus d'une demande de délégation (non affichée au client)
-        - acceptation d'une demande de délégation (vue par le client comme un simple changement de programmeur)
+    - sa capacité,
+    - sa liste d'équipement,
+    - ses disponibilités,
+    - son statut (réservé, disponible, non réservable)
 
-#### 4.2.3. Valider un ticket
-##### Résumé
-Un manager valide ou invalide un nouveau ticket
-##### Acteurs
+### 4.3. Groupe 3 : Gestion des réservations
 
-Un manager.
-##### Pré-conditions
-Il existe un ticket à valider.
+```plantuml
+@startuml
 
-##### Description
+left to right direction
+skin rose
 
-- 1. le manager visualise la liste des nouveaux tickets à valider ;
-- 2. il en choisit un ;
-- 3. il consulte sa description ;
-- 4. il choisit le programmeur en charge du ticket ;
-- 5. le ticket passe à l'état validé ; l'information est enregistrée (et datée), avec en particulier le lien vers le programmeur choisi ;
-- 6. le client est prévenu
-##### Post-conditions
-Le ticket est validé, et le programmeur verra qu'il doit le traiter.
-##### Déroulement alternatifs...
-- 3.1 le manager décide de refuser le ticket
-- 3.2 il écrit un message pour l'expliquer
-- 3.3 le message est enregistré dans l'historique du ticket
-- 3.4 le client est prévenu
-- 3.5 le ticket est clos.
+actor "Enseignant" as ENS
+actor "Appariteur" as AP
+actor "Système de\nnotification" as SYS
 
-#### 4.2.4. Créer un rapport d'avancement
-##### Résumé
-Un programmeur documente son avancement sur un ticket qu'il traite.
-##### Acteurs
-un programmeur
-##### Pré-conditions
-un ticket non clos est assigné à ce programmeur.
-##### Description
-- 1. le programmeur choisit un ticket à documenter
-- 2. il entre les informations sur son action sous forme textuelle ;
-- 3. ces informations sont ajoutées à l'historique du ticket (avec la date) ;
-- 4. (point d'extension) : il peut décider de clore le ticket.
+actor "Utilisateur" as U
 
-##### Post-conditions
-Les informations sur la progression du ticket sont enregistrées dans son historique ; elles seront consultables par le client.
+ENS --|> U
+AP --|> U
 
-#### 4.2.5. Clore un ticket
+rectangle "Système de réservation des salles" {
 
-##### Résumé
-Un programmeur va clore un ticket
-##### Acteurs
-un programmeur
-##### Pré-conditions
-le programmeur est en charge du ticket
-##### Description
-- 1. le programmeur a créer un rapport d'avancement pour le ticket
-- 2. il le marque comme clos
-- 3. le ticket est clos ; la date de clôture est enregistrée.
-##### Post-conditions
+  usecase "Rechercher une salle\ndisponible" as UC_RECH
 
-- Le ticket n'apparaît plus dans la liste des tickets du programmeur.
-- l'événement est signalé au client et au manager dans leur tableau de bord
+  usecase "Filtrer par date\net créneau" as UC_FILTRE_DATE
+  usecase "Filtrer par capacité" as UC_FILTRE_CAP
+  usecase "Filtrer par équipements" as UC_FILTRE_EQUIP
 
-#### 4.2.6. Déléguer un ticket
-##### Résumé
-Un programmeur propose à un de ses collègue de prendre en charge un ticket
-##### Acteurs
-un programmeur
+  usecase "Effectuer une demande\nde réservation" as UC_RESERVER
 
-##### Pré-conditions
-le programmeur est en charge d'un ticket
+  usecase "Consulter mes\nréservations" as UC_CONSULT
 
-##### Description
+  usecase "Annuler une\nréservation" as UC_ANNULER
 
-- 1. il choisit un de ses collègue ;
-- 2. il remplit un formulaire qui contient :
-    - une partie publique qui sera ajoutée à l'historique visible par le client ;
-    - une partie privée à destination uniquement interne ; elle peut être vide
-- 3. il valide
+  usecase "Valider une demande\nde réservation" as UC_VALIDER
 
-##### Post-conditions
+  usecase "Refuser une demande\nde réservation" as UC_REFUSER
 
-- la demande de délégation est enregistrée et ajoutée à l'historique ;
-- elle sera visible sur le tableau de bord :
-    - des deux programmeurs ;
-    - des managers.
+  usecase "Consulter les demandes\nde réservation en attente" as UC_DEMANDES
 
-##### Remarque
+  usecase "Notifier l'utilisateur" as UC_NOTIF
 
-Tant que le programmeur destinataire n'a pas accepté de gérer un ticket, ça n'est pas la peine de prévenir le client.
+}
 
-#### 4.2.7. Accepter ou refuser un ticket
+U --> UC_RECH
+U --> UC_RESERVER
+U --> UC_CONSULT
+U --> UC_ANNULER
+
+AP --> UC_DEMANDES
+AP --> UC_VALIDER
+AP --> UC_REFUSER
+
+UC_RESERVER ..> UC_RECH : <<include>>
+UC_VALIDER ..> UC_NOTIF : <<include>>
+UC_REFUSER ..> UC_NOTIF : <<include>>
+UC_ANNULER ..> UC_NOTIF : <<include>>
+
+UC_RECH <.. UC_FILTRE_DATE : <<extend>>
+UC_RECH <.. UC_FILTRE_CAP : <<extend>>
+UC_RECH <.. UC_FILTRE_EQUIP : <<extend>>
+
+UC_NOTIF --> SYS
+
+@enduml
+```
+
+#### 4.3.1. Réserver une salle
 
 ##### Résumé
 
-Un programmeur à qui un de ses collègues a demandé de gérer un ticket accepte de le faire
+Un utilisateur effectue une demade de réservation
 
 ##### Acteurs
 
-un programmeur
+- un utilisateur
+- un responsable
 
 ##### Pré-conditions
-Le programmeur a reçu une demande de délégation pour un ticket
+
+Il existe une salle à réserver.
 
 ##### Description
 
-1. il visualise l'historique du ticket ;
-2. il accepte de le prendre en charge ;
-3. l'information est ajoutée dans l'historique du ticket
-
-##### Déroulement alternatif 1 : refus
-
-2.1 il refuse de le prendre en charge ;
-3. l'information est ajoutée dans l'historique du ticket
+1. l'utilisateur visualise la liste des salles;
+2. il effectue une recherche des salles disponibles (par date, capacité, équipements)
+3. il en choisit un; 
+4. il consulte sa description; 
+5. il choisit le créneau à reserver; 
+6. si la réservation de la salle n'est pas soumis à la validation d'un responsable, l'utilisateur reçoit un mail de confirmation et la salle apparait maintenant avec le statut réservé;
 
 ##### Post-conditions
 
-- En cas d'acceptation :
-    - le programmeur devient le gestionnaire du ticket ;
-    - l'information est affichée sur les tableaux de bord du client, du programmeur qui a délégué le ticket, de celui qui l'a accepté, et du manager.
-- En cas de refus :
-    - l'information est affichée sur les tableaux de bord du programmeur qui a délégué le ticket, de celui qui l'a refusé, et du manager.
+La demande de réservation est validé.
 
+##### Déroulement alternatif...
 
-#### 4.2.8. Consulter le tableau de bord / Client
+- 5.1 la réservation de la salle est soumise à la validation d'un responsable
+- 5.2 les responsables consultent les demandes de réservations en attente
+- 5.3 le responsable valide une demande de réservation
+- 5.5 l'utilisateur est informé par mail
 
-##### Résumé
-On affiche les informations pertinentes pour le client
-##### Acteurs
-un Client
-##### Description
-- le client choisi éventuellement un ou plusieurs filtres ;
-- il peut potentiellement voir tous les tickets qu'il a ouvert et leur historique (sauf pour les délégations refusées)
-
-##### Remarques
-- par défaut, on propose au client les événements récents sur les tickets qu'il a ouvert
-
-#### 4.2.9. Consulter le tableau de bord / Manager
-
-On a concentré le tableau de bord sur les informations minimales à afficher.
+#### 4.3.2. Modifier une réservation
 
 ##### Résumé
-On affiche les informations pertinentes pour le manager
+
+Un utilisateur modifie sa réservation.
 
 ##### Acteurs
-un Manager
+
+- un utilisateur
+- un responsable
+
+##### Pré-conditions
+
+La réservation est modifiée (date). L'utilisateur est notifié par mail lorsque la modification est effective.
 
 ##### Description
 
-Le tableau de bord affiche :
-- la liste des tickets à valider ;
-- la liste des tickets récemment fermés.
-
-#### 4.2.10. Consulter le tableau de bord / Programmeur
-
-##### Résumé
-On affiche les informations pertinentes pour le programmeur
-
-##### Acteurs
-un programmeur
-
-##### Description
-- assignation d'un ticket par le manager ;
-- demande de délégation par un autre développeur ;
-- l'acceptation ou le refus de ses propres demandes de délégation
-- rappels
-
-#### 4.2.10. Consulter le tableau de bord / Client
-
-##### Résumé
-On affiche les informations pertinentes pour le client
-
-##### Acteurs
-un client
-
-##### Description
-- On affiche
-    - les rejets ou acceptations de moins d'une semaine pour ses tickets.
-    - les derniers événements sur tous ses tickets **ouverts** ;
-    - les événements récents (moins d'une semaine) concernant ceux de ses tickets qui viennent d'être clôts
-
-#### 4.2.11. Envoyer rappels
-
-##### Résumé
-En l'absence d'activité sur un ticket ouvert, un mail est expédié.
-##### Acteurs
-- l'ordonnanceur (le temps) : action automatique
-- le système de messagerie
-
-##### Description
-
-- le système liste les tickets ouverts sans activité depuis plus de **n** jours (réglable dans les paramètres de l'application ?)
-- il envoie un rappel au programmeur en charge du ticket.
+1. l'utilisateur visualise ses réservations; 
+2. il en choisit une; 
+3. il modifie les dates de réservations ou ajoute un commentaire; 
+4. rl'utilisateur reçoit un mail de confirmation;
 
 ##### Post-conditions
 
-Le programmeur est prévenu.
+La réservation est modifiée.
 
 
-## 5. Annexes
-### 5.1. Terminologie
+#### 4.3.2. Annuler une réservation
 
-ticket
-: demande faite par un client, et traitée par le logiciel
+##### Résumé
 
+Un utilisateur annule sa réservation.
 
-### 5.2. Historique
+##### Acteurs
 
-- lors de la rédaction des *use cases*, il est apparu que le mode de consultation des tickets était trop restrictif. Dans un premier temps, on n'envisageait de visualiser que les tickets actifs. Il est important que le programmeur et le manager puisse éventuellement voir la liste des tickets clos ;
-- de même, il faut que les événements récents et pertinents soient soulignés. On introduit donc une notion de *tableau de bord* à consulter.
-- V 1.1 : une première phase d'analyse a montré que la description des besoins pour le tableau de bord était un peu floue. On la précise donc.
+- un utilisateur
+- un responsable
 
+##### Pré-conditions
+
+La réservation est annulée. L'utilisateur est notifié par mail lorsque l'annulation est effective.
+
+##### Description
+
+1. l'utilisateur visualise ses réservations;
+2. il en choisit une;
+3. il annule sa demande de réservation;
+4. l'utilisateur reçoit un mail de confirmation;
+
+##### Post-conditions
+
+La réservation est annulée.
