@@ -16,5 +16,6 @@ brew install graphviz
 ## TOC
 
 ```shell
+# Insert a TOC after <!-- toc --> or replace an existing TOC
 npx markdown-toc -i input.md --maxdepth 4
 ```
