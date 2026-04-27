@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Expression des besoins v1.0
+# Projet *Réservation de salles* : Expression des besoins v1.1
 
 <!-- toc -->
 
@@ -107,7 +107,9 @@ rectangle "Gestion des comptes" {
   usecase "Consulter les demandes\nen attente" as UC_CONSULTER_DEMANDE
   usecase "Valider une demande\nde compte" as UC_VALIDER
   usecase "Refuser une demande\nde compte" as UC_REFUSER
-
+  usecase "Modifier les informations d'un compte" as UC_MODIFER_COMPTE
+  usecase "Modifier un mot de passe" as UC_MODIFIER_PASSE
+  usecase "Demande la réinitialisation d'un mot de passe" as UC_REINITIALISER_PASSE
 }
 
 U <|-- E
@@ -115,7 +117,11 @@ U <|-- AP
 U <|-- R
 
 U --> UC_CREER
+U --> UC_MODIFER_COMPTE
+U --> UC_MODIFIER_PASSE
+U --> UC_REINITIALISER_PASSE
 
+A --> UC_MODIFER_COMPTE
 A --> UC_CONSULTER_DEMANDE
 A --> UC_VALIDER
 A --> UC_REFUSER
@@ -124,14 +130,13 @@ A --> UC_REFUSER
 @enduml
 ```
 
-#### 4.1.1. Cas d'utilisation « Demander une création de compte »
+#### 4.1.1. Cas d'utilisation « Déposer une demande de création de compte »
 
 ##### Résumé
-L'utilisateur dépose une demande de création un compte et valide son adresse mail. L'administrateur consulte les demandes de création de compte et valide ou refuse une demande.
+L'utilisateur dépose une demande de création un compte et valide son adresse mail.
 
 ##### Acteurs
 - un utilisateur
-- un administrateur
 
 ##### Pré-conditions
 - l'administrateur est connecté
@@ -149,9 +154,6 @@ L'utilisateur dépose une demande de création un compte et valide son adresse m
 3. le système vérifie que le compte n'existe pas déjà
 4. si le login n'est pas vide et que le compte n'existe pas déjà, un mail est envoyé à l'utilisateur pour confirmer son mail 
 5. l'utilisateur valide son mail grâce au lien reçu
-6. l'administrateur consulte la liste des demandes en attente avec un mail valide
-7. l'administrateur valide ou refuse les demandes
-8. l'utilisateur reçoit un mail l'indiquant que son compte est validé
 
 ##### Déroulement alternatif : données incorrectes
 
@@ -194,71 +196,118 @@ L'utilisateur dépose une demande de création un compte et valide son adresse m
 
 - lors du premier déploiement du serveur de l'application un administrateur et son mot de passe sont définis dans les fichiers de configuration. Le mot de passe peut ensuite être modifié.
 
-#### 4.1.2. Cas d'utilisation « Se connecter »
+#### 4.1.2. Cas d'utilisation « Consulter les demandes de création de compte »
 
 ##### Résumé
-Un utilisateur s'authentifie et est connecté
+L'administrateur consulte les demandes de création de compte et valide ou refuse une demande.
 
 ##### Acteurs
-un utilisateur quelconque
+- un administrateur
 
 ##### Pré-conditions
-L'utilisateur a été créé
+- l'administrateur est connecté
 
 ##### Description
 
-1. l'utilisateur entre son *login* et son mot de passe
-2. le système vérifie que l'utilisateur existe
-3. le système vérifie que le mot de passe est correct
+1. l'administrateur consulte la liste des demandes en attente avec un mail valide
 
-##### Déroulement alternatif : utilisateur inexistant
-
-2.1 l'utilisateur n'existe pas
-2.2 le système prévient celui-ci qu'il n'a pas pu le connecter (sans plus d'information)
-
-##### Déroulement alternatif : mot de passe incorrect
-
-3.1 le mot de passe est incorrect
-3.2 le système prévient l'utilisateur qu'il n'a pas pu le connecter (sans plus d'information)
-
-##### Exceptions
-
-En cas de panne technique, l'utilisateur est averti.
-
-##### Post-conditions
-
-En cas de succès du scénario nominal, l'utilisateur est connecté, avec les droits relatifs à son compte.
-
-##### Remarques
-
-- Il est important de ne pas spécifier à l'utilisateur la raison pour laquelle il n'a pas pu se connecter (compte inexistant **ou** mot de passe incorrect)
-- il sera souhaitable (mais non prioritaire) de *logger* les tentatives (sans les mots de passe, bien entendu) pour aider au support et à la sécurité.
-
-#### 4.1.2. Cas d'utilisation « Modifier les droits des utilisateurs »
-
+#### 4.1.3. Valider une demande de création de compte
 
 ##### Résumé
-
-Un administrateur s'authentifie et modifie les droits des utilisateurs.
+Après avoir consulté la liste des demandes de création de compte en attente, l'administrateur valide la demande.
 
 ##### Acteurs
-
 - un administrateur
+
+##### Pré-conditions
+- l'administrateur est connecté
+
+##### Description
+
+1. l'administrateur valide la demande de création de compte d'un utilisateur
+2. l'utilisateur reçoit un mail l'indiquant que son compte est validé
+
+##### Post-conditions
+Le compte utilisateur est créé.
+
+#### 4.1.4. Refuser une demande de création de compte
+
+##### Résumé
+Après avoir consulté la liste des demandes de création de compte en attente, l'administrateur refuse la demande.
+
+##### Acteurs
+- un administrateur
+
+##### Pré-conditions
+- l'administrateur est connecté
+
+##### Description
+
+1. l'administrateur refuse la demande de création de compte d'un utilisateur
+2. l'utilisateur reçoit un mail l'indiquant que sa demande a été rejetée
+
+#### 4.1.5. Modifier les informations d'un compte
+
+##### Résumé
+Un utilisateur peut consulter et modifier les informations concernant son compte. Le système vérifie si le login est disponible, un mail de vérification est envoyé à la nouvelle adresse mail. Un mail d'information est envoyé à l'ancienne adresse mail. 
+
+##### Acteurs
 - un utilisateur
 
 ##### Pré-conditions
-
-L'utilisateur a été modifié
+- l'utilisateur est connecté
 
 ##### Description
 
-1. l'administrateur consulte la liste des utilisateurs
-2. il en choisit un (par mail, identifiant)
-3. il modifie les droits (responsable)
+1. L'utilisateur rempli le formulaire de modification du login
+2. le système vérifie si le login est disponible
+3. l'utilisateur peut aussi modifier son adresse mail
+4. le système envoie un mail de vérification à la nouvelle adresse mail
+5. l'utilisateur valide son adresse grâce au lien reçu
+6. les informations de l'utilisateur sont mises à jour
 
 ##### Post-conditions
+Les données de l'utilisateur sont mises à jour.
 
-L'utilisateur est modifié.
+#### 4.1.6. Modifier un mot de passe
+
+##### Résumé
+Un utilisateur peut modifier son mot de passe actuel.
+
+##### Acteurs
+- un utilisateur
+
+##### Pré-conditions
+- l'utilisateur est connecté
+
+##### Description
+
+1. l'utilisateur renseigne son ancien mot de passe ainsi que le nouveau mot de passe en double
+2. le système vérifie si les données sont correctes
+
+#### 4.1.7. Demander la réinitialisation d'un mot de passe 
+
+##### Résumé
+En cas d'oubli d'un mot de passe, l'utilisateur peut demander à l'écran de connexion la réinitialisation de son mot de passe.
+
+##### Acteurs
+- un utilisateur
+
+##### Pré-conditions
+- un compte utilisateur existant
+
+##### Description
+
+1. à l'écran de connexion, l'utilisateur clique sur le lien de réinitialisation de mot de passe
+2. l'utilisateur renseigne l'adresse mail liée à son compte utilisateur
+3. le système vérifie si l'adresse mail est liée à un compte utilisateur existant
+4. le système envoie un lien de réinitialisation à l'adresse mail
+5. au clic sur le lien, l'utilisateur est redirigé sur un formulaire et renseigne un nouveau mot de passe en double
+6. le système vérifie les données saisies
+7. le système informe par mail l'utilisateur  
+
+##### Post-conditions
+Le nouveau mot de passe est pris en compte.
 
 ### 4.2. Groupe 2 : Gestion des salles
 
@@ -272,6 +321,8 @@ actor "Appariteur" as AP
 
 rectangle "Gestion des salles" {
 
+  usecase "Consulter la liste des salles" as UC_LISTE_SALLES
+  
   usecase "Gérer une salle" as UC_GERER
 
   usecase "Créer une salle" as UC_CREER
@@ -289,12 +340,12 @@ rectangle "Gestion des salles" {
   usecase "Ajouter une plage\nde disponibilité" as UC_AJOUT_DISPO
   usecase "Modifier une plage\nde disponibilité" as UC_MODIF_DISPO
   usecase "Supprimer une plage\nde disponibilité" as UC_SUPPR_DISPO
-
 }
 
 AP --> UC_GERER
 AP --> UC_EQUIP
 AP --> UC_DISPO
+AP --> UC_LISTE_SALLES
 
 UC_GERER <.. UC_CREER : <<extend>>
 UC_GERER <.. UC_MODIFIER : <<extend>>
@@ -337,7 +388,10 @@ L'appariteur est connecté.
 
 - la salle est enregistrée.
 
-#### 4.2.2. Consulter la liste des salles
+#### 4.2.1. Créer une salle
+#### 4.2.2. Créer un équipement
+#### 4.2.3. Ajouter une plage de disponibilité d'une salle
+#### 4.2.4. Consulter la liste des salles
 
 ##### Résumé
 Un utilisateur consulte la liste des salles de l'établissement.
@@ -366,6 +420,13 @@ voir acteurs
     - ses disponibilités,
     - son statut (réservé, disponible, non réservable)
 
+#### 4.2.5. Modifier une salle
+#### 4.2.6. Supprimer une salle
+#### 4.2.7. Modifier un équipement
+#### 4.2.8. Supprimer un équipement
+#### 4.2.9. Modifier une plage de disponibilité d'une salle
+#### 4.2.10. Supprimer une plage de disponibilité d'une salle
+
 ### 4.3. Groupe 3 : Gestion des réservations
 
 ```plantuml
@@ -392,6 +453,8 @@ rectangle "Système de réservation des salles" {
   usecase "Filtrer par équipements" as UC_FILTRE_EQUIP
 
   usecase "Effectuer une demande\nde réservation" as UC_RESERVER
+  
+  usecase "Modifier une réservation" as UC_MODIFIER_RESERVATION
 
   usecase "Consulter mes\nréservations" as UC_CONSULT
 
@@ -411,6 +474,7 @@ U --> UC_RECH
 U --> UC_RESERVER
 U --> UC_CONSULT
 U --> UC_ANNULER
+U --> UC_MODIFIER_RESERVATION
 
 AP --> UC_DEMANDES
 AP --> UC_VALIDER
@@ -430,7 +494,10 @@ UC_NOTIF --> SYS
 @enduml
 ```
 
-#### 4.3.1. Réserver une salle
+#### 4.3.1. Afficher la liste des salles
+#### 4.3.2. Rechercher une salle selon différents critères
+
+#### 4.3.3. Réserver une salle
 
 ##### Résumé
 
@@ -465,7 +532,8 @@ La demande de réservation est validé.
 - 5.3 le responsable valide une demande de réservation
 - 5.5 l'utilisateur est informé par mail
 
-#### 4.3.2. Modifier une réservation
+#### 4.3.4. Consulter une réservation
+#### 4.3.5. Modifier une réservation
 
 ##### Résumé
 
@@ -492,7 +560,7 @@ La réservation est modifiée (date). L'utilisateur est notifié par mail lorsqu
 La réservation est modifiée.
 
 
-#### 4.3.2. Annuler une réservation
+#### 4.3.6. Annuler une réservation
 
 ##### Résumé
 
@@ -517,3 +585,7 @@ La réservation est annulée. L'utilisateur est notifié par mail lorsque l'annu
 ##### Post-conditions
 
 La réservation est annulée.
+
+#### 4.3.7. Consulter les demandes de réservation en attente
+#### 4.3.8. Valider une demande de réservation
+#### 4.3.9. Rejeter une demande de réservation   
