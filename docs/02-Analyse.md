@@ -1,6 +1,13 @@
-# Projet *Réservation de salles* : Analyse v1.0
+# Projet *Software Tickets* : Analyse V 1.2
 
+troisième version de l'analyse : 
 
+- on y a inclus le système de délégation de tickets. 
+- Par ailleurs, l'esquisse de travail sur le tableau de bord nous a conduit à revenir sur l'expression des besoins pour préciser les choses. La version actuelle de l'expression des besoins tient compte de ces révisions.
+- le *use case* [Visualiser un ticket](#427-visualiser-un-ticket)  comportait une méthode décidemment trop « magique » : `TicketRepository.listTicketsForUser()` ; comme la décision de ce qu'il faut montrer à l'utilisateur est un point métier important, il nous a semblé que, d'une part, ce n'était pas à un objet de type « lifecycle » de gérer la chose, et que d'autre part, il fallait un peu détailler les choses.
+- unification et rationalisation du vocabulaire :
+  - remplacer `listYYY` par `findYYY` ;
+  - remplacer `Documentation` par `ProgressReport`
 
 
 ## 1. Table des matières
