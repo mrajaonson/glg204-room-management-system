@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Expression des besoins v0.2
+# Projet *Réservation de salles* : Expression des besoins v1.0
 
 <!-- toc -->
 
@@ -50,7 +50,6 @@ Il s’agit donc de créer une application permettant :
 - après avoir déposé une demande de réservation, l'utilisateur reçoit un mail de confirmation lorsque sa demande est validée (en instantané ou après la validation d'un responsable);
 - les utilisateurs peuvent modifier ou annuler leurs réservations;
 - en cas d'évènements particuliers, une salle peut ne plus être disponible (travaux, maintenances, évènement prioritaire etc), les réservations devront donc être annulées automatiquement et la liste des salles disponibles mise à jour, un mail d'annulation devra être envoyé;
-- 
 
 ### 2.2. Situation actuelle
 
@@ -105,12 +104,9 @@ actor "Administrateur" as A
 
 rectangle "Gestion des comptes" {
   usecase "Déposer une demande\nde création de compte" as UC_CREER
-  usecase "Remplir le formulaire\nde demande" as UC_FORMULAIRE
-  usecase "Valider l'adresse email" as UC_MAIL
   usecase "Consulter les demandes\nen attente" as UC_CONSULTER_DEMANDE
   usecase "Valider une demande\nde compte" as UC_VALIDER
   usecase "Refuser une demande\nde compte" as UC_REFUSER
-  usecase "Notifier l'utilisateur\npar mail" as UC_NOTIFIER
 
 }
 
@@ -119,15 +115,11 @@ U <|-- AP
 U <|-- R
 
 U --> UC_CREER
-UC_CREER ..> UC_FORMULAIRE : <<include>>
-UC_CREER ..> UC_MAIL : <<include>>
 
 A --> UC_CONSULTER_DEMANDE
 A --> UC_VALIDER
 A --> UC_REFUSER
 
-UC_VALIDER ..> UC_NOTIFIER : <<include>>
-UC_REFUSER ..> UC_NOTIFIER : <<include>>
 
 @enduml
 ```
@@ -158,7 +150,7 @@ L'utilisateur dépose une demande de création un compte et valide son adresse m
 4. si le login n'est pas vide et que le compte n'existe pas déjà, un mail est envoyé à l'utilisateur pour confirmer son mail 
 5. l'utilisateur valide son mail grâce au lien reçu
 6. l'administrateur consulte la liste des demandes en attente avec un mail valide
-7. l'administreur valide ou refuse les demandes
+7. l'administrateur valide ou refuse les demandes
 8. l'utilisateur reçoit un mail l'indiquant que son compte est validé
 
 ##### Déroulement alternatif : données incorrectes
@@ -334,10 +326,10 @@ L'appariteur est connecté.
 
 1. l'appariteur donne un titre à la salle;
 2. il renseigne la localisation de la salle;
-3. il ajoute une description de la salle;
+3. il ajoute une description de la salle (type de salle, amphi, tp etc);
 4. il ajoute la capacité de la salle;
 5. il ajoute les équipements présents dans la salle;
-6. il définit les disponibilités de la salle;
+6. il définit les disponibilités de la salle (créneaux jours et heures pendant lesquelles la salle est reservable si besoin);
 7. le système vérifie que la salle a un titre, une localisation, une description, une capacité, une liste des équipements et des disponibilités;
 8. la salle est enregistrée.
 
@@ -456,7 +448,7 @@ Il existe une salle à réserver.
 ##### Description
 
 1. l'utilisateur visualise la liste des salles;
-2. il effectue une recherche des salles disponibles (par date, capacité, équipements)
+2. il effectue une recherche des salles disponibles (par jour et heure de disponibilité, capacité, équipements);
 3. il en choisit un; 
 4. il consulte sa description; 
 5. il choisit le créneau à reserver; 
@@ -492,8 +484,8 @@ La réservation est modifiée (date). L'utilisateur est notifié par mail lorsqu
 
 1. l'utilisateur visualise ses réservations; 
 2. il en choisit une; 
-3. il modifie les dates de réservations ou ajoute un commentaire; 
-4. rl'utilisateur reçoit un mail de confirmation;
+3. il modifie les dates de réservations ou ajoute un commentaire (le système vérifie si le nouveau créneau ne rentre pas en concurrence avec une réservation existante); 
+4. l'utilisateur reçoit un mail de confirmation;
 
 ##### Post-conditions
 
