@@ -113,11 +113,7 @@ Pour la pertinence :
 
 #### 4.1.1. Déposer une demande de création de compte
 
-- `FormulaireDemandeCompte` — interface utilisateur
-- `ServiceCompte` — service
-- `Compte` — domaine
-- `DemandeCreationCompte` — domaine + cycle de vie
-- `ServiceMail` — interface système
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -133,6 +129,8 @@ enum EtatDemande {
   CREEE
   MAIL_ENVOYE
   MAIL_VALIDE
+  VALIDEE
+  REFUSEE
 }
 
 class DemandeCreationCompte <<lifecycle>> {
@@ -159,32 +157,16 @@ class ServiceMail <<boundary>> {
   envoyerMailConfirmation()
 }
 
+FormulaireDemandeCompte ..> ServiceCompte
+ServiceCompte ..> Compte
+ServiceCompte ..> DemandeCreationCompte
+ServiceCompte ..> ServiceMail
+DemandeCreationCompte -> EtatDemande : > etat
+
 @enduml
 ```
 
-##### Cas nominal
-
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireDemandeCompte as ui
-control ServiceCompte as svc
-entity Compte as compte
-
-u -> ui : setLogin()
-u -> ui : setMotDePasse()
-u -> ui : setMotDePasseConfirmation()
-u -> ui : setMail()
-ui -> ui : checkData()
-ui -> svc : soumettreFormulaire()
-svc -> compte : verifierLoginDisponible(login)
-compte --> svc : false
-svc --> ui : login indisponible
-ui --> u : message d'erreur
-@enduml
-```
+##### Séquence
 
 ```plantuml
 @startuml
@@ -200,38 +182,33 @@ u -> ui : setLogin()
 u -> ui : setMotDePasse()
 u -> ui : setMotDePasseConfirmation()
 u -> ui : setMail()
-ui -> ui : checkData()
-ui -> svc : soumettreFormulaire()
-svc -> compte : verifierLoginDisponible(login)
-compte --> svc : true
-svc -> dcm : creerDemande(login, motDePasse, mail)
-note right : etat = CREEE
-svc -> mail : envoyerMailConfirmation(mail)
-svc -> dcm : majEtat()
-note right : etat = MAIL_ENVOYE
-svc --> ui : confirmation envoi mail
-ui --> u : confirmation envoi mail
+alt données incorrectes
+  ui -> ui : checkData() : false
+  ui --> u : message d'erreur
+else données valides
+  ui -> ui : checkData()
+  ui -> svc : soumettreFormulaire()
+end
+alt login indisponible
+  svc -> compte : verifierLoginDisponible(login)
+  compte --> svc : false
+  svc --> ui : login indisponible
+  ui --> u : message d'erreur
+else login disponible
+  svc -> compte : verifierLoginDisponible(login)
+  compte --> svc : true
+  svc -> dcm : creerDemande(login, motDePasse, mail)
+  note right : etat = CREEE
+  svc -> mail : envoyerMailConfirmation(mail)
+  svc -> dcm : majEtat()
+  note right : etat = MAIL_ENVOYE
+  svc --> ui : confirmation envoi mail
+  ui --> u : confirmation envoi mail
+end
 @enduml
 ```
 
-##### Déroulement alternatif : données incorrectes
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireDemandeCompte as ui
-
-u -> ui : setLogin()
-u -> ui : setMotDePasse()
-u -> ui : setMotDePasseConfirmation()
-u -> ui : setMail()
-ui -> ui : checkData() : false
-ui --> u : message d'erreur
-@enduml
-```
-
-##### Déroulement alternatif : le compte existe déjà
+##### Validation du lien mail
 
 ```plantuml
 @startuml
@@ -248,9 +225,7 @@ note right : etat = MAIL_VALIDE
 
 #### 4.1.2. Consulter les demandes de création de compte
 
-- `ListeDemandesCompteUI` — interface utilisateur
-- `ServiceCompte` — service
-- `DemandeCreationCompte` — domaine + cycle de vie
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -269,8 +244,13 @@ class DemandeCreationCompte <<lifecycle>> {
   etat : EtatDemande
 }
 
+ListeDemandesCompteUI ..> ServiceCompte
+ServiceCompte ..> DemandeCreationCompte
+
 @enduml
 ```
+
+##### Séquence
 
 ```plantuml
 @startuml
@@ -335,7 +315,7 @@ ui --> a : confirmation
 
 #### 4.1.5. Modifier les informations d'un compte
 
-- `FormulaireModificationCompte` — interface utilisateur
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -356,21 +336,13 @@ class Compte <<entity>> {
   mail : String
 }
 
+FormulaireModificationCompte ..> ServiceCompte
+ServiceCompte ..> Compte
+
 @enduml
 ```
 
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireModificationCompte as ui
-
-u -> ui : setLogin()
-u -> ui : setMail()
-ui -> ui : checkData() : false
-ui --> u : message d'erreur
-@enduml
-```
+##### Séquence
 
 ```plantuml
 @startuml
@@ -382,17 +354,22 @@ entity Compte as compte
 
 u -> ui : setLogin()
 u -> ui : setMail()
-ui -> ui : checkData()
-ui -> svc : modifierCompte()
-svc -> compte : majInfos(login, mail)
-svc --> ui : confirmation
-ui --> u : confirmation
+alt données incorrectes
+  ui -> ui : checkData() : false
+  ui --> u : message d'erreur
+else données valides
+  ui -> ui : checkData()
+  ui -> svc : modifierCompte()
+  svc -> compte : majInfos(login, mail)
+  svc --> ui : confirmation
+  ui --> u : confirmation
+end
 @enduml
 ```
 
 #### 4.1.6. Modifier un mot de passe
 
-- `FormulaireModificationMotDePasse` — interface utilisateur
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -414,22 +391,13 @@ class Compte <<entity>> {
   mail : String
 }
 
+FormulaireModificationMotDePasse ..> ServiceCompte
+ServiceCompte ..> Compte
+
 @enduml
 ```
 
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireModificationMotDePasse as ui
-
-u -> ui : setMotDePasseActuel()
-u -> ui : setNouveauMotDePasse()
-u -> ui : setNouveauMotDePasseConfirmation()
-ui -> ui : checkData() : false
-ui --> u : message d'erreur
-@enduml
-```
+##### Séquence
 
 ```plantuml
 @startuml
@@ -442,40 +410,31 @@ entity Compte as compte
 u -> ui : setMotDePasseActuel()
 u -> ui : setNouveauMotDePasse()
 u -> ui : setNouveauMotDePasseConfirmation()
-ui -> ui : checkData()
-ui -> svc : modifierMotDePasse()
-svc -> compte : verifierMotDePasse(motDePasseActuel)
-compte --> svc : false
-svc --> ui : mot de passe incorrect
-ui --> u : message d'erreur
-@enduml
-```
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireModificationMotDePasse as ui
-control ServiceCompte as svc
-entity Compte as compte
-
-u -> ui : setMotDePasseActuel()
-u -> ui : setNouveauMotDePasse()
-u -> ui : setNouveauMotDePasseConfirmation()
-ui -> ui : checkData()
-ui -> svc : modifierMotDePasse()
-svc -> compte : verifierMotDePasse(motDePasseActuel)
-compte --> svc : true
-svc -> compte : majMotDePasse(nouveauMotDePasse)
-svc --> ui : confirmation
-ui --> u : confirmation
+alt données incorrectes
+  ui -> ui : checkData() : false
+  ui --> u : message d'erreur
+else données valides
+  ui -> ui : checkData()
+  ui -> svc : modifierMotDePasse()
+end
+alt mot de passe incorrect
+  svc -> compte : verifierMotDePasse(motDePasseActuel)
+  compte --> svc : false
+  svc --> ui : mot de passe incorrect
+  ui --> u : message d'erreur
+else mot de passe correct
+  svc -> compte : verifierMotDePasse(motDePasseActuel)
+  compte --> svc : true
+  svc -> compte : majMotDePasse(nouveauMotDePasse)
+  svc --> ui : confirmation
+  ui --> u : confirmation
+end
 @enduml
 ```
 
 #### 4.1.7. Demander la réinitialisation d'un mot de passe
 
-- `FormulaireDemandeReinitialisation` — interface utilisateur
-- `FormulaireNouveauMotDePasse` — interface utilisateur
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -505,38 +464,15 @@ class Compte <<entity>> {
   mail : String
 }
 
+FormulaireDemandeReinitialisation ..> ServiceCompte
+FormulaireNouveauMotDePasse ..> ServiceCompte
+ServiceCompte ..> Compte
+ServiceCompte ..> ServiceMail
+
 @enduml
 ```
 
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireDemandeReinitialisation as ui
-
-u -> ui : setMail()
-ui -> ui : checkData() : false
-ui --> u : message d'erreur
-@enduml
-```
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireDemandeReinitialisation as ui
-control ServiceCompte as svc
-entity Compte as compte
-
-u -> ui : setMail()
-ui -> ui : checkData()
-ui -> svc : demanderReinitialisation(mail)
-svc -> compte : findByMail(mail)
-compte --> svc : null
-svc --> ui : compte introuvable
-ui --> u : message d'erreur
-@enduml
-```
+##### Séquence
 
 ```plantuml
 @startuml
@@ -549,21 +485,32 @@ entity Compte as compte
 boundary ServiceMail as mail
 
 u -> ui : setMail()
-ui -> ui : checkData()
-ui -> svc : demanderReinitialisation(mail)
-svc -> compte : findByMail(mail)
-compte --> svc : compte
-svc -> mail : envoyerMailReinitialisation(mail)
-svc --> ui : confirmation envoi mail
-ui --> u : confirmation envoi mail
-
-u -> ui2 : setNouveauMotDePasse()
-u -> ui2 : setNouveauMotDePasseConfirmation()
-ui2 -> ui2 : checkData()
-ui2 -> svc : reinitialiserMotDePasse(token, nouveauMotDePasse)
-svc -> compte : majMotDePasse(nouveauMotDePasse)
-svc --> ui2 : confirmation
-ui2 --> u : confirmation
+alt données incorrectes
+  ui -> ui : checkData() : false
+  ui --> u : message d'erreur
+else données valides
+  ui -> ui : checkData()
+  ui -> svc : demanderReinitialisation(mail)
+end
+alt compte introuvable
+  svc -> compte : findByMail(mail)
+  compte --> svc : null
+  svc --> ui : compte introuvable
+  ui --> u : message d'erreur
+else compte trouvé
+  svc -> compte : findByMail(mail)
+  compte --> svc : compte
+  svc -> mail : envoyerMailReinitialisation(mail)
+  svc --> ui : confirmation envoi mail
+  ui --> u : confirmation envoi mail
+  u -> ui2 : setNouveauMotDePasse()
+  u -> ui2 : setNouveauMotDePasseConfirmation()
+  ui2 -> ui2 : checkData()
+  ui2 -> svc : reinitialiserMotDePasse(token, nouveauMotDePasse)
+  svc -> compte : majMotDePasse(nouveauMotDePasse)
+  svc --> ui2 : confirmation
+  ui2 --> u : confirmation
+end
 @enduml
 ```
 
@@ -571,10 +518,7 @@ ui2 --> u : confirmation
 
 #### 4.2.1. Créer une salle
 
-- `FormulaireCreationSalle` — interface utilisateur
-- `ServiceSalle` — service
-- `Salle` — domaine
-- `TypeSalle` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -606,27 +550,17 @@ enum TypeSalle {
   COURS
   TP
   REUNION
+  AMPHI
 }
 
+FormulaireCreationSalle ..> ServiceSalle
+ServiceSalle ..> Salle
+Salle -> TypeSalle : > type
+
 @enduml
 ```
 
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireCreationSalle as ui
-
-r -> ui : setNom()
-r -> ui : setLocalisation()
-r -> ui : setCapacite()
-r -> ui : setDescription()
-r -> ui : setType()
-r -> ui : setReservationAvecValidation()
-ui -> ui : checkData() : false
-ui --> r : message d'erreur
-@enduml
-```
+##### Séquence
 
 ```plantuml
 @startuml
@@ -652,10 +586,7 @@ ui --> r : confirmation
 
 #### 4.2.2. Créer un équipement
 
-- `FormulaireCreationEquipement` — interface utilisateur
-- `ServiceSalle` — service
-- `Equipement` — domaine
-- `Salle` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -676,10 +607,14 @@ class Equipement <<entity>> {
   description : String
 }
 
+FormulaireCreationEquipement ..> ServiceSalle
+ServiceSalle ..> Equipement
+Salle *-- "*" Equipement
+
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -688,7 +623,6 @@ actor Responsable as r
 boundary FormulaireCreationEquipement as ui
 control ServiceSalle as svc
 entity Equipement as eq
-entity Salle as salle
 
 r -> ui : setNom()
 r -> ui : setDescription()
@@ -702,11 +636,7 @@ ui --> r : confirmation
 
 #### 4.2.3. Ajouter une plage de disponibilité d'une salle
 
-- `FormulaireDisponibiliteSalle` — interface utilisateur
-- `ServiceSalle` — service
-- `Salle` — domaine
-- `PlageDisponibilite` — domaine + cycle de vie
-- `Heure` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -753,10 +683,17 @@ class Heure <<value>> {
   minute : Integer
 }
 
+FormulaireDisponibiliteSalle ..> ServiceSalle
+ServiceSalle ..> Salle
+Salle *-- "*" PlageDisponibilite
+PlageDisponibilite -> StatutPlage : > statut
+PlageDisponibilite --> Heure : > heureDebut
+PlageDisponibilite --> Heure : > heureFin
+
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -776,43 +713,24 @@ ui -> ui : checkData()
 ui -> svc : ajouterPlageDisponibilite(formulaire)
 svc -> pd : creerPlage(dateDebut, heureDebut, dateFin, heureFin)
 note right : statut = ACTIVE
-svc -> pd : verifierAbsenceConflict(salle, pd)
-pd --> svc : aucun conflict
-svc -> salle : ajouterPlageDisponibilite(pd)
-svc --> ui : confirmation
-ui --> r : confirmation
-@enduml
-```
-
-##### Déroulement alternatif : conflit de disponibilité
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireDisponibiliteSalle as ui
-control ServiceSalle as svc
-participant PlageDisponibilite as pd <<lifecycle>>
-
-r -> ui : setDateDebut()
-r -> ui : setHeureDebut()
-r -> ui : setDateFin()
-r -> ui : setHeureFin()
-ui -> ui : checkData()
-ui -> svc : ajouterPlageDisponibilite(formulaire)
-svc -> pd : verifierAbsenceConflict(salle, pd)
-pd --> svc : conflit existe
-svc --> ui : erreur conflit de disponibilité
-ui --> r : message d'erreur
+alt conflit de disponibilité
+  svc -> pd : verifierAbsenceConflict(salle, pd)
+  pd --> svc : conflit existe
+  svc --> ui : erreur conflit de disponibilité
+  ui --> r : message d'erreur
+else aucun conflit
+  svc -> pd : verifierAbsenceConflict(salle, pd)
+  pd --> svc : aucun conflit
+  svc -> salle : ajouterPlageDisponibilite(pd)
+  svc --> ui : confirmation
+  ui --> r : confirmation
+end
 @enduml
 ```
 
 #### 4.2.4. Consulter la liste des salles
 
-- `ListeSallesUI` — interface utilisateur
-- `ServiceSalle` — service
-- `Salle` — domaine
-- `TypeSalle` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -839,16 +757,13 @@ class Salle <<entity>> {
   plagesDisponibilite : Liste<PlageDisponibilite>
 }
 
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
+ListeSallesUI ..> ServiceSalle
+ServiceSalle ..> Salle
 
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -859,39 +774,26 @@ control ServiceSalle as svc
 entity Salle as salle
 
 r -> ui : consulterListeSalles()
-ui -> svc : listerSalles()
-svc -> salle : findAll()
-salle --> svc : liste des salles
-svc --> ui : liste des salles
-ui --> r : affiche la liste
-@enduml
-```
-
-##### Déroulement alternatif : filtrage par type
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary ListeSallesUI as ui
-control ServiceSalle as svc
-entity Salle as salle
-
-r -> ui : setFiltreType(type)
-ui -> svc : filtrerSallesByType(type)
-svc -> salle : findByType(type)
-salle --> svc : liste des salles
-svc --> ui : liste filtrée
-ui --> r : affiche la liste filtrée
+alt filtrage par type
+  r -> ui : setFiltreType(type)
+  ui -> svc : filtrerSallesByType(type)
+  svc -> salle : findByType(type)
+  salle --> svc : liste des salles
+  svc --> ui : liste filtrée
+  ui --> r : affiche la liste filtrée
+else sans filtre
+  ui -> svc : listerSalles()
+  svc -> salle : findAll()
+  salle --> svc : liste des salles
+  svc --> ui : liste des salles
+  ui --> r : affiche la liste
+end
 @enduml
 ```
 
 #### 4.2.5. Modifier une salle
 
-- `FormulaireModificationSalle` — interface utilisateur
-- `ServiceSalle` — service
-- `Salle` — domaine
-- `TypeSalle` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -930,16 +832,13 @@ class Salle <<entity>> {
   modifierReservationAvecValidation(reservationAvecValidation : Boolean)
 }
 
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
+FormulaireModificationSalle ..> ServiceSalle
+ServiceSalle ..> Salle
 
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -960,7 +859,7 @@ r -> ui : setReservationAvecValidation()
 ui -> ui : checkData()
 ui -> svc : modifierSalle(id, donnees)
 svc -> svc : verifierDonnees()
-svc -> salle : findById(id)
+svc -> salle : rechercherId(id)
 salle --> svc : salle
 svc -> salle : modifierNom(nom)
 svc -> salle : modifierLocalisation(localisation)
@@ -973,27 +872,9 @@ ui --> r : confirmation
 @enduml
 ```
 
-##### Déroulement alternatif : données incorrectes
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireModificationSalle as ui
-
-r -> ui : setCapacite()
-ui -> ui : checkData() : false
-ui --> r : message d'erreur
-@enduml
-```
-
 #### 4.2.6. Supprimer une salle
 
-- `FormulaireSuppressionSalle` — interface utilisateur
-- `ServiceSalle` — service
-- `Salle` — domaine
-- `DemandeSuppressionSalle` — domaine + cycle de vie
-- `EtatDemandeSuppression` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1034,10 +915,16 @@ enum EtatDemandeSuppression {
   SUPPRIMEE
 }
 
+FormulaireSuppressionSalle ..> ServiceSalle
+ServiceSalle ..> Salle
+ServiceSalle ..> DemandeSuppressionSalle
+DemandeSuppressionSalle --> Salle : > salle
+DemandeSuppressionSalle -> EtatDemandeSuppression : > etat
+
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1053,42 +940,25 @@ ui -> ui : afficherDonneesSalle()
 r -> ui : confirmerSuppression()
 ui -> svc : supprimerSalle(salle)
 svc -> svc : verifierPossibiliteSuppression(salle)
-note right : verifier absences reservations
-svc -> dds : creerDemande(salle, dateDemande)
-note right : etat = EN_COURS
-svc -> dds : confirmerDemande()
-note right : etat = CONFIRMEE
-svc -> salle : supprimer()
-svc --> ui : confirmation
-ui --> r : confirmation
-@enduml
-```
-
-##### Déroulement alternatif : salle avec réservations actives
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireSuppressionSalle as ui
-control ServiceSalle as svc
-
-r -> ui : chargerSalle(salle)
-ui -> ui : afficherDonneesSalle()
-r -> ui : confirmerSuppression()
-ui -> svc : supprimerSalle(salle)
-svc -> svc : verifierPossibiliteSuppression(salle)
-svc --> ui : echec suppression
-ui --> r : message d'erreur : salle avec réservations actives
+note right : vérifier absence de réservations
+alt salle avec réservations actives
+  svc --> ui : echec suppression
+  ui --> r : message d'erreur : salle avec réservations actives
+else suppression possible
+  svc -> dds : creerDemande(salle, dateDemande)
+  note right : etat = EN_COURS
+  svc -> dds : confirmerDemande()
+  note right : etat = CONFIRMEE
+  svc -> salle : supprimer()
+  svc --> ui : confirmation
+  ui --> r : confirmation
+end
 @enduml
 ```
 
 #### 4.2.7. Modifier un équipement
 
-- `FormulaireModificationEquipement` — interface utilisateur
-- `ServiceSalle` — service
-- `Equipement` — domaine
-- `Salle` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1126,10 +996,14 @@ class Salle <<entity>> {
   equipements : Liste<Equipement>
 }
 
+FormulaireModificationEquipement ..> ServiceSalle
+ServiceSalle ..> Equipement
+Salle *-- "*" Equipement
+
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1143,41 +1017,26 @@ r -> ui : chargerEquipement(id)
 ui -> ui : afficherDonnees()
 r -> ui : setNom()
 r -> ui : setDescription()
-ui -> ui : checkData()
-ui -> svc : modifierEquipement(id, donnees)
-svc -> svc : verifierDonnees()
-svc -> eq : findById(id)
-eq --> svc : equipement
-svc -> eq : modifierNom(nom)
-svc -> eq : modifierDescription(description)
-svc --> ui : confirmation
-ui --> r : confirmation
-@enduml
-```
-
-##### Déroulement alternatif : données incorrectes
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireModificationEquipement as ui
-
-r -> ui : setNom()
-r -> ui : setDescription()
-ui -> ui : checkData() : false
-ui --> r : message d'erreur
+alt données incorrectes
+  ui -> ui : checkData() : false
+  ui --> r : message d'erreur
+else données valides
+  ui -> ui : checkData()
+  ui -> svc : modifierEquipement(id, donnees)
+  svc -> svc : verifierDonnees()
+  svc -> eq : rechercherId(id)
+  eq --> svc : equipement
+  svc -> eq : modifierNom(nom)
+  svc -> eq : modifierDescription(description)
+  svc --> ui : confirmation
+  ui --> r : confirmation
+end
 @enduml
 ```
 
 #### 4.2.8. Supprimer un équipement
 
-- `FormulaireSuppressionEquipement` — interface utilisateur
-- `ServiceSalle` — service
-- `Equipement` — domaine
-- `Salle` — domaine
-- `DemandeSuppressionEquipement` — domaine + cycle de vie
-- `EtatDemandeSuppression` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1219,10 +1078,16 @@ class DemandeSuppressionEquipement <<lifecycle>> {
   etat : EtatDemandeSuppression
 }
 
+FormulaireSuppressionEquipement ..> ServiceSalle
+ServiceSalle ..> Equipement
+ServiceSalle ..> DemandeSuppressionEquipement
+Salle *-- "*" Equipement
+DemandeSuppressionEquipement --> Equipement : > equipement
+
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1238,45 +1103,27 @@ ui -> ui : afficherDonneesEquipement()
 r -> ui : confirmerSuppression()
 ui -> svc : supprimerEquipement(equipement)
 svc -> svc : verifierPossibiliteSuppression(equipement)
-svc -> dse : creerDemande(equipement, dateDemande)
-note right : etat = EN_COURS
-svc -> dse : confirmerDemande()
-note right : etat = CONFIRMEE
-svc -> dse : supprimerDemande()
-note right : etat = SUPPRIMEE
-svc -> eq : supprimer()
-svc -> Salle : retirerEquipement(equipement)
-svc --> ui : confirmation
-ui --> r : confirmation
-@enduml
-```
-
-##### Déroulement alternatif : échec suppression
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireSuppressionEquipement as ui
-control ServiceSalle as svc
-
-r -> ui : chargerEquipement(equipement)
-ui -> ui : afficherDonneesEquipement()
-r -> ui : confirmerSuppression()
-ui -> svc : supprimerEquipement(equipement)
-svc -> svc : verifierPossibiliteSuppression(equipement)
-svc --> ui : echec suppression
-ui --> r : message d'erreur
+alt échec suppression
+  svc --> ui : echec suppression
+  ui --> r : message d'erreur
+else suppression possible
+  svc -> dse : creerDemande(equipement, dateDemande)
+  note right : etat = EN_COURS
+  svc -> dse : confirmerDemande()
+  note right : etat = CONFIRMEE
+  svc -> dse : supprimerDemande()
+  note right : etat = SUPPRIMEE
+  svc -> eq : supprimer()
+  svc -> Salle : retirerEquipement(equipement)
+  svc --> ui : confirmation
+  ui --> r : confirmation
+end
 @enduml
 ```
 
 #### 4.2.9. Modifier une plage de disponibilité d'une salle
 
-- `FormulaireModificationDisponibilite` — interface utilisateur
-- `ServiceSalle` — service
-- `PlageDisponibilite` — domaine + cycle de vie
-- `Salle` — domaine
-- `Heure` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1322,20 +1169,21 @@ class Salle <<entity>> {
   plagesDisponibilite : Liste<PlageDisponibilite>
 }
 
-enum StatutPlage {
-  ACTIVE
-  INACTIVE
-}
-
 class Heure <<value>> {
   heure : Integer
   minute : Integer
 }
 
+FormulaireModificationDisponibilite ..> ServiceSalle
+ServiceSalle ..> PlageDisponibilite
+Salle *-- "*" PlageDisponibilite
+PlageDisponibilite --> Heure : > heureDebut
+PlageDisponibilite --> Heure : > heureFin
+
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1344,7 +1192,6 @@ actor Responsable as r
 boundary FormulaireModificationDisponibilite as ui
 control ServiceSalle as svc
 entity PlageDisponibilite as pd
-entity Salle as salle
 
 r -> ui : chargerPlage(id)
 ui -> ui : afficherDonnees()
@@ -1356,51 +1203,28 @@ r -> ui : setStatut()
 ui -> ui : checkData()
 ui -> svc : modifierPlageDisponibilite(id, donnees)
 svc -> svc : verifierConflit(donnees)
-svc -> pd : findById(id)
-pd --> svc : plage
-svc -> pd : modifierDateDebut(dateDebut)
-svc -> pd : modifierHeureDebut(heureDebut)
-svc -> pd : modifierDateFin(dateFin)
-svc -> pd : modifierHeureFin(heureFin)
-svc -> pd : modifierStatut(statut)
-svc --> ui : confirmation
-ui --> r : confirmation
-@enduml
-```
-
-##### Déroulement alternatif : conflit de disponibilité
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireModificationDisponibilite as ui
-control ServiceSalle as svc
-entity PlageDisponibilite as pd
-
-r -> ui : chargerPlage(id)
-ui -> ui : afficherDonnees()
-r -> ui : setDateDebut()
-r -> ui : setHeureDebut()
-r -> ui : setDateFin()
-r -> ui : setHeureFin()
-ui -> ui : checkData()
-ui -> svc : modifierPlageDisponibilite(id, donnees)
-svc -> svc : verifierConflit(donnees)
-svc -> pd : chercherConflit()
-pd --> svc : conflit détecté
-svc --> ui : erreur : plage en conflit
-ui --> r : message d'erreur
+alt conflit détecté
+  svc -> pd : chercherConflit()
+  pd --> svc : conflit détecté
+  svc --> ui : erreur : plage en conflit
+  ui --> r : message d'erreur
+else aucun conflit
+  svc -> pd : rechercherId(id)
+  pd --> svc : plage
+  svc -> pd : modifierDateDebut(dateDebut)
+  svc -> pd : modifierHeureDebut(heureDebut)
+  svc -> pd : modifierDateFin(dateFin)
+  svc -> pd : modifierHeureFin(heureFin)
+  svc -> pd : modifierStatut(statut)
+  svc --> ui : confirmation
+  ui --> r : confirmation
+end
 @enduml
 ```
 
 #### 4.2.10. Supprimer une plage de disponibilité d'une salle
 
-- `FormulaireSuppressionDisponibilite` — interface utilisateur
-- `ServiceSalle` — service
-- `PlageDisponibilite` — domaine + cycle de vie
-- `Salle` — domaine
-- `DemandeSuppressionPlage` — domaine + cycle de vie
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1447,15 +1271,16 @@ class DemandeSuppressionPlage <<lifecycle>> {
   etat : EtatDemandeSuppression
 }
 
-enum StatutPlage {
-  ACTIVE
-  INACTIVE
-}
+FormulaireSuppressionDisponibilite ..> ServiceSalle
+ServiceSalle ..> PlageDisponibilite
+ServiceSalle ..> DemandeSuppressionPlage
+Salle *-- "*" PlageDisponibilite
+DemandeSuppressionPlage --> PlageDisponibilite : > plage
 
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1472,35 +1297,21 @@ ui -> ui : afficherDonneesPlage()
 r -> ui : confirmerSuppression()
 ui -> svc : supprimerPlageDisponibilite(plage)
 svc -> svc : verifierPossibiliteSuppression(plage)
-svc -> dsp : creerDemande(plage, dateDemande)
-note right : etat = EN_COURS
-svc -> dsp : confirmerDemande()
-note right : etat = CONFIRMEE
-svc -> dsp : supprimerDemande()
-note right : etat = SUPPRIMEE
-svc -> pd : supprimer()
-svc -> salle : retirerPlageDisponibilite(plage)
-svc --> ui : confirmation
-ui --> r : confirmation
-@enduml
-```
-
-##### Déroulement alternatif : plage avec réservations associées
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireSuppressionDisponibilite as ui
-control ServiceSalle as svc
-
-r -> ui : chargerPlage(plage)
-ui -> ui : afficherDonneesPlage()
-r -> ui : confirmerSuppression()
-ui -> svc : supprimerPlageDisponibilite(plage)
-svc -> svc : verifierPossibiliteSuppression(plage)
-svc --> ui : echec suppression
-ui --> r : message d'erreur : plage avec réservations associées
+alt plage avec réservations associées
+  svc --> ui : echec suppression
+  ui --> r : message d'erreur : plage avec réservations associées
+else suppression possible
+  svc -> dsp : creerDemande(plage, dateDemande)
+  note right : etat = EN_COURS
+  svc -> dsp : confirmerDemande()
+  note right : etat = CONFIRMEE
+  svc -> dsp : supprimerDemande()
+  note right : etat = SUPPRIMEE
+  svc -> pd : supprimer()
+  svc -> salle : retirerPlageDisponibilite(plage)
+  svc --> ui : confirmation
+  ui --> r : confirmation
+end
 @enduml
 ```
 
@@ -1508,10 +1319,7 @@ ui --> r : message d'erreur : plage avec réservations associées
 
 #### 4.3.1. Afficher la liste des salles
 
-- `ListeSallesReservationUI` — interface utilisateur
-- `ServiceSalle` — service
-- `Salle` — domaine
-- `TypeSalle` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1542,16 +1350,13 @@ class Salle <<entity>> {
   equipements : Liste<Equipement>
 }
 
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
+ListeSallesReservationUI ..> ServiceSalle
+ServiceSalle ..> Salle
 
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1562,42 +1367,28 @@ control ServiceSalle as svc
 entity Salle as salle
 
 u -> ui : afficherListeSalles()
-ui -> svc : listerSalles()
-svc -> salle : findAll()
-salle --> svc : liste des salles
-svc --> ui : liste des salles
-ui --> u : affiche la liste
-@enduml
-```
-
-##### Déroulement alternatif : filtrage par type et capacité
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary ListeSallesReservationUI as ui
-control ServiceSalle as svc
-entity Salle as salle
-
-u -> ui : setFiltreType(type)
-u -> ui : setCapaciteMin(min)
-u -> ui : setCapaciteMax(max)
-ui -> svc : filtrerSalles(type, min, max)
-svc -> salle : findByTypeAndCapacite(type, min, max)
-salle --> svc : liste des salles filtrées
-svc --> ui : liste filtrée
-ui --> u : affiche la liste filtrée
+alt filtrage par type et capacité
+  u -> ui : setFiltreType(type)
+  u -> ui : setCapaciteMin(min)
+  u -> ui : setCapaciteMax(max)
+  ui -> svc : filtrerSalles(type, min, max)
+  svc -> salle : findByTypeAndCapacite(type, min, max)
+  salle --> svc : liste des salles filtrées
+  svc --> ui : liste filtrée
+  ui --> u : affiche la liste filtrée
+else sans filtre
+  ui -> svc : listerSalles()
+  svc -> salle : findAll()
+  salle --> svc : liste des salles
+  svc --> ui : liste des salles
+  ui --> u : affiche la liste
+end
 @enduml
 ```
 
 #### 4.3.2. Rechercher une salle selon différents critères
 
-- `FormulaireRechercheSalle` — interface utilisateur
-- `ServiceSalle` — service
-- `FiltreRechercheSalle` — domaine
-- `Salle` — domaine
-- `TypeSalle` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1650,11 +1441,10 @@ class Salle <<entity>> {
   equipements : Liste<Equipement>
 }
 
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
+FormulaireRechercheSalle ..> ServiceSalle
+ServiceSalle ..> FiltreRechercheSalle
+ServiceSalle ..> Salle
+FiltreRechercheSalle ..> Salle : > applyFilter
 
 @enduml
 ```
@@ -1718,15 +1508,7 @@ ui --> u : affiche la liste
 
 #### 4.3.3. Réserver une salle
 
-- `FormulaireReservationSalle` — interface utilisateur
-- `ServiceReservation` — service
-- `Reservation` — domaine
-- `DemandeReservation` — domaine + cycle de vie
-- `EtatReservation` — domaine
-- `Salle` — domaine
-- `PlageDisponibilite` — domaine
-- `Compte` — domaine
-- `Heure` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1806,16 +1588,20 @@ enum EtatDemandeReservation {
   REJETEE
 }
 
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
+FormulaireReservationSalle ..> ServiceReservation
+ServiceReservation ..> Reservation
+ServiceReservation ..> DemandeReservation
+Reservation -> Compte : > demandeur
+Reservation -> Salle : > salle
+Reservation -> EtatReservation : > statut
+DemandeReservation --> Reservation : > reservation
+DemandeReservation -> EtatDemandeReservation : > etat
+Salle *-- "*" PlageDisponibilite
 
 @enduml
 ```
 
-##### Cas nominal : réservation sans validation nécessaire
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1824,38 +1610,6 @@ actor Utilisateur as u
 boundary FormulaireReservationSalle as ui
 control ServiceReservation as svc
 entity Reservation as res
-entity Salle as salle
-entity Compte as compte
-
-u -> ui : setSalle()
-u -> ui : setDateDebut()
-u -> ui : setHeureDebut()
-u -> ui : setDateFin()
-u -> ui : setHeureFin()
-u -> ui : setMotif()
-ui -> ui : checkData()
-ui -> svc : creerReservation(formulaire)
-svc -> svc : verifierDisponibilite(salle, dateDebut, dateFin, heureDebut, heureFin)
-svc -> compte : findById(demandeurId)
-compte --> svc : compte
-svc -> res : creerReservation(dateDebut, dateFin, heureDebut, heureFin, motif, demandeur, salle)
-note right : statut = EN_ATTENTE
-svc -> res : sauvegarder()
-svc --> ui : confirmation
-ui --> u : confirmation reservation
-@enduml
-```
-
-##### Déroulement alternatif : réservation avec validation requise
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireReservationSalle as ui
-control ServiceReservation as svc
-entity Reservation as res
-entity Salle as salle
 entity DemandeReservation as dr <<lifecycle>>
 entity Compte as compte
 boundary ServiceMail as mail
@@ -1869,51 +1623,29 @@ u -> ui : setMotif()
 ui -> ui : checkData()
 ui -> svc : creerReservation(formulaire)
 svc -> svc : verifierDisponibilite(salle, dateDebut, dateFin, heureDebut, heureFin)
-svc -> compte : findById(demandeurId)
+svc -> compte : rechercherId(demandeurId)
 compte --> svc : compte
 svc -> res : creerReservation(dateDebut, dateFin, heureDebut, heureFin, motif, demandeur, salle)
 note right : statut = EN_ATTENTE
 svc -> res : sauvegarder()
-svc -> dr : creerDemande(reservation, dateCreation)
-note right : etat = CREEE
-svc -> mail : envoyerMailValidation(reservation)
-svc -> dr : notifierValidation()
-note right : etat = VALIDEE
-svc --> ui : confirmation en attente
-ui --> u : demande envoyee pour validation
-@enduml
-```
-
-##### Déroulement alternatif : salle indisponible
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireReservationSalle as ui
-control ServiceReservation as svc
-
-u -> ui : setSalle()
-u -> ui : setDateDebut()
-u -> ui : setHeureDebut()
-u -> ui : setDateFin()
-u -> ui : setHeureFin()
-u -> ui : setMotif()
-ui -> ui : checkData()
-ui -> svc : creerReservation(formulaire)
-svc -> svc : verifierDisponibilite(salle, dateDebut, dateFin, heureDebut, heureFin)
-svc --> ui : echec verification
-ui --> u : message d'erreur : salle indisponible
+alt validation requise
+  svc -> dr : creerDemande(reservation, dateCreation)
+  note right : etat = CREEE
+  svc -> mail : envoyerMailValidation(reservation)
+  svc -> dr : notifierValidation()
+  note right : etat = VALIDEE
+  svc --> ui : confirmation en attente
+  ui --> u : demande envoyee pour validation
+else sans validation
+  svc --> ui : confirmation
+  ui --> u : confirmation reservation
+end
 @enduml
 ```
 
 #### 4.3.4. Consulter une réservation
 
-- `FormulaireConsultationReservation` — interface utilisateur
-- `ServiceReservation` — service
-- `Reservation` — domaine
-- `Salle` — domaine
-- `DemandeReservation` — domaine + cycle de vie
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -1972,10 +1704,17 @@ enum EtatDemandeReservation {
   REJETEE
 }
 
+FormulaireConsultationReservation ..> ServiceReservation
+ServiceReservation ..> Reservation
+Reservation -> Salle : > salle
+Reservation -> EtatReservation : > statut
+DemandeReservation --> Reservation : > reservation
+DemandeReservation -> EtatDemandeReservation : > etat
+
 @enduml
 ```
 
-##### Cas nominal
+##### Séquence
 
 ```plantuml
 @startuml
@@ -1988,7 +1727,7 @@ entity Salle as salle
 
 u -> ui : consulterReservation(id)
 ui -> svc : consulterReservation(id)
-svc -> res : findById(id)
+svc -> res : rechercherId(id)
 res --> svc : reservation
 svc -> res : obtenirSalle()
 salle --> svc : salle
@@ -1997,34 +1736,9 @@ ui --> u : affiche reservation detaillee
 @enduml
 ```
 
-##### Déroulement alternatif : réservation refusée
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireConsultationReservation as ui
-control ServiceReservation as svc
-entity Reservation as res
-
-u -> ui : consulterReservation(id)
-ui -> svc : consulterReservation(id)
-svc -> res : findById(id)
-res --> svc : reservation
-res --> svc : statut = REFUSEE
-svc --> ui : reservation detaillee avec statut refuse
-ui --> u : affiche reservation detaillee avec statut refuse
-@enduml
-```
-
 #### 4.3.5. Modifier une réservation
 
-- `FormulaireModificationReservation` — interface utilisateur
-- `ServiceReservation` — service
-- `Reservation` — domaine
-- `Salle` — domaine
-- `PlageDisponibilite` — domaine
-- `Heure` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -2084,12 +1798,6 @@ enum EtatReservation {
   ANNULEE
 }
 
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
-
 class Compte <<entity>> {
   id : Integer
   login : String
@@ -2101,10 +1809,17 @@ class Heure <<value>> {
   minute : Integer
 }
 
+FormulaireModificationReservation ..> ServiceReservation
+ServiceReservation ..> Reservation
+Reservation -> Compte : > demandeur
+Reservation -> Salle : > salle
+Reservation -> EtatReservation : > statut
+Salle *-- "*" PlageDisponibilite
+
 @enduml
 ```
 
-##### Cas nominal : modification réussie
+##### Séquence
 
 ```plantuml
 @startuml
@@ -2113,7 +1828,6 @@ actor Utilisateur as u
 boundary FormulaireModificationReservation as ui
 control ServiceReservation as svc
 entity Reservation as res
-entity Salle as salle
 
 u -> ui : chargerReservation(id)
 ui -> ui : afficherDonnees()
@@ -2122,69 +1836,27 @@ u -> ui : setHeures()
 u -> ui : setMotif()
 ui -> ui : checkData()
 ui -> svc : modifierReservation(id, modifications)
-svc -> svc : verifierDonnees(modifications)
-svc -> res : findById(id)
+svc -> res : rechercherId(id)
 res --> svc : reservation
-svc -> res : modifier(dates, heures, motif)
-res --> svc : reservation modifiee
-svc -> res : sauvegarder()
-svc --> ui : confirmation
-ui --> u : confirmation modification
-@enduml
-```
-
-##### Déroulement alternatif : conflit de disponibilité
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireModificationReservation as ui
-control ServiceReservation as svc
-
-u -> ui : chargerReservation(id)
-ui -> ui : afficherDonnees()
-u -> ui : setDates()
-u -> ui : setHeures()
-ui -> ui : checkData()
-ui -> svc : modifierReservation(id, modifications)
 svc -> svc : verifierDisponibilite(nouvellesDates)
-svc -> PlageDisponibilite : detectConflit(salle, dates)
-PlageDisponibilite --> svc : conflit trouve
-svc --> ui : echec reservation
-ui --> u : message d'erreur : nouvelle plage indisponible
-@enduml
-```
-
-##### Déroulement alternatif : modification impossible (réservation validée/verrouillée)
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireModificationReservation as ui
-control ServiceReservation as svc
-entity Reservation as res
-
-u -> ui : chargerReservation(id)
-ui -> ui : afficherDonnees()
-u -> ui : setMotif()
-ui -> svc : modifierReservation(id, modifications)
-svc -> res : findById(id)
-res --> svc : reservation
-res --> svc : statut = CONFIRMEE (verrouiller)
-svc --> ui : echec modification
-ui --> u : message erreur : modification impossible
+alt conflit de disponibilité
+  svc -> PlageDisponibilite : detectConflit(salle, dates)
+  PlageDisponibilite --> svc : conflit trouve
+  svc --> ui : echec reservation
+  ui --> u : message d'erreur : nouvelle plage indisponible
+else aucun conflit
+  svc -> res : modifier(dates, heures, motif)
+  res --> svc : reservation modifiee
+  svc -> res : sauvegarder()
+  svc --> ui : confirmation
+  ui --> u : confirmation modification
+end
 @enduml
 ```
 
 #### 4.3.6. Annuler une réservation
 
-- `FormulaireAnnulationReservation` — interface utilisateur
-- `ServiceReservation` — service
-- `Reservation` — domaine
-- `Salle` — domaine
-- `DemandeAnnulation` — domaine + cycle de vie
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -2244,22 +1916,23 @@ class ServiceMail <<control>> {
   envoyerNotification()
 }
 
-enum EtatReservation {
-  EN_ATTENTE
-  CONFIRMEE
-  REFUSEE
-  ANNULEE
-}
-
 enum EtatDemandeAnnulation {
   CREEE
   TRAITEE
 }
 
+FormulaireAnnulationReservation ..> ServiceReservation
+ServiceReservation ..> Reservation
+ServiceReservation ..> DemandeAnnulation
+Reservation -> Compte : > demandeur
+Reservation -> Salle : > salle
+DemandeAnnulation --> Reservation : > reservation
+DemandeAnnulation -> EtatDemandeAnnulation : > etat
+
 @enduml
 ```
 
-##### Cas nominal : annulation demandée par un utilisateur
+##### Séquence
 
 ```plantuml
 @startuml
@@ -2277,46 +1950,28 @@ u -> ui : setMotifAnnulation()
 u -> ui : confirmerAnnulation()
 ui -> svc : annulerReservation(reservation, motifAnnulation)
 svc -> svc : verifierPossibiliteAnnulation(reservation)
-svc -> dc : creerDemande(reservation, dateDemande)
-note right : etat = CREEE
-svc -> res : verifierStatut(reservation)
-res --> svc : statut = EN_ATTENTE or CONFIRMEE
-svc -> res : annuler()
-note right : statut = ANNULEE
-svc -> dc : traiterDemande()
-note right : etat = TRAITEE
-svc -> salle : libererPlage(plage)
-svc --> ui : confirmation
-ui --> u : reservation annulee
-@enduml
-```
-
-##### Déroulement alternatif : annulation impossible (dates trop proches)
-
-```plantuml
-@startuml
-skin rose
-actor Utilisateur as u
-boundary FormulaireAnnulationReservation as ui
-control ServiceReservation as svc
-
-u -> ui : chargerReservation(reservation)
-ui -> ui : afficherDetailsReservation()
-u -> ui : confirmerAnnulation()
-ui -> svc : annulerReservation(reservation, motifAnnulation)
-svc -> svc : verifierPossibiliteAnnulation(reservation)
-svc --> ui : echec annulation
-ui --> u : message d'erreur : annulation impossible (dates trop proches)
+alt annulation impossible (dates trop proches)
+  svc --> ui : echec annulation
+  ui --> u : message d'erreur : annulation impossible (dates trop proches)
+else annulation possible
+  svc -> dc : creerDemande(reservation, dateDemande)
+  note right : etat = CREEE
+  svc -> res : verifierStatut(reservation)
+  res --> svc : statut = EN_ATTENTE or CONFIRMEE
+  svc -> res : annuler()
+  note right : statut = ANNULEE
+  svc -> dc : traiterDemande()
+  note right : etat = TRAITEE
+  svc -> salle : libererPlage(plage)
+  svc --> ui : confirmation
+  ui --> u : reservation annulee
+end
 @enduml
 ```
 
 #### 4.3.7. Consulter les demandes de réservation en attente
 
-- `ListeDemandesReservationUI` — interface utilisateur
-- `ServiceReservation` — service
-- `DemandeReservation` — domaine + cycle de vie
-- `Reservation` — domaine
-- `EtatDemandeReservation` — domaine
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -2375,18 +2030,12 @@ enum EtatDemandeReservation {
   REJETEE
 }
 
-enum EtatReservation {
-  EN_ATTENTE
-  CONFIRMEE
-  REFUSEE
-  ANNULEE
-}
-
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
+ListeDemandesReservationUI ..> ServiceReservation
+ServiceReservation ..> DemandeReservation
+DemandeReservation --> Reservation : > reservation
+DemandeReservation -> EtatDemandeReservation : > etat
+Reservation -> Compte : > demandeur
+Reservation -> Salle : > salle
 
 @enduml
 ```
@@ -2418,12 +2067,7 @@ ui --> r : affiche la liste
 
 #### 4.3.8. Valider une demande de réservation
 
-- `FormulaireValidationDemande` — interface utilisateur
-- `ServiceReservation` — service
-- `DemandeReservation` — domaine + cycle de vie
-- `Reservation` — domaine
-- `Compte` — domaine
-- `ServiceNotification` — service
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -2485,23 +2129,17 @@ class ServiceNotification <<control>> {
   envoyerNotificationValidation()
 }
 
-enum EtatDemandeReservation {
-  CREEE
-  VALIDEE
-  REJETEE
-}
-
-enum EtatReservation {
-  EN_ATTENTE
-  CONFIRMEE
-  REFUSEE
-  ANNULEE
-}
+FormulaireValidationDemande ..> ServiceReservation
+ServiceReservation ..> DemandeReservation
+ServiceReservation ..> ServiceNotification
+DemandeReservation --> Reservation : > reservation
+Reservation -> Compte : > demandeur
+Reservation -> Salle : > salle
 
 @enduml
 ```
 
-##### Cas nominal : validation acceptée
+##### Séquence
 
 ```plantuml
 @startuml
@@ -2511,7 +2149,6 @@ boundary FormulaireValidationDemande as ui
 control ServiceReservation as svc
 entity DemandeReservation as dr <<lifecycle>>
 entity Reservation as res
-entity Salle as salle
 entity Compte as demandeur
 control ServiceNotification as notif
 
@@ -2532,44 +2169,9 @@ ui --> r : demande validée
 @enduml
 ```
 
-##### Déroulement alternatif : validation refusée
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireValidationDemande as ui
-control ServiceReservation as svc
-entity DemandeReservation as dr <<lifecycle>>
-entity Reservation as res
-entity Compte as demandeur
-control ServiceNotification as notif
-
-r -> ui : chargerDemande(demande)
-ui -> ui : afficherDetailsDemande()
-r -> ui : refuserDemande()
-ui -> svc : refuserDemande(demande, validateur, motifRefus)
-svc -> svc : verifierConditionRefus(demande)
-svc -> dr : refuserDemande()
-note right : etat = REFUSEE
-svc -> res : mettreAJourStatut(EN_ATTENTE -> REFUSEE)
-note right : statut = REFUSEE
-svc -> notif : preparerNotificationRefus(reservation, demandeur, motifRefus)
-notif --> svc : notification refus preparée
-svc -> notif : envoyerMailRefus(demandeur, reservation)
-svc --> ui : confirmation
-ui --> r : demande refusée
-@enduml
-```
-
 #### 4.3.9. Rejeter une demande de réservation
 
-- `FormulaireRejectionDemande` — interface utilisateur
-- `ServiceReservation` — service
-- `DemandeReservation` — domaine + cycle de vie
-- `Reservation` — domaine
-- `Compte` — domaine
-- `ServiceNotification` — service
+##### Classes candidates
 
 ```plantuml
 @startuml
@@ -2582,78 +2184,10 @@ class FormulaireRejectionDemande <<boundary>> {
   confirmation : Boolean
 }
 
-class ServiceReservation <<control>> {
-  rejeterDemande()
-  verifierPossibiliteRejet()
-  envoyerNotificationRejet()
-}
-
-class DemandeReservation <<entity>> {
-  id : Integer
-  reservation : Reservation
-  dateCreation : Date
-  etat : EtatDemandeReservation
-
-  rejeterDemande(motifRejet : String)
-}
-
-class Reservation <<entity>> {
-  id : Integer
-  dateDebut : Date
-  heureDebut : Heure
-  dateFin : Date
-  heureFin : Heure
-  motif : String
-  demandeur : Compte
-  salle : Salle
-  statut : EtatReservation
-}
-
-class Salle <<entity>> {
-  id : Integer
-  nom : String
-  localisation : String
-  capacite : Integer
-  description : String
-  type : TypeSalle
-  reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
-  equipements : Liste<Equipement>
-}
-
-class Compte <<entity>> {
-  id : Integer
-  login : String
-  mail : String
-}
-
-class ServiceNotification <<control>> {
-  envoyerNotificationRejet()
-}
-
-enum EtatDemandeReservation {
-  CREEE
-  VALIDEE
-  REJETEE
-}
-
-enum EtatReservation {
-  EN_ATTENTE
-  CONFIRMEE
-  REFUSEE
-  ANNULEE
-}
-
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
-}
-
 @enduml
 ```
 
-##### Cas nominal : rejet direct
+##### Séquence
 
 ```plantuml
 @startuml
@@ -2663,16 +2197,17 @@ boundary FormulaireRejectionDemande as ui
 control ServiceReservation as svc
 entity DemandeReservation as dr <<lifecycle>>
 entity Reservation as res
-entity Salle as salle
 entity Compte as demandeur
 control ServiceNotification as notif
 
-u -> ui : chargerDemande(demande)
+r -> ui : chargerDemande(demande)
 ui -> ui : afficherDetailsDemande()
 r -> ui : setMotifRejet()
 r -> ui : confirmerRejet()
 ui -> svc : rejeterDemande(demande, motifRejet)
 svc -> svc : verifierPossibiliteRejet(demande)
+svc -> dr : obtenirEtat()
+dr --> svc : etat = CREEE
 svc -> dr : rejeterDemande(motifRejet)
 note right : etat = REJETEE
 svc -> res : mettreAJourStatut(EN_ATTENTE -> REFUSEE)
@@ -2682,28 +2217,6 @@ notif --> svc : notification preparée
 svc -> notif : envoyerMailRejet(demandeur, reservation, motifRejet)
 svc --> ui : confirmation
 ui --> r : demande rejetée
-@enduml
-```
-
-##### Déroulement alternatif : demande déjà validée ou rejetée
-
-```plantuml
-@startuml
-skin rose
-actor Responsable as r
-boundary FormulaireRejectionDemande as ui
-control ServiceReservation as svc
-entity DemandeReservation as dr <<lifecycle>>
-
-u -> ui : chargerDemande(demande)
-ui -> ui : afficherDetailsDemande()
-r -> ui : confirmerRejet()
-ui -> svc : rejeterDemande(demande, motifRejet)
-svc -> svc : verifierPossibiliteRejet(demande)
-svc -> dr : obtenirEtat()
-dr --> svc : etat = VALIDEE or REJETEE
-svc --> ui : echec rejet
-ui --> r : message d'erreur : demande deja traitée
 @enduml
 ```
 
@@ -2765,23 +2278,30 @@ class Heure <<value>> {
   minute : Integer
 }
 
-enum TypeSalle {
-  COURS
-  TP
-  REUNION
+class FiltreRechercheSalle <<entity>> {
+  nom : String
+  localisation : String
+  capaciteMin : Integer
+  capaciteMax : Integer
+  type : TypeSalle
+  equipements : Liste<String>
+  disponibilite : Boolean
+  date : Date
+  dateDebut : Date
+  dateFin : Date
+  heureDebut : Heure
+  heureFin : Heure
+
+  applyFilter(salle : Salle) : Boolean
 }
 
-enum StatutPlage {
-  ACTIVE
-  INACTIVE
-}
-
-enum EtatReservation {
-  EN_ATTENTE
-  CONFIRMEE
-  REFUSEE
-  ANNULEE
-}
+Salle *-- "*" Equipement
+Salle *-- "*" PlageDisponibilite
+Reservation -> Compte : > demandeur
+Reservation -> Salle : > salle
+PlageDisponibilite --> Heure : > heureDebut
+PlageDisponibilite --> Heure : > heureFin
+FiltreRechercheSalle ..> Salle : > applyFilter
 
 @enduml
 ```
@@ -2886,7 +2406,7 @@ class ServiceNotification <<control>> {
   preparerNotificationRefus()
 }
 
-class ServiceMail <<control>> {
+class ServiceMail <<boundary>> {
   envoyerMailValidation()
   envoyerMailRefus()
   envoyerMailRejet()
@@ -3024,23 +2544,6 @@ class FormulaireRejectionDemande <<boundary>> {
   reservation : Reservation
   motifRejet : String
   confirmation : Boolean
-}
-
-class FiltreRechercheSalle <<entity>> {
-  nom : String
-  localisation : String
-  capaciteMin : Integer
-  capaciteMax : Integer
-  type : TypeSalle
-  equipements : Liste<String>
-  disponibilite : Boolean
-  date : Date
-  dateDebut : Date
-  dateFin : Date
-  heureDebut : Heure
-  heureFin : Heure
-
-  applyFilter(salle : Salle) : Boolean
 }
 
 @enduml
