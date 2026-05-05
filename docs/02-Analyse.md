@@ -153,7 +153,7 @@ class ServiceCompte <<control>> {
   creerDemande()
 }
 
-class ServiceMail <<boundary>> {
+class ServiceMail <<control>> {
   envoyerMailConfirmation()
 }
 
@@ -176,17 +176,17 @@ boundary FormulaireDemandeCompte as ui
 control ServiceCompte as svc
 entity Compte as compte
 participant DemandeCreationCompte as dcm <<lifecycle>>
-boundary ServiceMail as mail
+control ServiceMail as mail
 
 u -> ui : setLogin()
 u -> ui : setMotDePasse()
 u -> ui : setMotDePasseConfirmation()
 u -> ui : setMail()
 alt données incorrectes
-  ui -> ui : checkData() : false
+  ui -> ui : verifierDonnees() : false
   ui --> u : message d'erreur
 else données valides
-  ui -> ui : checkData()
+  ui -> ui : verifierDonnees()
   ui -> svc : soumettreFormulaire()
 end
 alt login indisponible
@@ -279,7 +279,7 @@ boundary ListeDemandesCompteUI as ui
 control ServiceCompte as svc
 participant DemandeCreationCompte as dcm <<lifecycle>>
 entity Compte as compte
-boundary ServiceMail as mail
+control ServiceMail as mail
 
 a -> ui : validerDemande(demande)
 ui -> svc : validerDemande(demande)
@@ -301,10 +301,10 @@ actor Administrateur as a
 boundary ListeDemandesCompteUI as ui
 control ServiceCompte as svc
 participant DemandeCreationCompte as dcm <<lifecycle>>
-boundary ServiceMail as mail
+control ServiceMail as mail
 
-a -> ui : refuserDemande(demande)
-ui -> svc : refuserDemande(demande)
+a -> ui : rejeterDemande(demande)
+ui -> svc : rejeterDemande(demande)
 svc -> dcm : majEtat()
 note right : etat = REFUSEE
 svc -> mail : envoyerMailRefus(mail)
@@ -355,10 +355,10 @@ entity Compte as compte
 u -> ui : setLogin()
 u -> ui : setMail()
 alt données incorrectes
-  ui -> ui : checkData() : false
+  ui -> ui : verifierDonnees() : false
   ui --> u : message d'erreur
 else données valides
-  ui -> ui : checkData()
+  ui -> ui : verifierDonnees()
   ui -> svc : modifierCompte()
   svc -> compte : majInfos(login, mail)
   svc --> ui : confirmation
@@ -411,10 +411,10 @@ u -> ui : setMotDePasseActuel()
 u -> ui : setNouveauMotDePasse()
 u -> ui : setNouveauMotDePasseConfirmation()
 alt données incorrectes
-  ui -> ui : checkData() : false
+  ui -> ui : verifierDonnees() : false
   ui --> u : message d'erreur
 else données valides
-  ui -> ui : checkData()
+  ui -> ui : verifierDonnees()
   ui -> svc : modifierMotDePasse()
 end
 alt mot de passe incorrect
@@ -454,7 +454,7 @@ class ServiceCompte <<control>> {
   reinitialiserMotDePasse()
 }
 
-class ServiceMail <<boundary>> {
+class ServiceMail <<control>> {
   envoyerMailReinitialisation()
 }
 
@@ -482,14 +482,14 @@ boundary FormulaireDemandeReinitialisation as ui
 boundary FormulaireNouveauMotDePasse as ui2
 control ServiceCompte as svc
 entity Compte as compte
-boundary ServiceMail as mail
+control ServiceMail as mail
 
 u -> ui : setMail()
 alt données incorrectes
-  ui -> ui : checkData() : false
+  ui -> ui : verifierDonnees() : false
   ui --> u : message d'erreur
 else données valides
-  ui -> ui : checkData()
+  ui -> ui : verifierDonnees()
   ui -> svc : demanderReinitialisation(mail)
 end
 alt compte introuvable
@@ -505,7 +505,7 @@ else compte trouvé
   ui --> u : confirmation envoi mail
   u -> ui2 : setNouveauMotDePasse()
   u -> ui2 : setNouveauMotDePasseConfirmation()
-  ui2 -> ui2 : checkData()
+  ui2 -> ui2 : verifierDonnees()
   ui2 -> svc : reinitialiserMotDePasse(token, nouveauMotDePasse)
   svc -> compte : majMotDePasse(nouveauMotDePasse)
   svc --> ui2 : confirmation
@@ -576,7 +576,7 @@ r -> ui : setCapacite()
 r -> ui : setDescription()
 r -> ui : setType()
 r -> ui : setReservationAvecValidation()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : creerSalle()
 svc -> salle : creerSalle(nom, localisation, capacite, description, type, reservationAvecValidation)
 svc --> ui : confirmation
@@ -626,7 +626,7 @@ entity Equipement as eq
 
 r -> ui : setNom()
 r -> ui : setDescription()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : creerEquipement(nom, description, salle)
 svc -> eq : creerEquipement(nom, description)
 svc --> ui : confirmation
@@ -709,7 +709,7 @@ r -> ui : setHeureDebut()
 r -> ui : setDateFin()
 r -> ui : setHeureFin()
 r -> ui : selectSalle()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : ajouterPlageDisponibilite(formulaire)
 svc -> pd : creerPlage(dateDebut, heureDebut, dateFin, heureFin)
 note right : statut = ACTIVE
@@ -856,7 +856,7 @@ r -> ui : setCapacite()
 r -> ui : setDescription()
 r -> ui : setType()
 r -> ui : setReservationAvecValidation()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : modifierSalle(id, donnees)
 svc -> svc : verifierDonnees()
 svc -> salle : rechercherId(id)
@@ -903,23 +903,8 @@ class Salle <<entity>> {
   supprimer()
 }
 
-class DemandeSuppressionSalle <<lifecycle>> {
-  salle : Salle
-  dateDemande : Date
-  etat : EtatDemandeSuppression
-}
-
-enum EtatDemandeSuppression {
-  EN_COURS
-  CONFIRMEE
-  SUPPRIMEE
-}
-
 FormulaireSuppressionSalle ..> ServiceSalle
 ServiceSalle ..> Salle
-ServiceSalle ..> DemandeSuppressionSalle
-DemandeSuppressionSalle --> Salle : > salle
-DemandeSuppressionSalle -> EtatDemandeSuppression : > etat
 
 @enduml
 ```
@@ -933,7 +918,6 @@ actor Responsable as r
 boundary FormulaireSuppressionSalle as ui
 control ServiceSalle as svc
 entity Salle as salle
-participant DemandeSuppressionSalle as dds <<lifecycle>>
 
 r -> ui : chargerSalle(salle)
 ui -> ui : afficherDonneesSalle()
@@ -945,10 +929,6 @@ alt salle avec réservations actives
   svc --> ui : echec suppression
   ui --> r : message d'erreur : salle avec réservations actives
 else suppression possible
-  svc -> dds : creerDemande(salle, dateDemande)
-  note right : etat = EN_COURS
-  svc -> dds : confirmerDemande()
-  note right : etat = CONFIRMEE
   svc -> salle : supprimer()
   svc --> ui : confirmation
   ui --> r : confirmation
@@ -1018,10 +998,10 @@ ui -> ui : afficherDonnees()
 r -> ui : setNom()
 r -> ui : setDescription()
 alt données incorrectes
-  ui -> ui : checkData() : false
+  ui -> ui : verifierDonnees() : false
   ui --> r : message d'erreur
 else données valides
-  ui -> ui : checkData()
+  ui -> ui : verifierDonnees()
   ui -> svc : modifierEquipement(id, donnees)
   svc -> svc : verifierDonnees()
   svc -> eq : rechercherId(id)
@@ -1072,17 +1052,9 @@ class Salle <<entity>> {
   equipements : Liste<Equipement>
 }
 
-class DemandeSuppressionEquipement <<lifecycle>> {
-  equipement : Equipement
-  dateDemande : Date
-  etat : EtatDemandeSuppression
-}
-
 FormulaireSuppressionEquipement ..> ServiceSalle
 ServiceSalle ..> Equipement
-ServiceSalle ..> DemandeSuppressionEquipement
 Salle *-- "*" Equipement
-DemandeSuppressionEquipement --> Equipement : > equipement
 
 @enduml
 ```
@@ -1096,7 +1068,6 @@ actor Responsable as r
 boundary FormulaireSuppressionEquipement as ui
 control ServiceSalle as svc
 entity Equipement as eq
-participant DemandeSuppressionEquipement as dse <<lifecycle>>
 
 r -> ui : chargerEquipement(equipement)
 ui -> ui : afficherDonneesEquipement()
@@ -1107,12 +1078,6 @@ alt échec suppression
   svc --> ui : echec suppression
   ui --> r : message d'erreur
 else suppression possible
-  svc -> dse : creerDemande(equipement, dateDemande)
-  note right : etat = EN_COURS
-  svc -> dse : confirmerDemande()
-  note right : etat = CONFIRMEE
-  svc -> dse : supprimerDemande()
-  note right : etat = SUPPRIMEE
   svc -> eq : supprimer()
   svc -> Salle : retirerEquipement(equipement)
   svc --> ui : confirmation
@@ -1200,7 +1165,7 @@ r -> ui : setHeureDebut()
 r -> ui : setDateFin()
 r -> ui : setHeureFin()
 r -> ui : setStatut()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : modifierPlageDisponibilite(id, donnees)
 svc -> svc : verifierConflit(donnees)
 alt conflit détecté
@@ -1265,17 +1230,9 @@ class Salle <<entity>> {
   retirerPlageDisponibilite(plage : PlageDisponibilite)
 }
 
-class DemandeSuppressionPlage <<lifecycle>> {
-  plage : PlageDisponibilite
-  dateDemande : Date
-  etat : EtatDemandeSuppression
-}
-
 FormulaireSuppressionDisponibilite ..> ServiceSalle
 ServiceSalle ..> PlageDisponibilite
-ServiceSalle ..> DemandeSuppressionPlage
 Salle *-- "*" PlageDisponibilite
-DemandeSuppressionPlage --> PlageDisponibilite : > plage
 
 @enduml
 ```
@@ -1290,7 +1247,6 @@ boundary FormulaireSuppressionDisponibilite as ui
 control ServiceSalle as svc
 entity PlageDisponibilite as pd
 entity Salle as salle
-participant DemandeSuppressionPlage as dsp <<lifecycle>>
 
 r -> ui : chargerPlage(plage)
 ui -> ui : afficherDonneesPlage()
@@ -1301,12 +1257,6 @@ alt plage avec réservations associées
   svc --> ui : echec suppression
   ui --> r : message d'erreur : plage avec réservations associées
 else suppression possible
-  svc -> dsp : creerDemande(plage, dateDemande)
-  note right : etat = EN_COURS
-  svc -> dsp : confirmerDemande()
-  note right : etat = CONFIRMEE
-  svc -> dsp : supprimerDemande()
-  note right : etat = SUPPRIMEE
   svc -> pd : supprimer()
   svc -> salle : retirerPlageDisponibilite(plage)
   svc --> ui : confirmation
@@ -1402,7 +1352,8 @@ class FormulaireRechercheSalle <<boundary>> {
   type : TypeSalle
   equipements : Liste<String>
   disponibilite : Boolean
-  date : Date
+  dateDebut : Date
+  dateFin : Date
   heureDebut : Heure
   heureFin : Heure
 }
@@ -1420,13 +1371,12 @@ class FiltreRechercheSalle <<entity>> {
   type : TypeSalle
   equipements : Liste<String>
   disponibilite : Boolean
-  date : Date
   dateDebut : Date
   dateFin : Date
   heureDebut : Heure
   heureFin : Heure
 
-  applyFilter(salle : Salle) : Boolean
+  appliquerFiltre(salle : Salle) : Boolean
 }
 
 class Salle <<entity>> {
@@ -1444,7 +1394,7 @@ class Salle <<entity>> {
 FormulaireRechercheSalle ..> ServiceSalle
 ServiceSalle ..> FiltreRechercheSalle
 ServiceSalle ..> Salle
-FiltreRechercheSalle ..> Salle : > applyFilter
+FiltreRechercheSalle ..> Salle : > appliquerFiltre
 
 @enduml
 ```
@@ -1462,7 +1412,7 @@ entity Salle as salle
 
 u -> ui : setNom()
 u -> ui : setLocalisation()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : rechercherSalles(formulaire)
 svc -> filtre : creerFiltre(nom, localisation)
 svc -> salle : findAll()
@@ -1492,7 +1442,7 @@ u -> ui : setDisponible()
 u -> ui : setDate()
 u -> ui : setHeureDebut()
 u -> ui : setHeureFin()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : rechercherSalles(formulaire)
 svc -> filtre : creerFiltre(capaciteMin, type, date, dateDebut, dateFin, heureDebut, heureFin)
 svc -> salle : findByCapaciteAndType(capaciteMin, type)
@@ -1612,7 +1562,7 @@ control ServiceReservation as svc
 entity Reservation as res
 entity DemandeReservation as dr <<lifecycle>>
 entity Compte as compte
-boundary ServiceMail as mail
+control ServiceMail as mail
 
 u -> ui : setSalle()
 u -> ui : setDateDebut()
@@ -1620,7 +1570,7 @@ u -> ui : setHeureDebut()
 u -> ui : setDateFin()
 u -> ui : setHeureFin()
 u -> ui : setMotif()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : creerReservation(formulaire)
 svc -> svc : verifierDisponibilite(salle, dateDebut, dateFin, heureDebut, heureFin)
 svc -> compte : rechercherId(demandeurId)
@@ -1834,7 +1784,7 @@ ui -> ui : afficherDonnees()
 u -> ui : setDates()
 u -> ui : setHeures()
 u -> ui : setMotif()
-ui -> ui : checkData()
+ui -> ui : verifierDonnees()
 ui -> svc : modifierReservation(id, modifications)
 svc -> res : rechercherId(id)
 res --> svc : reservation
@@ -1900,12 +1850,6 @@ class Salle <<entity>> {
   equipements : Liste<Equipement>
 }
 
-class DemandeAnnulation <<lifecycle>> {
-  reservation : Reservation
-  dateDemande : Date
-  etat : EtatDemandeAnnulation
-}
-
 class Compte <<entity>> {
   id : Integer
   login : String
@@ -1916,18 +1860,10 @@ class ServiceMail <<control>> {
   envoyerNotification()
 }
 
-enum EtatDemandeAnnulation {
-  CREEE
-  TRAITEE
-}
-
 FormulaireAnnulationReservation ..> ServiceReservation
 ServiceReservation ..> Reservation
-ServiceReservation ..> DemandeAnnulation
 Reservation -> Compte : > demandeur
 Reservation -> Salle : > salle
-DemandeAnnulation --> Reservation : > reservation
-DemandeAnnulation -> EtatDemandeAnnulation : > etat
 
 @enduml
 ```
@@ -1942,7 +1878,6 @@ boundary FormulaireAnnulationReservation as ui
 control ServiceReservation as svc
 entity Reservation as res
 entity Salle as salle
-participant DemandeAnnulation as dc <<lifecycle>>
 
 u -> ui : chargerReservation(reservation)
 ui -> ui : afficherDetailsReservation()
@@ -2177,7 +2112,7 @@ ui --> r : demande validée
 @startuml
 skin rose
 
-class FormulaireRejectionDemande <<boundary>> {
+class FormulaireRejetDemande <<boundary>> {
   demande : DemandeReservation
   reservation : Reservation
   motifRejet : String
@@ -2193,7 +2128,7 @@ class FormulaireRejectionDemande <<boundary>> {
 @startuml
 skin rose
 actor Responsable as r
-boundary FormulaireRejectionDemande as ui
+boundary FormulaireRejetDemande as ui
 control ServiceReservation as svc
 entity DemandeReservation as dr <<lifecycle>>
 entity Reservation as res
@@ -2286,13 +2221,12 @@ class FiltreRechercheSalle <<entity>> {
   type : TypeSalle
   equipements : Liste<String>
   disponibilite : Boolean
-  date : Date
   dateDebut : Date
   dateFin : Date
   heureDebut : Heure
   heureFin : Heure
 
-  applyFilter(salle : Salle) : Boolean
+  appliquerFiltre(salle : Salle) : Boolean
 }
 
 Salle *-- "*" Equipement
@@ -2301,7 +2235,7 @@ Reservation -> Compte : > demandeur
 Reservation -> Salle : > salle
 PlageDisponibilite --> Heure : > heureDebut
 PlageDisponibilite --> Heure : > heureFin
-FiltreRechercheSalle ..> Salle : > applyFilter
+FiltreRechercheSalle ..> Salle : > appliquerFiltre
 
 @enduml
 ```
@@ -2319,45 +2253,10 @@ class DemandeReservation <<lifecycle>> {
   etat : EtatDemandeReservation
 }
 
-class DemandeSuppressionPlage <<lifecycle>> {
-  plage : PlageDisponibilite
-  dateDemande : Date
-  etat :EtatDemandeSuppression
-}
-
-class DemandeAnnulation <<lifecycle>> {
-  reservation : Reservation
-  dateDemande : Date
-  etat :EtatDemandeAnnulation
-}
-
-class DemandeSuppressionSalle <<lifecycle>> {
-  salle : Salle
-  dateDemande : Date
-  etat :EtatDemandeSuppression
-}
-
-class DemandeSuppressionEquipement <<lifecycle>> {
-  equipement : Equipement
-  dateDemande : Date
-  etat :EtatDemandeSuppression
-}
-
 enum EtatDemandeReservation {
   CREEE
   VALIDEE
   REJETEE
-}
-
-enum EtatDemandeAnnulation {
-  CREEE
-  TRAITEE
-}
-
-enum EtatDemandeSuppression {
-  EN_COURS
-  CONFIRMEE
-  SUPPRIMEE
 }
 
 @enduml
@@ -2373,13 +2272,13 @@ class ServiceSalle <<control>> {
   listerSalles()
   rechercherSalles()
   filtrerSalles()
-  creeSalle()
+  creerSalle()
   modifierSalle()
   supprimerSalle()
   ajouterEquipement()
   modifierEquipement()
   supprimerEquipement()
-  creerPlageDisponibilite()
+  ajouterPlageDisponibilite()
   supprimerPlageDisponibilite()
   verifierPossibiliteSuppression()
 }
@@ -2392,7 +2291,6 @@ class ServiceReservation <<control>> {
   modifierReservation()
   annulerReservation()
   validerDemande()
-  refuserDemande()
   rejeterDemande()
   verifierDisponibilite()
   verifierConditionValidation()
@@ -2406,7 +2304,7 @@ class ServiceNotification <<control>> {
   preparerNotificationRefus()
 }
 
-class ServiceMail <<boundary>> {
+class ServiceMail <<control>> {
   envoyerMailValidation()
   envoyerMailRefus()
   envoyerMailRejet()
@@ -2439,7 +2337,7 @@ class ListeDemandesReservationUI <<boundary>> {
   filtreStatut : EtatDemandeReservation
 }
 
-class FormulaireAjoutSalle <<boundary>> {
+class FormulaireCreationSalle <<boundary>> {
   nom : String
   localisation : String
   capacite : Integer
@@ -2495,7 +2393,6 @@ class FormulaireRechercheSalle <<boundary>> {
   type : TypeSalle
   equipements : Liste<String>
   disponibilite : Boolean
-  date : Date
   dateDebut : Date
   dateFin : Date
   heureDebut : Heure
@@ -2539,7 +2436,7 @@ class FormulaireValidationDemande <<boundary>> {
   validateurActuel : Compte
 }
 
-class FormulaireRejectionDemande <<boundary>> {
+class FormulaireRejetDemande <<boundary>> {
   demande : DemandeReservation
   reservation : Reservation
   motifRejet : String
