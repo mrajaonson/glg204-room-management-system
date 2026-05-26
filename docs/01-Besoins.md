@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Expression des besoins v1.2
+# Projet *Réservation de salles* : Expression des besoins v1.3
 
 ## Table des matières
 
@@ -26,7 +26,6 @@
     + [4.1.7. Demander la réinitialisation d'un mot de passe](#417-demander-la-reinitialisation-dun-mot-de-passe)
   * [4.2. Groupe 2 : Gestion des salles](#42-groupe-2--gestion-des-salles)
     + [4.2.1. Créer une salle](#421-creer-une-salle)
-    + [4.2.1. Créer une salle](#421-creer-une-salle-1)
     + [4.2.2. Créer un équipement](#422-creer-un-equipement)
     + [4.2.3. Ajouter une plage de disponibilité d'une salle](#423-ajouter-une-plage-de-disponibilite-dune-salle)
     + [4.2.4. Consulter la liste des salles](#424-consulter-la-liste-des-salles)
@@ -409,9 +408,57 @@ L'appariteur est connecté.
 
 - la salle est enregistrée.
 
-#### 4.2.1. Créer une salle
 #### 4.2.2. Créer un équipement
+
+##### Résumé
+Un appariteur crée un équipement (chaise, tableau, ordinateur, etc.).
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté.
+
+##### Description
+
+1. l'appariteur renseigne le nom de l'équipement;
+2. il renseigne la description de l'équipement;
+3. le système vérifie que le nom n'est pas vide;
+4. l'équipement est enregistré.
+
+##### Post-conditions
+
+L'équipement est enregistré.
+
 #### 4.2.3. Ajouter une plage de disponibilité d'une salle
+
+##### Résumé
+Un appariteur ajoute une plage de disponibilité à une salle pour la rendre réservable sur une période donnée.
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté. La salle existe.
+
+##### Description
+
+1. l'appariteur sélectionne une salle;
+2. il renseigne la date et l'heure de début de la plage;
+3. il renseigne la date et l'heure de fin de la plage;
+4. le système vérifie la cohérence des données saisies;
+5. le système vérifie l'absence de conflit avec les plages existantes de la salle;
+6. la plage de disponibilité est enregistrée.
+
+##### Déroulement alternatif : conflit de disponibilité
+
+- 5.1 une plage existante est en conflit avec la nouvelle plage ;
+- 5.2 le système affiche un message d'erreur.
+
+##### Post-conditions
+
+La plage de disponibilité est enregistrée et la salle est réservable sur cette période.
+
 #### 4.2.4. Consulter la liste des salles
 
 ##### Résumé
@@ -442,11 +489,151 @@ voir acteurs
     - son statut (réservé, disponible, non réservable)
 
 #### 4.2.5. Modifier une salle
+
+##### Résumé
+Un appariteur modifie les informations d'une salle existante.
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté. La salle existe.
+
+##### Description
+
+1. l'appariteur sélectionne une salle dans la liste;
+2. il modifie un ou plusieurs champs : titre, localisation, description, capacité, type de réservation;
+3. le système vérifie que les données saisies sont valides;
+4. les modifications sont enregistrées.
+
+##### Post-conditions
+
+Les informations de la salle sont mises à jour.
+
 #### 4.2.6. Supprimer une salle
+
+##### Résumé
+Un appariteur supprime une salle de l'application.
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté. La salle existe.
+
+##### Description
+
+1. l'appariteur sélectionne une salle dans la liste;
+2. il demande la suppression de la salle;
+3. le système vérifie qu'aucune réservation active n'est associée à la salle;
+4. la salle est supprimée.
+
+##### Déroulement alternatif : réservations actives
+
+- 3.1 la salle possède des réservations actives ;
+- 3.2 le système affiche un message d'erreur et annule la suppression.
+
+##### Post-conditions
+
+La salle est supprimée.
+
 #### 4.2.7. Modifier un équipement
+
+##### Résumé
+Un appariteur modifie les informations d'un équipement existant.
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté. L'équipement existe.
+
+##### Description
+
+1. l'appariteur sélectionne un équipement;
+2. il modifie le nom ou la description de l'équipement;
+3. le système vérifie que les données saisies sont valides;
+4. les modifications sont enregistrées.
+
+##### Post-conditions
+
+Les informations de l'équipement sont mises à jour.
+
 #### 4.2.8. Supprimer un équipement
+
+##### Résumé
+Un appariteur supprime un équipement de l'application.
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté. L'équipement existe.
+
+##### Description
+
+1. l'appariteur sélectionne un équipement;
+2. il confirme la suppression;
+3. l'équipement est supprimé.
+
+##### Post-conditions
+
+L'équipement est supprimé.
+
 #### 4.2.9. Modifier une plage de disponibilité d'une salle
+
+##### Résumé
+Un appariteur modifie une plage de disponibilité d'une salle.
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté. La plage de disponibilité existe.
+
+##### Description
+
+1. l'appariteur sélectionne une plage de disponibilité d'une salle;
+2. il modifie les dates et heures de début ou de fin;
+3. le système vérifie la cohérence des données saisies;
+4. le système vérifie l'absence de conflit avec les autres plages de la salle;
+5. les modifications sont enregistrées.
+
+##### Déroulement alternatif : conflit de disponibilité
+
+- 4.1 une plage existante est en conflit avec la plage modifiée ;
+- 4.2 le système affiche un message d'erreur.
+
+##### Post-conditions
+
+La plage de disponibilité est mise à jour.
+
 #### 4.2.10. Supprimer une plage de disponibilité d'une salle
+
+##### Résumé
+Un appariteur supprime une plage de disponibilité d'une salle.
+
+##### Acteurs
+- un appariteur
+
+##### Pré-conditions
+L'appariteur est connecté. La plage de disponibilité existe.
+
+##### Description
+
+1. l'appariteur sélectionne une plage de disponibilité d'une salle;
+2. il confirme la suppression;
+3. le système vérifie qu'aucune réservation n'est associée à cette plage;
+4. la plage est supprimée.
+
+##### Déroulement alternatif : réservations associées
+
+- 3.1 des réservations sont associées à la plage ;
+- 3.2 le système affiche un message d'erreur et annule la suppression.
+
+##### Post-conditions
+
+La plage de disponibilité est supprimée.
 
 ### 4.3. Groupe 3 : Gestion des réservations
 
@@ -516,7 +703,48 @@ UC_NOTIF --> SYS
 ```
 
 #### 4.3.1. Afficher la liste des salles
+
+##### Résumé
+Un utilisateur affiche la liste des salles de l'établissement avec la possibilité de les filtrer.
+
+##### Acteurs
+- un utilisateur
+
+##### Pré-conditions
+L'utilisateur est connecté.
+
+##### Description
+
+1. le système affiche la liste de toutes les salles;
+2. l'utilisateur peut filtrer la liste par type de salle et par capacité;
+3. le système met à jour la liste en fonction des filtres appliqués;
+4. l'utilisateur sélectionne une salle pour consulter son détail.
+
+##### Post-conditions
+
+La liste des salles est affichée.
+
 #### 4.3.2. Rechercher une salle selon différents critères
+
+##### Résumé
+Un utilisateur recherche une salle en combinant plusieurs critères : capacité, type, équipements, disponibilité sur un créneau donné.
+
+##### Acteurs
+- un utilisateur
+
+##### Pré-conditions
+L'utilisateur est connecté.
+
+##### Description
+
+1. l'utilisateur renseigne un ou plusieurs critères de recherche : nom, localisation, capacité minimale et maximale, type de salle, équipements requis;
+2. l'utilisateur peut également filtrer par disponibilité en précisant une date et un créneau horaire;
+3. le système filtre les salles correspondant aux critères;
+4. la liste des salles correspondantes est affichée.
+
+##### Post-conditions
+
+La liste des salles correspondant aux critères est affichée.
 
 #### 4.3.3. Réserver une salle
 
@@ -554,6 +782,26 @@ La demande de réservation est validé.
 - 5.5 l'utilisateur est informé par mail
 
 #### 4.3.4. Consulter une réservation
+
+##### Résumé
+Un utilisateur consulte le détail d'une de ses réservations.
+
+##### Acteurs
+- un utilisateur
+
+##### Pré-conditions
+L'utilisateur est connecté. La réservation existe.
+
+##### Description
+
+1. l'utilisateur visualise la liste de ses réservations;
+2. il en sélectionne une;
+3. le système affiche toutes les informations de la réservation : salle, dates et heures, motif, statut.
+
+##### Post-conditions
+
+Les détails de la réservation sont affichés.
+
 #### 4.3.5. Modifier une réservation
 
 ##### Résumé
@@ -608,5 +856,62 @@ La réservation est annulée. L'utilisateur est notifié par mail lorsque l'annu
 La réservation est annulée.
 
 #### 4.3.7. Consulter les demandes de réservation en attente
+
+##### Résumé
+Un responsable consulte la liste des demandes de réservation en attente de validation.
+
+##### Acteurs
+- un responsable
+
+##### Pré-conditions
+Le responsable est connecté.
+
+##### Description
+
+1. le responsable consulte la liste des demandes de réservation dont l'état est « en attente »;
+2. le système affiche pour chaque demande : la salle concernée, l'utilisateur demandeur, la date et le créneau souhaités, le motif.
+
 #### 4.3.8. Valider une demande de réservation
+
+##### Résumé
+Après avoir consulté la liste des demandes de réservation en attente, un responsable valide une demande.
+
+##### Acteurs
+- un responsable
+
+##### Pré-conditions
+Le responsable est connecté. Une demande de réservation est en attente.
+
+##### Description
+
+1. le responsable sélectionne une demande de réservation en attente;
+2. il valide la demande;
+3. la réservation passe au statut confirmé;
+4. l'utilisateur reçoit un mail de confirmation.
+
+##### Post-conditions
+
+La réservation est confirmée et l'utilisateur en est informé par mail.
+
 #### 4.3.9. Rejeter une demande de réservation
+
+##### Résumé
+Après avoir consulté la liste des demandes de réservation en attente, un responsable rejette une demande.
+
+##### Acteurs
+- un responsable
+
+##### Pré-conditions
+Le responsable est connecté. Une demande de réservation est en attente.
+
+##### Description
+
+1. le responsable sélectionne une demande de réservation en attente;
+2. il renseigne un motif de rejet;
+3. il confirme le rejet;
+4. la demande de réservation passe au statut rejeté;
+5. l'utilisateur reçoit un mail l'informant du rejet et du motif.
+
+##### Post-conditions
+
+La demande est rejetée et l'utilisateur en est informé par mail.
