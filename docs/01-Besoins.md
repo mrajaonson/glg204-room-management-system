@@ -1,4 +1,6 @@
-# Projet *Réservation de salles* : Expression des besoins v1.1
+# Projet *Réservation de salles* : Expression des besoins v1.2
+
+## Table des matières
 
 <!-- toc -->
 

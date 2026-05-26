@@ -1,4 +1,6 @@
-# Projet *Réservation de salles* : Analyse v1.0
+# Projet *Réservation de salles* : Analyse v1.1
+
+## 1. Table des matières
 
 <!-- toc -->
 
@@ -7,12 +9,13 @@
 - [4. Cas d’utilisation](#4-cas-dutilisation)
   * [4.1. Groupe 1 : gestion des comptes](#41-groupe-1--gestion-des-comptes)
     + [4.1.1. Déposer une demande de création de compte](#411-deposer-une-demande-de-creation-de-compte)
-    + [4.1.2. Consulter les demandes de création de compte](#412-consulter-les-demandes-de-creation-de-compte)
+    + [4.1.2. Consulter les demandes de création de compte en attente](#412-consulter-les-demandes-de-creation-de-compte-en-attente)
     + [4.1.3. Valider une demande de création de compte](#413-valider-une-demande-de-creation-de-compte)
     + [4.1.4. Refuser une demande de création de compte](#414-refuser-une-demande-de-creation-de-compte)
     + [4.1.5. Modifier les informations d'un compte](#415-modifier-les-informations-dun-compte)
     + [4.1.6. Modifier un mot de passe](#416-modifier-un-mot-de-passe)
     + [4.1.7. Demander la réinitialisation d'un mot de passe](#417-demander-la-reinitialisation-dun-mot-de-passe)
+    + [4.1.8. Modifier un mot de passe réinitialisé](#418-modifier-un-mot-de-passe-reinitialise)
   * [4.2. Groupe 2 : gestion des salles](#42-groupe-2--gestion-des-salles)
     + [4.2.1. Créer une salle](#421-creer-une-salle)
     + [4.2.2. Créer un équipement](#422-creer-un-equipement)
@@ -87,6 +90,7 @@ Pour la pertinence :
 | Compte      | Modifier les informations d'un compte                   | 1       | 2          | non         |
 | Compte      | Modifier un mot de passe                                | 3       | 2          | non         |
 | Compte      | Demander la réinitialisation d'un mot de passe          | 3       | 2          | non         |
+| Compte      | Modifier un mot de passe réinitialisé                   | 3       | 2          | non         |
 | Salle       | Créer une salle                                         | 1       | 5          | oui         |
 | Salle       | Créer un équipement                                     | 1       | 3          | oui         |
 | Salle       | Ajouter une plage de disponibilité d'une salle          | 4       | 5          | oui         |
@@ -138,6 +142,7 @@ class DemandeCreationCompte <<lifecycle>> {
   motDePasse : String
   mail : String
   etat : EtatDemande
+  dateCreation : Date
 }
 
 class FormulaireDemandeCompte <<boundary>> {
@@ -153,14 +158,14 @@ class ServiceCompte <<control>> {
   creerDemande()
 }
 
-class ServiceMail <<control>> {
+class ServiceNotification <<boundary>> {
   envoyerMailConfirmation()
 }
 
 FormulaireDemandeCompte ..> ServiceCompte
 ServiceCompte ..> Compte
 ServiceCompte ..> DemandeCreationCompte
-ServiceCompte ..> ServiceMail
+ServiceCompte ..> ServiceNotification
 DemandeCreationCompte -> EtatDemande : > etat
 
 @enduml
@@ -176,7 +181,7 @@ boundary FormulaireDemandeCompte as ui
 control ServiceCompte as svc
 entity Compte as compte
 participant DemandeCreationCompte as dcm <<lifecycle>>
-control ServiceMail as mail
+control ServiceNotification as notif
 
 u -> ui : setLogin()
 u -> ui : setMotDePasse()
@@ -199,7 +204,7 @@ else login disponible
   compte --> svc : true
   svc -> dcm : creerDemande(login, motDePasse, mail)
   note right : etat = CREEE
-  svc -> mail : envoyerMailConfirmation(mail)
+  svc -> notif : envoyerMailConfirmation(mail)
   svc -> dcm : majEtat()
   note right : etat = MAIL_ENVOYE
   svc --> ui : confirmation envoi mail
@@ -223,7 +228,7 @@ note right : etat = MAIL_VALIDE
 @enduml
 ```
 
-#### 4.1.2. Consulter les demandes de création de compte
+#### 4.1.2. Consulter les demandes de création de compte en attente
 
 ##### Classes candidates
 
@@ -242,6 +247,7 @@ class DemandeCreationCompte <<lifecycle>> {
   motDePasse : String
   mail : String
   etat : EtatDemande
+  dateCreation : Date
 }
 
 ListeDemandesCompteUI ..> ServiceCompte
@@ -271,6 +277,12 @@ ui --> a : affiche la liste
 
 #### 4.1.3. Valider une demande de création de compte
 
+##### Classes candidates
+
+Aucune nouvelle classe. Les classes `ListeDemandesCompteUI`, `ServiceCompte`, `DemandeCreationCompte`, `Compte` et `ServiceNotification` sont définies dans les sections précédentes.
+
+##### Séquence
+
 ```plantuml
 @startuml
 skin rose
@@ -279,20 +291,26 @@ boundary ListeDemandesCompteUI as ui
 control ServiceCompte as svc
 participant DemandeCreationCompte as dcm <<lifecycle>>
 entity Compte as compte
-control ServiceMail as mail
+control ServiceNotification as notif
 
 a -> ui : validerDemande(demande)
 ui -> svc : validerDemande(demande)
 svc -> compte : creerCompte(login, motDePasse, mail)
 svc -> dcm : majEtat()
 note right : etat = VALIDEE
-svc -> mail : envoyerMailValidation(mail)
+svc -> notif : envoyerMailValidation(mail)
 svc --> ui : confirmation
 ui --> a : confirmation
 @enduml
 ```
 
 #### 4.1.4. Refuser une demande de création de compte
+
+##### Classes candidates
+
+Aucune nouvelle classe. Les classes `ListeDemandesCompteUI`, `ServiceCompte`, `DemandeCreationCompte` et `ServiceNotification` sont définies dans les sections précédentes.
+
+##### Séquence
 
 ```plantuml
 @startuml
@@ -301,13 +319,13 @@ actor Administrateur as a
 boundary ListeDemandesCompteUI as ui
 control ServiceCompte as svc
 participant DemandeCreationCompte as dcm <<lifecycle>>
-control ServiceMail as mail
+control ServiceNotification as notif
 
 a -> ui : rejeterDemande(demande)
 ui -> svc : rejeterDemande(demande)
 svc -> dcm : majEtat()
 note right : etat = REFUSEE
-svc -> mail : envoyerMailRefus(mail)
+svc -> notif : envoyerMailRefus(mail)
 svc --> ui : confirmation
 ui --> a : confirmation
 @enduml
@@ -444,30 +462,9 @@ class FormulaireDemandeReinitialisation <<boundary>> {
   mail : String
 }
 
-class FormulaireNouveauMotDePasse <<boundary>> {
-  nouveauMotDePasse : String
-  nouveauMotDePasseConfirmation : String
-}
-
-class ServiceCompte <<control>> {
-  demanderReinitialisation()
-  reinitialiserMotDePasse()
-}
-
-class ServiceMail <<control>> {
-  envoyerMailReinitialisation()
-}
-
-class Compte <<entity>> {
-  login : String
-  motDePasse : String
-  mail : String
-}
-
 FormulaireDemandeReinitialisation ..> ServiceCompte
-FormulaireNouveauMotDePasse ..> ServiceCompte
 ServiceCompte ..> Compte
-ServiceCompte ..> ServiceMail
+ServiceCompte ..> ServiceNotification
 
 @enduml
 ```
@@ -479,10 +476,9 @@ ServiceCompte ..> ServiceMail
 skin rose
 actor Utilisateur as u
 boundary FormulaireDemandeReinitialisation as ui
-boundary FormulaireNouveauMotDePasse as ui2
 control ServiceCompte as svc
 entity Compte as compte
-control ServiceMail as mail
+boundary ServiceNotification as notif
 
 u -> ui : setMail()
 alt données incorrectes
@@ -500,16 +496,53 @@ alt compte introuvable
 else compte trouvé
   svc -> compte : findByMail(mail)
   compte --> svc : compte
-  svc -> mail : envoyerMailReinitialisation(mail)
+  svc -> notif : envoyerMailReinitialisation(mail)
   svc --> ui : confirmation envoi mail
   ui --> u : confirmation envoi mail
-  u -> ui2 : setNouveauMotDePasse()
-  u -> ui2 : setNouveauMotDePasseConfirmation()
-  ui2 -> ui2 : verifierDonnees()
-  ui2 -> svc : reinitialiserMotDePasse(token, nouveauMotDePasse)
+end
+@enduml
+```
+
+#### 4.1.8. Modifier un mot de passe réinitialisé
+
+##### Classes candidates
+
+```plantuml
+@startuml
+skin rose
+
+class FormulaireNouveauMotDePasse <<boundary>> {
+  nouveauMotDePasse : String
+  nouveauMotDePasseConfirmation : String
+}
+
+FormulaireNouveauMotDePasse ..> ServiceCompte
+ServiceCompte ..> Compte
+
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+actor Utilisateur as u
+boundary FormulaireNouveauMotDePasse as ui
+control ServiceCompte as svc
+entity Compte as compte
+
+u -> ui : setNouveauMotDePasse()
+u -> ui : setNouveauMotDePasseConfirmation()
+alt données incorrectes
+  ui -> ui : verifierDonnees() : false
+  ui --> u : message d'erreur
+else données valides
+  ui -> ui : verifierDonnees()
+  ui -> svc : reinitialiserMotDePasse(token, nouveauMotDePasse)
   svc -> compte : majMotDePasse(nouveauMotDePasse)
-  svc --> ui2 : confirmation
-  ui2 --> u : confirmation
+  svc --> ui : confirmation
+  ui --> u : confirmation
 end
 @enduml
 ```
@@ -609,7 +642,7 @@ class Equipement <<entity>> {
 
 FormulaireCreationEquipement ..> ServiceSalle
 ServiceSalle ..> Equipement
-Salle *-- "*" Equipement
+Salle o-- "*" Equipement
 
 @enduml
 ```
@@ -655,22 +688,13 @@ class ServiceSalle <<control>> {
   verifierConflit()
 }
 
-class Salle <<entity>> {
-  nom : String
-  localisation : String
-  capacite : Integer
-  description : String
-  type : TypeSalle
-  reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
-}
-
 class PlageDisponibilite <<lifecycle>> {
   dateDebut : Date
   heureDebut : Heure
   dateFin : Date
   heureFin : Heure
   statut : StatutPlage
+  salle : Salle
 }
 
 enum StatutPlage {
@@ -684,11 +708,10 @@ class Heure <<value>> {
 }
 
 FormulaireDisponibiliteSalle ..> ServiceSalle
-ServiceSalle ..> Salle
-Salle *-- "*" PlageDisponibilite
 PlageDisponibilite -> StatutPlage : > statut
 PlageDisponibilite --> Heure : > heureDebut
 PlageDisponibilite --> Heure : > heureFin
+PlageDisponibilite -> Salle : > salle
 
 @enduml
 ```
@@ -714,13 +737,11 @@ ui -> svc : ajouterPlageDisponibilite(formulaire)
 svc -> pd : creerPlage(dateDebut, heureDebut, dateFin, heureFin)
 note right : statut = ACTIVE
 alt conflit de disponibilité
-  svc -> pd : verifierAbsenceConflict(salle, pd)
-  pd --> svc : conflit existe
+  svc -> svc : verifierConflit(salle, pd)
   svc --> ui : erreur conflit de disponibilité
   ui --> r : message d'erreur
 else aucun conflit
-  svc -> pd : verifierAbsenceConflict(salle, pd)
-  pd --> svc : aucun conflit
+  svc -> svc : verifierConflit(salle, pd)
   svc -> salle : ajouterPlageDisponibilite(pd)
   svc --> ui : confirmation
   ui --> r : confirmation
@@ -754,7 +775,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
 }
 
 ListeSallesUI ..> ServiceSalle
@@ -822,7 +843,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
 
   modifierNom(nom : String)
   modifierLocalisation(localisation : String)
@@ -898,7 +919,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
 
   supprimer()
 }
@@ -972,13 +993,12 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
   equipements : Liste<Equipement>
 }
 
 FormulaireModificationEquipement ..> ServiceSalle
 ServiceSalle ..> Equipement
-Salle *-- "*" Equipement
+Salle o-- "*" Equipement
 
 @enduml
 ```
@@ -1048,13 +1068,12 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
   equipements : Liste<Equipement>
 }
 
 FormulaireSuppressionEquipement ..> ServiceSalle
 ServiceSalle ..> Equipement
-Salle *-- "*" Equipement
+Salle o-- "*" Equipement
 
 @enduml
 ```
@@ -1079,7 +1098,6 @@ alt échec suppression
   ui --> r : message d'erreur
 else suppression possible
   svc -> eq : supprimer()
-  svc -> Salle : retirerEquipement(equipement)
   svc --> ui : confirmation
   ui --> r : confirmation
 end
@@ -1108,7 +1126,7 @@ class ServiceSalle <<control>> {
   verifierConflit()
 }
 
-class PlageDisponibilite <<entity>> {
+class PlageDisponibilite <<lifecycle>> {
   id : Integer
   dateDebut : Date
   heureDebut : Heure
@@ -1131,7 +1149,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
 }
 
 class Heure <<value>> {
@@ -1141,7 +1159,7 @@ class Heure <<value>> {
 
 FormulaireModificationDisponibilite ..> ServiceSalle
 ServiceSalle ..> PlageDisponibilite
-Salle *-- "*" PlageDisponibilite
+PlageDisponibilite -> Salle : > salle
 PlageDisponibilite --> Heure : > heureDebut
 PlageDisponibilite --> Heure : > heureFin
 
@@ -1156,7 +1174,7 @@ skin rose
 actor Responsable as r
 boundary FormulaireModificationDisponibilite as ui
 control ServiceSalle as svc
-entity PlageDisponibilite as pd
+participant PlageDisponibilite as pd <<lifecycle>>
 
 r -> ui : chargerPlage(id)
 ui -> ui : afficherDonnees()
@@ -1206,7 +1224,7 @@ class ServiceSalle <<control>> {
   verifierPossibiliteSuppression()
 }
 
-class PlageDisponibilite <<entity>> {
+class PlageDisponibilite <<lifecycle>> {
   id : Integer
   dateDebut : Date
   heureDebut : Heure
@@ -1225,14 +1243,14 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
 
   retirerPlageDisponibilite(plage : PlageDisponibilite)
 }
 
 FormulaireSuppressionDisponibilite ..> ServiceSalle
 ServiceSalle ..> PlageDisponibilite
-Salle *-- "*" PlageDisponibilite
+PlageDisponibilite -> Salle : > salle
 
 @enduml
 ```
@@ -1245,7 +1263,7 @@ skin rose
 actor Responsable as r
 boundary FormulaireSuppressionDisponibilite as ui
 control ServiceSalle as svc
-entity PlageDisponibilite as pd
+participant PlageDisponibilite as pd <<lifecycle>>
 entity Salle as salle
 
 r -> ui : chargerPlage(plage)
@@ -1296,7 +1314,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
@@ -1363,7 +1381,7 @@ class ServiceSalle <<control>> {
   appliquerFiltres()
 }
 
-class FiltreRechercheSalle <<entity>> {
+class Filtre <<value>> {
   nom : String
   localisation : String
   capaciteMin : Integer
@@ -1375,7 +1393,10 @@ class FiltreRechercheSalle <<entity>> {
   dateFin : Date
   heureDebut : Heure
   heureFin : Heure
+}
 
+class FiltreRechercheSalle <<entity>> {
+  creerFiltre(filtre : Filtre)
   appliquerFiltre(salle : Salle) : Boolean
 }
 
@@ -1387,13 +1408,13 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
   equipements : Liste<Equipement>
 }
 
 FormulaireRechercheSalle ..> ServiceSalle
 ServiceSalle ..> FiltreRechercheSalle
 ServiceSalle ..> Salle
+FiltreRechercheSalle ..> Filtre
 FiltreRechercheSalle ..> Salle : > appliquerFiltre
 
 @enduml
@@ -1408,13 +1429,16 @@ actor Utilisateur as u
 boundary FormulaireRechercheSalle as ui
 control ServiceSalle as svc
 entity FiltreRechercheSalle as filtre
+participant Filtre as f <<value>>
 entity Salle as salle
 
 u -> ui : setNom()
 u -> ui : setLocalisation()
 ui -> ui : verifierDonnees()
 ui -> svc : rechercherSalles(formulaire)
-svc -> filtre : creerFiltre(nom, localisation)
+svc -> f : new Filtre(nom, localisation)
+f --> svc : filtre
+svc -> filtre : creerFiltre(filtre)
 svc -> salle : findAll()
 salle --> svc : toutes les salles
 svc -> filtre : appliquerFiltre(salles)
@@ -1433,8 +1457,9 @@ actor Utilisateur as u
 boundary FormulaireRechercheSalle as ui
 control ServiceSalle as svc
 entity FiltreRechercheSalle as filtre
+participant Filtre as f <<value>>
 entity Salle as salle
-entity PlageDisponibilite as pd
+participant PlageDisponibilite as pd <<lifecycle>>
 
 u -> ui : setCapaciteMin()
 u -> ui : setType()
@@ -1444,11 +1469,13 @@ u -> ui : setHeureDebut()
 u -> ui : setHeureFin()
 ui -> ui : verifierDonnees()
 ui -> svc : rechercherSalles(formulaire)
-svc -> filtre : creerFiltre(capaciteMin, type, date, dateDebut, dateFin, heureDebut, heureFin)
+svc -> f : new Filtre(capaciteMin, type, disponibilite, dateDebut, dateFin, heureDebut, heureFin)
+f --> svc : filtre
+svc -> filtre : creerFiltre(filtre)
 svc -> salle : findByCapaciteAndType(capaciteMin, type)
 salle --> svc : salles candidates
-svc -> filtre : filtrerByDisponibilite(salles, date, dateDebut, dateFin, heureDebut, heureFin)
-filtre -> pd : verifierDisponibilite(plage, date, heureDebut, heureFin)
+svc -> filtre : filtrerByDisponibilite(salles, filtre)
+filtre -> pd : verifierDisponibilite(plage, filtre)
 pd --> filtre : disponible / non disponible
 filtre --> svc : salles disponibles
 svc --> ui : liste des salles
@@ -1478,6 +1505,11 @@ class ServiceReservation <<control>> {
   creerReservation()
   verifierDisponibilite()
   creerDemande()
+}
+
+class ServiceNotification <<boundary>> {
+  preparerNotificationValidation()
+  envoyerNotificationValidation()
 }
 
 class Reservation <<entity>> {
@@ -1512,17 +1544,18 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
-class PlageDisponibilite <<entity>> {
+class PlageDisponibilite <<lifecycle>> {
   id : Integer
   dateDebut : Date
   heureDebut : Heure
   dateFin : Date
   heureFin : Heure
   statut : StatutPlage
+  salle : Salle
 }
 
 enum EtatReservation {
@@ -1541,12 +1574,13 @@ enum EtatDemandeReservation {
 FormulaireReservationSalle ..> ServiceReservation
 ServiceReservation ..> Reservation
 ServiceReservation ..> DemandeReservation
+ServiceReservation ..> ServiceNotification
 Reservation -> Compte : > demandeur
 Reservation -> Salle : > salle
 Reservation -> EtatReservation : > statut
 DemandeReservation --> Reservation : > reservation
 DemandeReservation -> EtatDemandeReservation : > etat
-Salle *-- "*" PlageDisponibilite
+PlageDisponibilite -> Salle : > salle
 
 @enduml
 ```
@@ -1560,9 +1594,9 @@ actor Utilisateur as u
 boundary FormulaireReservationSalle as ui
 control ServiceReservation as svc
 entity Reservation as res
-entity DemandeReservation as dr <<lifecycle>>
+participant DemandeReservation as dr <<lifecycle>>
 entity Compte as compte
-control ServiceMail as mail
+control ServiceNotification as notif
 
 u -> ui : setSalle()
 u -> ui : setDateDebut()
@@ -1581,9 +1615,9 @@ svc -> res : sauvegarder()
 alt validation requise
   svc -> dr : creerDemande(reservation, dateCreation)
   note right : etat = CREEE
-  svc -> mail : envoyerMailValidation(reservation)
-  svc -> dr : notifierValidation()
-  note right : etat = VALIDEE
+  svc -> notif : preparerNotificationValidation(reservation, compte)
+  notif --> svc : notification preparée
+  svc -> notif : envoyerNotificationValidation(compte, reservation)
   svc --> ui : confirmation en attente
   ui --> u : demande envoyee pour validation
 else sans validation
@@ -1637,7 +1671,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
@@ -1680,7 +1714,7 @@ ui -> svc : consulterReservation(id)
 svc -> res : rechercherId(id)
 res --> svc : reservation
 svc -> res : obtenirSalle()
-salle --> svc : salle
+res --> svc : salle
 svc --> ui : reservation completee
 ui --> u : affiche reservation detaillee
 @enduml
@@ -1728,17 +1762,18 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
-class PlageDisponibilite <<entity>> {
+class PlageDisponibilite <<lifecycle>> {
   id : Integer
   dateDebut : Date
   heureDebut : Heure
   dateFin : Date
   heureFin : Heure
   statut : StatutPlage
+  salle : Salle
 }
 
 enum EtatReservation {
@@ -1764,7 +1799,7 @@ ServiceReservation ..> Reservation
 Reservation -> Compte : > demandeur
 Reservation -> Salle : > salle
 Reservation -> EtatReservation : > statut
-Salle *-- "*" PlageDisponibilite
+PlageDisponibilite -> Salle : > salle
 
 @enduml
 ```
@@ -1846,7 +1881,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
@@ -1856,12 +1891,14 @@ class Compte <<entity>> {
   mail : String
 }
 
-class ServiceMail <<control>> {
-  envoyerNotification()
+class ServiceNotification <<boundary>> {
+  preparerNotificationAnnulation()
+  envoyerNotificationAnnulation()
 }
 
 FormulaireAnnulationReservation ..> ServiceReservation
 ServiceReservation ..> Reservation
+ServiceReservation ..> ServiceNotification
 Reservation -> Compte : > demandeur
 Reservation -> Salle : > salle
 
@@ -1878,6 +1915,7 @@ boundary FormulaireAnnulationReservation as ui
 control ServiceReservation as svc
 entity Reservation as res
 entity Salle as salle
+control ServiceNotification as notif
 
 u -> ui : chargerReservation(reservation)
 ui -> ui : afficherDetailsReservation()
@@ -1889,15 +1927,14 @@ alt annulation impossible (dates trop proches)
   svc --> ui : echec annulation
   ui --> u : message d'erreur : annulation impossible (dates trop proches)
 else annulation possible
-  svc -> dc : creerDemande(reservation, dateDemande)
-  note right : etat = CREEE
   svc -> res : verifierStatut(reservation)
   res --> svc : statut = EN_ATTENTE or CONFIRMEE
   svc -> res : annuler()
   note right : statut = ANNULEE
-  svc -> dc : traiterDemande()
-  note right : etat = TRAITEE
-  svc -> salle : libererPlage(plage)
+  svc -> salle : retirerPlageDisponibilite(plage)
+  svc -> notif : preparerNotificationAnnulation(reservation)
+  notif --> svc : notification preparée
+  svc -> notif : envoyerNotificationAnnulation(reservation)
   svc --> ui : confirmation
   ui --> u : reservation annulee
 end
@@ -1922,7 +1959,7 @@ class ServiceReservation <<control>> {
   filtrerDemandes()
 }
 
-class DemandeReservation <<entity>> {
+class DemandeReservation <<lifecycle>> {
   id : Integer
   reservation : Reservation
   dateCreation : Date
@@ -1949,7 +1986,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
@@ -1983,18 +2020,18 @@ skin rose
 actor Responsable as r
 boundary ListeDemandesReservationUI as ui
 control ServiceReservation as svc
-entity DemandeReservation as dr <<lifecycle>>
+participant DemandeReservation as dr <<lifecycle>>
 entity Reservation as res
 entity Salle as salle
 
 r -> ui : listerDemandesEnAttente()
 ui -> svc : listerDemandesEnAttente()
-svc -> dr : findByEtat(ETAT_CREEE)
+svc -> dr : findByEtat(CREEE)
 dr --> svc : liste des demandes
 svc -> dr : chargerReservation()
-res --> svc : reservation completee
+dr --> svc : reservation completee
 svc -> res : chargerSalle()
-salle --> svc : salle
+res --> svc : salle
 svc --> ui : liste des demandes completees
 ui --> r : affiche la liste
 @enduml
@@ -2021,7 +2058,7 @@ class ServiceReservation <<control>> {
   mettreAJourStatutReservation()
 }
 
-class DemandeReservation <<entity>> {
+class DemandeReservation <<lifecycle>> {
   id : Integer
   reservation : Reservation
   dateCreation : Date
@@ -2056,11 +2093,11 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
-class ServiceNotification <<control>> {
+class ServiceNotification <<boundary>> {
   envoyerNotificationValidation()
 }
 
@@ -2082,7 +2119,7 @@ skin rose
 actor Responsable as r
 boundary FormulaireValidationDemande as ui
 control ServiceReservation as svc
-entity DemandeReservation as dr <<lifecycle>>
+participant DemandeReservation as dr <<lifecycle>>
 entity Reservation as res
 entity Compte as demandeur
 control ServiceNotification as notif
@@ -2096,9 +2133,9 @@ svc -> dr : validerDemande()
 note right : etat = VALIDEE
 svc -> res : mettreAJourStatut(EN_ATTENTE -> CONFIRMEE)
 note right : statut = CONFIRMEE
-svc -> notif : preparerNotification(reservation, demandeur)
+svc -> notif : preparerNotificationValidation(reservation, demandeur)
 notif --> svc : notification preparée
-svc -> notif : envoyerMailValidation(demandeur, reservation)
+svc -> notif : envoyerNotificationValidation(demandeur, reservation)
 svc --> ui : confirmation
 ui --> r : demande validée
 @enduml
@@ -2119,8 +2156,12 @@ class FormulaireRejetDemande <<boundary>> {
   confirmation : Boolean
 }
 
+FormulaireRejetDemande ..> ServiceReservation
+
 @enduml
 ```
+
+Les classes `ServiceReservation`, `DemandeReservation`, `Reservation` et `ServiceNotification` sont définies dans les sections précédentes.
 
 ##### Séquence
 
@@ -2130,7 +2171,7 @@ skin rose
 actor Responsable as r
 boundary FormulaireRejetDemande as ui
 control ServiceReservation as svc
-entity DemandeReservation as dr <<lifecycle>>
+participant DemandeReservation as dr <<lifecycle>>
 entity Reservation as res
 entity Compte as demandeur
 control ServiceNotification as notif
@@ -2147,9 +2188,9 @@ svc -> dr : rejeterDemande(motifRejet)
 note right : etat = REJETEE
 svc -> res : mettreAJourStatut(EN_ATTENTE -> REFUSEE)
 note right : statut = REFUSEE
-svc -> notif : preparerNotificationRejet(reservation, demandeur, motifRejet)
+svc -> notif : preparerNotificationRefus(reservation, demandeur, motifRejet)
 notif --> svc : notification preparée
-svc -> notif : envoyerMailRejet(demandeur, reservation, motifRejet)
+svc -> notif : envoyerNotificationRefus(demandeur, reservation, motifRejet)
 svc --> ui : confirmation
 ui --> r : demande rejetée
 @enduml
@@ -2171,7 +2212,7 @@ class Salle <<entity>> {
   description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
-  plagesDisponibilite : Liste<PlageDisponibilite>
+
   equipements : Liste<Equipement>
 }
 
@@ -2181,13 +2222,14 @@ class Equipement <<entity>> {
   description : String
 }
 
-class PlageDisponibilite <<entity>> {
+class PlageDisponibilite <<lifecycle>> {
   id : Integer
   dateDebut : Date
   heureDebut : Heure
   dateFin : Date
   heureFin : Heure
   statut : StatutPlage
+  salle : Salle
 }
 
 class Reservation <<entity>> {
@@ -2213,7 +2255,7 @@ class Heure <<value>> {
   minute : Integer
 }
 
-class FiltreRechercheSalle <<entity>> {
+class Filtre <<value>> {
   nom : String
   localisation : String
   capaciteMin : Integer
@@ -2225,16 +2267,42 @@ class FiltreRechercheSalle <<entity>> {
   dateFin : Date
   heureDebut : Heure
   heureFin : Heure
+}
 
+class FiltreRechercheSalle <<entity>> {
+  creerFiltre(filtre : Filtre)
   appliquerFiltre(salle : Salle) : Boolean
 }
 
-Salle *-- "*" Equipement
-Salle *-- "*" PlageDisponibilite
+enum TypeSalle {
+  COURS
+  TP
+  REUNION
+  AMPHI
+}
+
+enum StatutPlage {
+  ACTIVE
+  INACTIVE
+}
+
+enum EtatReservation {
+  EN_ATTENTE
+  CONFIRMEE
+  REFUSEE
+  ANNULEE
+}
+
+Salle o-- "*" Equipement
+PlageDisponibilite -> Salle : > salle
 Reservation -> Compte : > demandeur
 Reservation -> Salle : > salle
+Reservation -> EtatReservation : > statut
+Salle -> TypeSalle : > type
+PlageDisponibilite -> StatutPlage : > statut
 PlageDisponibilite --> Heure : > heureDebut
 PlageDisponibilite --> Heure : > heureFin
+FiltreRechercheSalle ..> Filtre
 FiltreRechercheSalle ..> Salle : > appliquerFiltre
 
 @enduml
@@ -2259,6 +2327,25 @@ enum EtatDemandeReservation {
   REJETEE
 }
 
+class DemandeCreationCompte <<lifecycle>> {
+  login : String
+  motDePasse : String
+  mail : String
+  etat : EtatDemande
+  dateCreation : Date
+}
+
+enum EtatDemande {
+  CREEE
+  MAIL_ENVOYE
+  MAIL_VALIDE
+  VALIDEE
+  REFUSEE
+}
+
+DemandeReservation -> EtatDemandeReservation : > etat
+DemandeCreationCompte -> EtatDemande : > etat
+
 @enduml
 ```
 
@@ -2268,6 +2355,18 @@ enum EtatDemandeReservation {
 @startuml
 skin rose
 
+class ServiceCompte <<control>> {
+  validerDonnees()
+  verifierLoginDisponible()
+  creerDemande()
+  validerDemande()
+  rejeterDemande()
+  modifierCompte()
+  modifierMotDePasse()
+  demanderReinitialisation()
+  reinitialiserMotDePasse()
+}
+
 class ServiceSalle <<control>> {
   listerSalles()
   rechercherSalles()
@@ -2275,10 +2374,12 @@ class ServiceSalle <<control>> {
   creerSalle()
   modifierSalle()
   supprimerSalle()
+  creerEquipement()
   ajouterEquipement()
   modifierEquipement()
   supprimerEquipement()
   ajouterPlageDisponibilite()
+  modifierPlageDisponibilite()
   supprimerPlageDisponibilite()
   verifierPossibiliteSuppression()
 }
@@ -2297,17 +2398,17 @@ class ServiceReservation <<control>> {
   envoyerNotification()
 }
 
-class ServiceNotification <<control>> {
-  envoyerNotificationValidation()
-  envoyerNotificationRefus()
-  preparerNotificationValidation()
-  preparerNotificationRefus()
-}
-
-class ServiceMail <<control>> {
+class ServiceNotification <<boundary>> {
+  envoyerMailConfirmation()
   envoyerMailValidation()
   envoyerMailRefus()
-  envoyerMailRejet()
+  envoyerMailReinitialisation()
+  preparerNotificationValidation()
+  envoyerNotificationValidation()
+  preparerNotificationRefus()
+  envoyerNotificationRefus()
+  preparerNotificationAnnulation()
+  envoyerNotificationAnnulation()
 }
 
 @enduml
@@ -2319,9 +2420,53 @@ class ServiceMail <<control>> {
 @startuml
 skin rose
 
+class ListeDemandesCompteUI <<boundary>> {}
+
+class FormulaireDemandeCompte <<boundary>> {
+  login : String
+  motDePasse : String
+  motDePasseConfirmation : String
+  mail : String
+}
+
+class FormulaireModificationCompte <<boundary>> {
+  login : String
+  mail : String
+}
+
+class FormulaireModificationMotDePasse <<boundary>> {
+  motDePasseActuel : String
+  nouveauMotDePasse : String
+  nouveauMotDePasseConfirmation : String
+}
+
+class FormulaireDemandeReinitialisation <<boundary>> {
+  mail : String
+}
+
+class FormulaireNouveauMotDePasse <<boundary>> {
+  nouveauMotDePasse : String
+  nouveauMotDePasseConfirmation : String
+}
+
+class FormulaireCreationEquipement <<boundary>> {
+  nom : String
+  description : String
+  salle : Salle
+}
+
+class FormulaireDisponibiliteSalle <<boundary>> {
+  dateDebut : Date
+  heureDebut : Heure
+  dateFin : Date
+  heureFin : Heure
+  salle : Salle
+}
+
 class ListeSallesUI <<boundary>> {
-  filterByType()
-  filterByCapacity()
+  sallesAffichees : Liste<Salle>
+  filtreType : TypeSalle
+  filtreRecherche : String
 }
 
 class ListeSallesReservationUI <<boundary>> {
@@ -2341,9 +2486,9 @@ class FormulaireCreationSalle <<boundary>> {
   nom : String
   localisation : String
   capacite : Integer
+  description : String
   type : TypeSalle
-  equipements : Liste<Equipement>
-  validation : Boolean
+  reservationAvecValidation : Boolean
 }
 
 class FormulaireSuppressionSalle <<boundary>> {
@@ -2352,16 +2497,17 @@ class FormulaireSuppressionSalle <<boundary>> {
 }
 
 class FormulaireModificationSalle <<boundary>> {
-  salle : Salle
+  id : Integer
   nom : String
   localisation : String
   capacite : Integer
+  description : String
   type : TypeSalle
   reservationAvecValidation : Boolean
 }
 
 class FormulaireModificationEquipement <<boundary>> {
-  equipement : Equipement
+  id : Integer
   nom : String
   description : String
 }
@@ -2372,11 +2518,12 @@ class FormulaireSuppressionEquipement <<boundary>> {
 }
 
 class FormulaireModificationDisponibilite <<boundary>> {
-  plage : PlageDisponibilite
+  id : Integer
   dateDebut : Date
   heureDebut : Heure
   dateFin : Date
   heureFin : Heure
+  statut : StatutPlage
 }
 
 class FormulaireSuppressionDisponibilite <<boundary>> {
