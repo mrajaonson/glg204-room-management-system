@@ -2,58 +2,8 @@
 
 ## 1. Table des matières
 
-<!-- toc -->
-
-- [2. Objectif du document](#2-objectif-du-document)
-- [3. Architecture](#3-architecture)
-  * [3.1. Choix des technologies](#31-choix-des-technologies)
-    + [3.1.1. Administration du système](#311-administration-du-systeme)
-    + [3.1.2. Côté utilisateurs](#312-cote-utilisateurs)
-    + [3.1.3. Côté responsables](#313-cote-responsables)
-  * [3.2. Contraintes techniques](#32-contraintes-techniques)
-- [4. Technologies utilisées](#4-technologies-utilisees)
-  * [4.1. Serveur web](#41-serveur-web)
-  * [4.2. Stockage des données](#42-stockage-des-donnees)
-  * [4.3. Couche de persistance](#43-couche-de-persistance)
-  * [4.4. Couche métier](#44-couche-metier)
-  * [4.5. Couche service et API REST](#45-couche-service-et-api-rest)
-  * [4.6. Couche présentation](#46-couche-presentation)
-  * [4.7. Authentification](#47-authentification)
-  * [4.8. Environnement de développement](#48-environnement-de-developpement)
-  * [4.9. Tests](#49-tests)
-  * [4.10. Packages et dépendances](#410-packages-et-dependances)
-  * [4.11. Déploiement](#411-deploiement)
-- [5. Préliminaire à la conception](#5-preliminaire-a-la-conception)
-- [6. Cas d'utilisation](#6-cas-dutilisation)
-  * [6.1. Rappel : modèle trouvé en analyse](#61-rappel--modele-trouve-en-analyse)
-  * [6.2. Groupe 1 : Gestion des comptes](#62-groupe-1--gestion-des-comptes)
-    + [6.2.1. Déposer une demande de création de compte](#621-deposer-une-demande-de-creation-de-compte)
-    + [6.2.2. Consulter les demandes de création de compte en attente](#622-consulter-les-demandes-de-creation-de-compte-en-attente)
-    + [6.2.3. Valider une demande de création de compte](#623-valider-une-demande-de-creation-de-compte)
-    + [6.2.4. Refuser une demande de création de compte](#624-refuser-une-demande-de-creation-de-compte)
-  * [6.3. Groupe 2 : Gestion des salles](#63-groupe-2--gestion-des-salles)
-    + [6.3.1. Créer une salle](#631-creer-une-salle)
-    + [6.3.2. Créer un équipement](#632-creer-un-equipement)
-    + [6.3.3. Ajouter une plage de disponibilité d'une salle](#633-ajouter-une-plage-de-disponibilite-dune-salle)
-    + [6.3.4. Consulter la liste des salles](#634-consulter-la-liste-des-salles)
-  * [6.4. Groupe 3 : Gestion des réservations](#64-groupe-3--gestion-des-reservations)
-    + [6.4.1. Rechercher une salle selon différents critères](#641-rechercher-une-salle-selon-differents-criteres)
-    + [6.4.2. Réserver une salle](#642-reserver-une-salle)
-    + [6.4.3. Consulter une réservation](#643-consulter-une-reservation)
-    + [6.4.4. Annuler une réservation](#644-annuler-une-reservation)
-    + [6.4.5. Valider une demande de réservation](#645-valider-une-demande-de-reservation)
-    + [6.4.6. Rejeter une demande de réservation](#646-rejeter-une-demande-de-reservation)
-- [7. Regroupement des classes](#7-regroupement-des-classes)
-  * [7.1. Groupe domaine](#71-groupe-domaine)
-  * [7.2. Groupe repositories](#72-groupe-repositories)
-  * [7.3. Groupe services](#73-groupe-services)
-  * [7.4. Groupe contrôleurs REST](#74-groupe-controleurs-rest)
-- [8. Choix, questions ouvertes et remarques](#8-choix-questions-ouvertes-et-remarques)
-- [9. Annexes](#9-annexes)
-  * [9.1. Terminologie](#91-terminologie)
-  * [9.2. Bibliographie](#92-bibliographie)
-
-<!-- tocstop -->
+\tableofcontents
+\newpage
 
 ## 2. Objectif du document
 
@@ -167,8 +117,8 @@ L'approche **Acteur/Action** permet de proposer les composants backend suivants 
 
 Chaque composant suit la même structure interne :
 
-~~~plantuml
-@startuml packages
+```plantuml
+@startuml
 skin rose
 
 package roomreservation {
@@ -231,7 +181,7 @@ package roomreservation {
   compte ..> notification
 }
 @enduml
-~~~
+```
 
 À chaque composant correspond un (ou plusieurs) `@RestController` qui sert de **façade** et communique avec la couche de présentation à travers des **DTOs**. Les entités JPA ne sont jamais exposées directement dans l'API.
 
@@ -241,8 +191,8 @@ package roomreservation {
 
 Un seul conteneur par composant : frontend, backend, base de données. Orchestration via **Docker Compose**.
 
-~~~plantuml
-@startuml deploiement_simple
+```plantuml
+@startuml
 !pragma layout smetana
 skin rose
 
@@ -270,7 +220,7 @@ note right of db
   Volume Docker persistant
 end note
 @enduml
-~~~
+```
 
 - le frontend Vue.js est servi par **Nginx** comme fichiers statiques ;
 - le backend Spring Boot expose l'API REST sur un port dédié ;
@@ -281,8 +231,8 @@ end note
 
 Si la charge augmente, on peut multiplier les instances backend derrière un **load balancer**. Le frontend reste servi par un **Nginx** unique — les fichiers statiques Vue.js n'ont pas besoin d'être scalés. L'authentification **JWT** (*stateless*) rend cette évolution naturelle : aucune session serveur à synchroniser entre les instances.
 
-~~~plantuml
-@startuml deploiement_scalable
+```plantuml
+@startuml
 !pragma layout smetana
 skin rose
 
@@ -336,7 +286,7 @@ note right of db
   si nécessaire.
 end note
 @enduml
-~~~
+```
 
 - le frontend Vue.js est servi par un **Nginx** unique — les fichiers statiques étant identiques pour tous les utilisateurs, il n'y a aucun intérêt à les dupliquer ;
 - le **load balancer** distribue les appels API REST entre les instances Spring Boot ;
@@ -370,8 +320,8 @@ On choisit de développer un sous-ensemble cohérent des fonctionnalités, en co
 
 Le modèle issu de l'analyse est un point de départ qui sera affiné pendant la conception.
 
-~~~plantuml
-@startuml modele_analyse
+```plantuml
+@startuml
 skin rose
 hide empty members
 title Modèle d'analyse (simplifié)
@@ -454,7 +404,7 @@ Reservation -> EtatReservation : > etat
 ListeAttente --> Salle
 ListeAttente --> Compte
 @enduml
-~~~
+```
 
 ### 6.2. Groupe 1 : Gestion des comptes
 

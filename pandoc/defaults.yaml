@@ -1,0 +1,9 @@
+pdf-engine: xelatex
+highlight-style: tango
+toc-depth: 4
+variables:
+  geometry: margin=2cm
+  fontsize: 12pt
+  colorlinks: true
+  papersize: a4
+  toc-title: ''
