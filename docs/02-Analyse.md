@@ -1,49 +1,9 @@
-# Projet *Réservation de salles* : Analyse v1.1
+# Projet *Réservation de salles* : Analyse v1.2
 
 ## 1. Table des matières
 
-<!-- toc -->
-
-- [2. Objectif du document](#2-objectif-du-document)
-- [3. Sélection des cas d'utilisation.](#3-selection-des-cas-dutilisation)
-- [4. Cas d’utilisation](#4-cas-dutilisation)
-  * [4.1. Groupe 1 : gestion des comptes](#41-groupe-1--gestion-des-comptes)
-    + [4.1.1. Déposer une demande de création de compte](#411-deposer-une-demande-de-creation-de-compte)
-    + [4.1.2. Consulter les demandes de création de compte en attente](#412-consulter-les-demandes-de-creation-de-compte-en-attente)
-    + [4.1.3. Valider une demande de création de compte](#413-valider-une-demande-de-creation-de-compte)
-    + [4.1.4. Refuser une demande de création de compte](#414-refuser-une-demande-de-creation-de-compte)
-    + [4.1.5. Modifier les informations d'un compte](#415-modifier-les-informations-dun-compte)
-    + [4.1.6. Modifier un mot de passe](#416-modifier-un-mot-de-passe)
-    + [4.1.7. Demander la réinitialisation d'un mot de passe](#417-demander-la-reinitialisation-dun-mot-de-passe)
-    + [4.1.8. Modifier un mot de passe réinitialisé](#418-modifier-un-mot-de-passe-reinitialise)
-  * [4.2. Groupe 2 : gestion des salles](#42-groupe-2--gestion-des-salles)
-    + [4.2.1. Créer une salle](#421-creer-une-salle)
-    + [4.2.2. Créer un équipement](#422-creer-un-equipement)
-    + [4.2.3. Ajouter une plage de disponibilité d'une salle](#423-ajouter-une-plage-de-disponibilite-dune-salle)
-    + [4.2.4. Consulter la liste des salles](#424-consulter-la-liste-des-salles)
-    + [4.2.5. Modifier une salle](#425-modifier-une-salle)
-    + [4.2.6. Supprimer une salle](#426-supprimer-une-salle)
-    + [4.2.7. Modifier un équipement](#427-modifier-un-equipement)
-    + [4.2.8. Supprimer un équipement](#428-supprimer-un-equipement)
-    + [4.2.9. Modifier une plage de disponibilité d'une salle](#429-modifier-une-plage-de-disponibilite-dune-salle)
-    + [4.2.10. Supprimer une plage de disponibilité d'une salle](#4210-supprimer-une-plage-de-disponibilite-dune-salle)
-  * [4.3. Groupe 3 : gestion des réservations](#43-groupe-3--gestion-des-reservations)
-    + [4.3.1. Afficher la liste des salles](#431-afficher-la-liste-des-salles)
-    + [4.3.2. Rechercher une salle selon différents critères](#432-rechercher-une-salle-selon-differents-criteres)
-    + [4.3.3. Réserver une salle](#433-reserver-une-salle)
-    + [4.3.4. Consulter une réservation](#434-consulter-une-reservation)
-    + [4.3.5. Modifier une réservation](#435-modifier-une-reservation)
-    + [4.3.6. Annuler une réservation](#436-annuler-une-reservation)
-    + [4.3.7. Consulter les demandes de réservation en attente](#437-consulter-les-demandes-de-reservation-en-attente)
-    + [4.3.8. Valider une demande de réservation](#438-valider-une-demande-de-reservation)
-    + [4.3.9. Rejeter une demande de réservation](#439-rejeter-une-demande-de-reservation)
-- [5. Regroupement des classes](#5-regroupement-des-classes)
-  * [5.1. Groupe domaine](#51-groupe-domaine)
-  * [5.2. Groupe domaine et cycle de vie](#52-groupe-domaine-et-cycle-de-vie)
-  * [5.3. Groupe Service](#53-groupe-service)
-  * [5.4. Groupe interface utilisateur et système](#54-groupe-interface-utilisateur-et-systeme)
-
-<!-- tocstop -->
+\tableofcontents
+\newpage
 
 ## 2. Objectif du document
 
@@ -176,6 +136,7 @@ DemandeCreationCompte -> EtatDemande : > etat
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireDemandeCompte as ui
 control ServiceCompte as svc
@@ -218,6 +179,7 @@ end
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 control ServiceCompte as svc
 participant DemandeCreationCompte as dcm <<lifecycle>>
@@ -261,6 +223,7 @@ ServiceCompte ..> DemandeCreationCompte
 ```plantuml
 @startuml
 skin rose
+
 actor Administrateur as a
 boundary ListeDemandesCompteUI as ui
 control ServiceCompte as svc
@@ -286,6 +249,7 @@ Aucune nouvelle classe. Les classes `ListeDemandesCompteUI`, `ServiceCompte`, `D
 ```plantuml
 @startuml
 skin rose
+
 actor Administrateur as a
 boundary ListeDemandesCompteUI as ui
 control ServiceCompte as svc
@@ -315,6 +279,7 @@ Aucune nouvelle classe. Les classes `ListeDemandesCompteUI`, `ServiceCompte`, `D
 ```plantuml
 @startuml
 skin rose
+
 actor Administrateur as a
 boundary ListeDemandesCompteUI as ui
 control ServiceCompte as svc
@@ -365,6 +330,7 @@ ServiceCompte ..> Compte
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireModificationCompte as ui
 control ServiceCompte as svc
@@ -420,6 +386,7 @@ ServiceCompte ..> Compte
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireModificationMotDePasse as ui
 control ServiceCompte as svc
@@ -474,6 +441,7 @@ ServiceCompte ..> ServiceNotification
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireDemandeReinitialisation as ui
 control ServiceCompte as svc
@@ -527,6 +495,7 @@ ServiceCompte ..> Compte
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireNouveauMotDePasse as ui
 control ServiceCompte as svc
@@ -598,6 +567,7 @@ Salle -> TypeSalle : > type
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireCreationSalle as ui
 control ServiceSalle as svc
@@ -652,6 +622,7 @@ Salle o-- "*" Equipement
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireCreationEquipement as ui
 control ServiceSalle as svc
@@ -721,6 +692,7 @@ PlageDisponibilite -> Salle : > salle
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireDisponibiliteSalle as ui
 control ServiceSalle as svc
@@ -789,6 +761,7 @@ ServiceSalle ..> Salle
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary ListeSallesUI as ui
 control ServiceSalle as svc
@@ -864,6 +837,7 @@ ServiceSalle ..> Salle
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireModificationSalle as ui
 control ServiceSalle as svc
@@ -935,6 +909,7 @@ ServiceSalle ..> Salle
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireSuppressionSalle as ui
 control ServiceSalle as svc
@@ -1008,6 +983,7 @@ Salle o-- "*" Equipement
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireModificationEquipement as ui
 control ServiceSalle as svc
@@ -1083,6 +1059,7 @@ Salle o-- "*" Equipement
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireSuppressionEquipement as ui
 control ServiceSalle as svc
@@ -1171,6 +1148,7 @@ PlageDisponibilite --> Heure : > heureFin
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireModificationDisponibilite as ui
 control ServiceSalle as svc
@@ -1260,6 +1238,7 @@ PlageDisponibilite -> Salle : > salle
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireSuppressionDisponibilite as ui
 control ServiceSalle as svc
@@ -1329,6 +1308,7 @@ ServiceSalle ..> Salle
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary ListeSallesReservationUI as ui
 control ServiceSalle as svc
@@ -1425,6 +1405,7 @@ FiltreRechercheSalle ..> Salle : > appliquerFiltre
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireRechercheSalle as ui
 control ServiceSalle as svc
@@ -1453,6 +1434,7 @@ ui --> u : affiche la liste
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireRechercheSalle as ui
 control ServiceSalle as svc
@@ -1590,6 +1572,7 @@ PlageDisponibilite -> Salle : > salle
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireReservationSalle as ui
 control ServiceReservation as svc
@@ -1703,6 +1686,7 @@ DemandeReservation -> EtatDemandeReservation : > etat
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireConsultationReservation as ui
 control ServiceReservation as svc
@@ -1809,6 +1793,7 @@ PlageDisponibilite -> Salle : > salle
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireModificationReservation as ui
 control ServiceReservation as svc
@@ -1910,6 +1895,7 @@ Reservation -> Salle : > salle
 ```plantuml
 @startuml
 skin rose
+
 actor Utilisateur as u
 boundary FormulaireAnnulationReservation as ui
 control ServiceReservation as svc
@@ -2017,6 +2003,7 @@ Reservation -> Salle : > salle
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary ListeDemandesReservationUI as ui
 control ServiceReservation as svc
@@ -2116,6 +2103,7 @@ Reservation -> Salle : > salle
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireValidationDemande as ui
 control ServiceReservation as svc
@@ -2168,6 +2156,7 @@ Les classes `ServiceReservation`, `DemandeReservation`, `Reservation` et `Servic
 ```plantuml
 @startuml
 skin rose
+
 actor Responsable as r
 boundary FormulaireRejetDemande as ui
 control ServiceReservation as svc

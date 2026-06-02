@@ -1,52 +1,9 @@
-# Projet *Réservation de salles* : Expression des besoins v1.3
+# Projet *Réservation de salles* : Expression des besoins v1.4
 
 ## Table des matières
 
-<!-- toc -->
-
-- [1. Objectif du document](#1-objectif-du-document)
-- [2. Présentation](#2-presentation)
-  * [2.1. Présentation du projet](#21-presentation-du-projet)
-  * [2.2. Situation actuelle](#22-situation-actuelle)
-  * [2.3. Les contraintes](#23-les-contraintes)
-  * [2.4. Présentation de la société](#24-presentation-de-la-societe)
-- [3. Acteurs](#3-acteurs)
-  * [3.1. Utilisateur](#31-utilisateur)
-  * [3.2. Responsable](#32-responsable)
-  * [3.3. Administrateur](#33-administrateur)
-  * [3.4. Résumé des Acteurs](#34-resume-des-acteurs)
-- [4. Cas d’utilisation](#4-cas-dutilisation)
-  * [4.1. Groupe 1 : Gestion des comptes](#41-groupe-1--gestion-des-comptes)
-    + [4.1.1. Cas d'utilisation « Déposer une demande de création de compte »](#411-cas-dutilisation-%C2%AB-deposer-une-demande-de-creation-de-compte-%C2%BB)
-    + [4.1.2. Cas d'utilisation « Consulter les demandes de création de compte »](#412-cas-dutilisation-%C2%AB-consulter-les-demandes-de-creation-de-compte-%C2%BB)
-    + [4.1.3. Valider une demande de création de compte](#413-valider-une-demande-de-creation-de-compte)
-    + [4.1.4. Refuser une demande de création de compte](#414-refuser-une-demande-de-creation-de-compte)
-    + [4.1.5. Modifier les informations d'un compte](#415-modifier-les-informations-dun-compte)
-    + [4.1.6. Modifier un mot de passe](#416-modifier-un-mot-de-passe)
-    + [4.1.7. Demander la réinitialisation d'un mot de passe](#417-demander-la-reinitialisation-dun-mot-de-passe)
-  * [4.2. Groupe 2 : Gestion des salles](#42-groupe-2--gestion-des-salles)
-    + [4.2.1. Créer une salle](#421-creer-une-salle)
-    + [4.2.2. Créer un équipement](#422-creer-un-equipement)
-    + [4.2.3. Ajouter une plage de disponibilité d'une salle](#423-ajouter-une-plage-de-disponibilite-dune-salle)
-    + [4.2.4. Consulter la liste des salles](#424-consulter-la-liste-des-salles)
-    + [4.2.5. Modifier une salle](#425-modifier-une-salle)
-    + [4.2.6. Supprimer une salle](#426-supprimer-une-salle)
-    + [4.2.7. Modifier un équipement](#427-modifier-un-equipement)
-    + [4.2.8. Supprimer un équipement](#428-supprimer-un-equipement)
-    + [4.2.9. Modifier une plage de disponibilité d'une salle](#429-modifier-une-plage-de-disponibilite-dune-salle)
-    + [4.2.10. Supprimer une plage de disponibilité d'une salle](#4210-supprimer-une-plage-de-disponibilite-dune-salle)
-  * [4.3. Groupe 3 : Gestion des réservations](#43-groupe-3--gestion-des-reservations)
-    + [4.3.1. Afficher la liste des salles](#431-afficher-la-liste-des-salles)
-    + [4.3.2. Rechercher une salle selon différents critères](#432-rechercher-une-salle-selon-differents-criteres)
-    + [4.3.3. Réserver une salle](#433-reserver-une-salle)
-    + [4.3.4. Consulter une réservation](#434-consulter-une-reservation)
-    + [4.3.5. Modifier une réservation](#435-modifier-une-reservation)
-    + [4.3.6. Annuler une réservation](#436-annuler-une-reservation)
-    + [4.3.7. Consulter les demandes de réservation en attente](#437-consulter-les-demandes-de-reservation-en-attente)
-    + [4.3.8. Valider une demande de réservation](#438-valider-une-demande-de-reservation)
-    + [4.3.9. Rejeter une demande de réservation](#439-rejeter-une-demande-de-reservation)
-
-<!-- tocstop -->
+\tableofcontents
+\newpage
 
 ## 1. Objectif du document
 
@@ -99,6 +56,7 @@ Utilisateur disposant de droits supplémentaires permettant de valider les deman
 ```plantuml
 @startuml
 skin rose
+
 :enseignant:
 :appariteur:
 :responsable:
@@ -196,19 +154,20 @@ L'utilisateur dépose une demande de création un compte et valide son adresse m
 
 ```plantuml
 @startuml
-  skin rose
-  title création d'un compte
-  start  
-  repeat :saisie des données;
-  repeat while (données correctes?) is (non) not (oui)
-    if (login existant?) then (non)
-      :créer compte;
-      :prévenir utilisateur;
-      stop
-    else (oui)
-      :message d'erreur;
-      end
-    endif  
+skin rose
+
+title création d'un compte
+start  
+repeat :saisie des données;
+repeat while (données correctes?) is (non) not (oui)
+if (login existant?) then (non)
+  :créer compte;
+  :prévenir utilisateur;
+  stop
+else (oui)
+  :message d'erreur;
+  end
+endif  
 @enduml
 ```
 

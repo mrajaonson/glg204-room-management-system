@@ -1,0 +1,23 @@
+\renewcommand*\contentsname{}
+
+\usepackage{graphicx}
+
+% Scale images down to fit the text width/height if they exceed it,
+% no upscale smaller images (uses graphicx natural-size internals).
+\makeatletter
+\def\maxwidth{%
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\def\maxheight{%
+  \ifdim\Gin@nat@height>0.9\textheight
+    0.9\textheight
+  \else
+    \Gin@nat@height
+  \fi
+}
+\makeatother
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}

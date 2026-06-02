@@ -27,29 +27,7 @@ generate_diagrams() {
 
 preprocess_md() {
     local input="$1" stem="$2" output="$3"
-    python3 - "$input" "$stem" "$output" <<'PYEOF'
-import sys, re, os
-
-input_file, stem, output_file = sys.argv[1], sys.argv[2], sys.argv[3]
-input_dir = os.path.dirname(os.path.abspath(input_file))
-
-with open(input_file, encoding="utf-8") as f:
-    content = f.read()
-
-blocks = re.findall(r'```plantuml\n.*?```', content, re.DOTALL)
-
-result = content
-for i, block in enumerate(blocks):
-    name = stem if i == 0 else f"{stem}_{i:03d}"
-    img_path = os.path.join(input_dir, f"{name}.png")
-    img = f"\\begin{{center}}\n\\includegraphics[width=\\linewidth,height=0.9\\textheight,keepaspectratio]{{{img_path}}}\n\\end{{center}}"
-    result = result.replace(block, img, 1)
-
-with open(output_file, "w", encoding="utf-8") as f:
-    f.write(result)
-
-print(f"Replaced {len(blocks)} PlantUML block(s) with image references.")
-PYEOF
+    python3 "${SCRIPT_DIR}/preprocess_md.py" "$input" "$stem" "$output"
 }
 
 cleanup_diagrams() {
@@ -65,8 +43,8 @@ cleanup_diagrams() {
 }
 
 build_pdf() {
-    local input="$1" output="$2" resource_path="$3" hdrfile="$4"
-    local args=("$input" --from markdown --defaults "$DEFAULTS_FILE" "--resource-path=${resource_path}" -o "$output" -H "$hdrfile")
+    local input="$1" output="$2" resource_path="$3"
+    local args=("$input" --from markdown --defaults "$DEFAULTS_FILE" "--resource-path=${resource_path}" -o "$output" -H "${SCRIPT_DIR}/header.tex")
 
     echo "Building PDF → $output"
     pandoc "${args[@]}"
@@ -84,16 +62,11 @@ main() {
     check_deps
 
     local tmpfile="${input_dir}/.md2pdf_${stem}_$$.md"
-    local hdrfile; hdrfile="$(mktemp --suffix=.tex)"
-    cat > "$hdrfile" <<'TEX'
-\renewcommand*\contentsname{}
-\usepackage{graphicx}
-TEX
-    trap "rm -f '$tmpfile' '$hdrfile'" EXIT
+    trap "rm -f '$tmpfile'" EXIT
 
     generate_diagrams "$input"
     preprocess_md     "$input" "$stem" "$tmpfile"
-    build_pdf         "$tmpfile" "$output" "$input_dir" "$hdrfile"
+    build_pdf         "$tmpfile" "$output" "$input_dir"
     cleanup_diagrams  "$input_dir" "$stem"
     echo "Done."
 }
