@@ -30,7 +30,7 @@ Les points à considérer sont en particulier :
 
 #### 3.1.1. Administration du système
 
-- opérations essentiellement CRUD (gestion des comptes, des salles) ;
+- opérations essentiellement CRUD (gestion des comptes, des salles, des réservations, etc) ;
 - l'administrateur est un utilisateur interne ;
 - sécurité importante : accès réservé aux administrateurs.
 
@@ -41,7 +41,7 @@ Une interface web classique est suffisante. La même application Vue.js pourra p
 - les utilisateurs consultent et filtrent la liste des salles disponibles ;
 - ils effectuent, modifient et annulent des réservations ;
 - ils reçoivent des notifications par mail ;
-- une interface web responsive est souhaitée (mobile inclus).
+- une interface web responsive est souhaitée.
 
 L'application Vue.js fournit une interface fluide sans rechargement de page complet. Les interactions avec l'API REST permettent de filtrer les salles dynamiquement et de gérer les réservations en temps réel.
 
@@ -54,8 +54,8 @@ L'application Vue.js fournit une interface fluide sans rechargement de page comp
 ### 3.2. Contraintes techniques
 
 - le système doit être accessible de l'extérieur via HTTPS ;
-- le backend expose une API REST/JSON ; le frontend Vue.js est une application distincte qui consomme cette API ;
-- le système doit être fiable pour l'envoi de mails (confirmation de réservation, annulation) ;
+- le backend expose une API REST ; le frontend Vue.js est une application distincte qui consomme cette API ;
+- le système doit être fiable pour l'envoi de mails (confirmation de réservation, annulation, etc) ;
 - l'application doit être raisonnablement sécurisée (authentification JWT, HTTPS, validation des données côté serveur).
 
 **Deux architectures de déploiement sont envisagées**, décrites en détail en section 4.11 :
@@ -71,7 +71,7 @@ Pour des raisons de facilité de maintenance, on choisit d'utiliser une applicat
 
 ### 4.2. Stockage des données
 
-Les données seront stockées dans une base **PostgreSQL**, aussi bien en développement qu'en production. Ce choix garantit la cohérence entre les environnements et évite les surprises liées aux différences de comportement entre bases de données.
+Les données seront stockées dans une base **PostgreSQL**, aussi bien en développement qu'en production. Ce choix garantit la cohérence entre les environnements et évite les comportements inattendus liés aux différences entre bases de données.
 
 ### 4.3. Couche de persistance
 
@@ -91,7 +91,7 @@ La couche présentation est entièrement gérée par **Vue.js**, une application
 
 ### 4.7. Authentification
 
-L'authentification sera gérée par **Spring Security** avec des **tokens JWT** (JSON Web Tokens). Le frontend envoie ses identifiants, reçoit un token, et l'inclut dans l'en-tête `Authorization` de chaque requête. Ce mécanisme est adapté à une architecture découplée frontend/backend.
+L'authentification sera gérée par **Spring Security** avec des **tokens JWT**. Le frontend envoie ses identifiants, reçoit un token, et l'inclut dans l'en-tête `Authorization` de chaque requête. Ce mécanisme est adapté à une architecture découplée frontend/backend.
 
 On pourra envisager dans un second temps l'utilisation de **Keycloak** pour une gestion plus avancée des identités.
 
@@ -101,7 +101,7 @@ Les projets backend seront manipulés via **Gradle**. Le projet frontend utilise
 
 ### 4.9. Tests
 
-- Tests unitaires backend : **JUnit 5** avec **Mockito** pour les mocks ;
+- Tests unitaires backend : **JUnit** ;
 - Tests d'intégration : **Spring Boot Test** avec base PostgreSQL (via **Testcontainers**) ;
 - Tests frontend : **Vitest** (ou Jest) pour les composants Vue.
 
@@ -408,83 +408,1113 @@ ListeAttente --> Compte
 
 ### 6.2. Groupe 1 : Gestion des comptes
 
+Les quatre cas de gestion des comptes s'appuient sur `CompteController` et `ServiceCompte`. La persistance est assurée par `CompteRepository` et `DemandeCreationCompteRepository`.
+
 #### 6.2.1. Déposer une demande de création de compte
 
-*(à compléter)*
+**Endpoints :**
+- `POST /api/comptes/demandes` — soumettre la demande
+- `GET /api/comptes/demandes/valider?token={token}` — valider le mail via le lien reçu
+
+Un champ `tokenValidation` est ajouté à `DemandeCreationCompte` pour sécuriser le lien de validation envoyé par mail. Le mot de passe est haché (BCrypt) avant la persistance.
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class CompteController <<controller>> {
+  + deposerDemande(dto : DemandeCreationCompteDTO) : ResponseEntity
+  + validerMail(token : String) : ResponseEntity
+}
+
+class DemandeCreationCompteDTO <<dto>> {
+  login : String
+  motDePasse : String
+  motDePasseConfirmation : String
+  mail : String
+}
+
+class ServiceCompte <<service>> {
+  + deposerDemande(dto : DemandeCreationCompteDTO)
+  + validerMail(token : String)
+}
+
+class CompteRepository <<repository>> {
+  + existsByLogin(login : String) : boolean
+  + existsByMail(mail : String) : boolean
+}
+
+class DemandeCreationCompteRepository <<repository>> {
+  + save(d : DemandeCreationCompte) : DemandeCreationCompte
+  + findByTokenValidation(token : String) : Optional<DemandeCreationCompte>
+  + existsByLogin(login : String) : boolean
+}
+
+class DemandeCreationCompte <<entity>> {
+  id : Long
+  login : String
+  motDePasseHash : String
+  mail : String
+  etat : EtatDemande
+  dateCreation : LocalDateTime
+  tokenValidation : String
+}
+
+class ServiceNotification <<service>> {
+  + envoyerMailConfirmation(mail : String, token : String)
+}
+
+CompteController ..> DemandeCreationCompteDTO
+CompteController ..> ServiceCompte
+ServiceCompte ..> CompteRepository
+ServiceCompte ..> DemandeCreationCompteRepository
+ServiceCompte ..> DemandeCreationCompte
+ServiceCompte ..> ServiceNotification
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary CompteController as ctrl
+control ServiceCompte as svc
+participant CompteRepository as compteRepo <<repository>>
+participant DemandeCreationCompteRepository as dcmRepo <<repository>>
+participant DemandeCreationCompte as dcm <<entity>>
+control ServiceNotification as notif
+
+u -> ctrl : POST /api/comptes/demandes
+ctrl -> svc : deposerDemande(dto)
+alt données invalides
+  svc --> ctrl : ValidationException
+  ctrl --> u : 400 Bad Request
+else login ou mail déjà existant
+  svc -> compteRepo : existsByLogin(login)
+  svc -> dcmRepo : existsByLogin(login)
+  svc --> ctrl : ConflictException
+  ctrl --> u : 409 Conflict
+else données valides et login disponible
+  svc -> dcm : new(login, hash(motDePasse), mail, UUID)
+  note right : etat = CREEE
+  svc -> dcmRepo : save(dcm)
+  svc -> notif : envoyerMailConfirmation(mail, token)
+  svc -> dcm : setEtat(MAIL_ENVOYE)
+  svc -> dcmRepo : save(dcm)
+  ctrl --> u : 201 Created
+end
+@enduml
+```
 
 #### 6.2.2. Consulter les demandes de création de compte en attente
 
-*(à compléter)*
+**Endpoint :** `GET /api/comptes/demandes` (accès restreint aux administrateurs ; retourne les demandes en état `MAIL_VALIDE`)
+
+##### Classes de conception
+
+Aucune nouvelle classe. On ajoute un DTO de réponse et une méthode au repository.
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class DemandeCreationCompteResponseDTO <<dto>> {
+  id : Long
+  login : String
+  mail : String
+  etat : EtatDemande
+  dateCreation : LocalDateTime
+}
+
+class ServiceCompte <<service>> {
+  + listerDemandesEnAttente() : List<DemandeCreationCompteResponseDTO>
+}
+
+class DemandeCreationCompteRepository <<repository>> {
+  + findByEtat(etat : EtatDemande) : List<DemandeCreationCompte>
+}
+
+ServiceCompte ..> DemandeCreationCompteRepository
+ServiceCompte ..> DemandeCreationCompteResponseDTO
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Administrateur as a
+boundary CompteController as ctrl
+control ServiceCompte as svc
+participant DemandeCreationCompteRepository as repo <<repository>>
+
+a -> ctrl : GET /api/comptes/demandes
+ctrl -> svc : listerDemandesEnAttente()
+svc -> repo : findByEtat(MAIL_VALIDE)
+repo --> svc : List<DemandeCreationCompte>
+svc --> ctrl : List<DemandeCreationCompteResponseDTO>
+ctrl --> a : 200 OK
+@enduml
+```
 
 #### 6.2.3. Valider une demande de création de compte
 
-*(à compléter)*
+**Endpoint :** `PUT /api/comptes/demandes/{id}/valider` (accès restreint aux administrateurs)
+
+La validation crée un `Compte` à partir des données de la `DemandeCreationCompte`, puis passe la demande à l'état `VALIDEE`.
+
+##### Classes de conception
+
+Aucune nouvelle classe. On utilise `CompteController`, `ServiceCompte`, `DemandeCreationCompteRepository`, `CompteRepository`, `Compte` et `ServiceNotification`.
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Administrateur as a
+boundary CompteController as ctrl
+control ServiceCompte as svc
+participant DemandeCreationCompteRepository as dcmRepo <<repository>>
+participant DemandeCreationCompte as dcm <<entity>>
+entity Compte as compte
+participant CompteRepository as compteRepo <<repository>>
+control ServiceNotification as notif
+
+a -> ctrl : PUT /api/comptes/demandes/{id}/valider
+ctrl -> svc : validerDemande(id)
+svc -> dcmRepo : findById(id)
+dcmRepo --> svc : demande
+svc -> compte : new(login, motDePasseHash, mail, UTILISATEUR)
+svc -> compteRepo : save(compte)
+svc -> dcm : setEtat(VALIDEE)
+svc -> dcmRepo : save(dcm)
+svc -> notif : envoyerMailValidation(mail)
+ctrl --> a : 200 OK
+@enduml
+```
 
 #### 6.2.4. Refuser une demande de création de compte
 
-*(à compléter)*
+**Endpoint :** `PUT /api/comptes/demandes/{id}/refuser` (accès restreint aux administrateurs)
+
+##### Classes de conception
+
+Aucune nouvelle classe.
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Administrateur as a
+boundary CompteController as ctrl
+control ServiceCompte as svc
+participant DemandeCreationCompteRepository as dcmRepo <<repository>>
+participant DemandeCreationCompte as dcm <<entity>>
+control ServiceNotification as notif
+
+a -> ctrl : PUT /api/comptes/demandes/{id}/refuser
+ctrl -> svc : refuserDemande(id)
+svc -> dcmRepo : findById(id)
+dcmRepo --> svc : demande
+svc -> dcm : setEtat(REFUSEE)
+svc -> dcmRepo : save(dcm)
+svc -> notif : envoyerMailRefus(mail)
+ctrl --> a : 200 OK
+@enduml
+```
 
 ### 6.3. Groupe 2 : Gestion des salles
 
+Les quatre cas s'appuient sur `SalleController` et `ServiceSalle`. La persistance est assurée par `SalleRepository`, `EquipementRepository` et `PlageDisponibiliteRepository`.
+
 #### 6.3.1. Créer une salle
 
-*(à compléter)*
+**Endpoint :** `POST /api/salles` (accès réservé aux responsables)
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class SalleController <<controller>> {
+  + creerSalle(dto : SalleCreationDTO) : ResponseEntity
+}
+
+class SalleCreationDTO <<dto>> {
+  nom : String
+  localisation : String
+  capacite : int
+  description : String
+  reservationSoumiseAValidation : boolean
+}
+
+class SalleResponseDTO <<dto>> {
+  id : Long
+  nom : String
+  localisation : String
+  capacite : int
+  description : String
+  reservationSoumiseAValidation : boolean
+}
+
+class ServiceSalle <<service>> {
+  + creerSalle(dto : SalleCreationDTO) : SalleResponseDTO
+}
+
+class SalleRepository <<repository>> {
+  + save(salle : Salle) : Salle
+}
+
+class Salle <<entity>> {
+  id : Long
+  nom : String
+  localisation : String
+  capacite : int
+  description : String
+  reservationSoumiseAValidation : boolean
+}
+
+SalleController ..> SalleCreationDTO
+SalleController ..> ServiceSalle
+ServiceSalle ..> SalleRepository
+ServiceSalle ..> Salle
+ServiceSalle ..> SalleResponseDTO
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Responsable as r
+boundary SalleController as ctrl
+control ServiceSalle as svc
+entity Salle as salle
+participant SalleRepository as repo <<repository>>
+
+r -> ctrl : POST /api/salles (SalleCreationDTO)
+ctrl -> svc : creerSalle(dto)
+svc -> svc : validerDonnees(dto)
+svc -> salle : new(nom, localisation, capacite, description, reservationSoumiseAValidation)
+svc -> repo : save(salle)
+repo --> svc : salle (avec id)
+svc --> ctrl : SalleResponseDTO
+ctrl --> r : 201 Created
+@enduml
+```
 
 #### 6.3.2. Créer un équipement
 
-*(à compléter)*
+**Endpoint :** `POST /api/salles/{salleId}/equipements` (accès réservé aux responsables)
+
+L'équipement est rattaché à une salle existante via `salleId`.
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class SalleController <<controller>> {
+  + creerEquipement(salleId : Long, dto : EquipementDTO) : ResponseEntity
+}
+
+class EquipementDTO <<dto>> {
+  nom : String
+  description : String
+}
+
+class ServiceSalle <<service>> {
+  + creerEquipement(salleId : Long, dto : EquipementDTO) : EquipementDTO
+}
+
+class SalleRepository <<repository>> {
+  + findById(id : Long) : Optional<Salle>
+}
+
+class EquipementRepository <<repository>> {
+  + save(eq : Equipement) : Equipement
+}
+
+class Equipement <<entity>> {
+  id : Long
+  nom : String
+  description : String
+  salle : Salle
+}
+
+SalleController ..> EquipementDTO
+SalleController ..> ServiceSalle
+ServiceSalle ..> SalleRepository
+ServiceSalle ..> EquipementRepository
+ServiceSalle ..> Equipement
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Responsable as r
+boundary SalleController as ctrl
+control ServiceSalle as svc
+participant SalleRepository as salleRepo <<repository>>
+entity Salle as salle
+entity Equipement as eq
+participant EquipementRepository as eqRepo <<repository>>
+
+r -> ctrl : POST /api/salles/{salleId}/equipements (EquipementDTO)
+ctrl -> svc : creerEquipement(salleId, dto)
+svc -> salleRepo : findById(salleId)
+salleRepo --> svc : salle
+svc -> svc : validerDonnees(dto)
+svc -> eq : new(nom, description, salle)
+svc -> eqRepo : save(eq)
+eqRepo --> svc : eq (avec id)
+svc --> ctrl : EquipementDTO
+ctrl --> r : 201 Created
+@enduml
+```
 
 #### 6.3.3. Ajouter une plage de disponibilité d'une salle
 
-*(à compléter)*
+**Endpoint :** `POST /api/salles/{salleId}/disponibilites` (accès réservé aux responsables)
+
+La vérification des conflits est une opération clé : on s'assure que la nouvelle plage ne chevauche aucune plage existante de la même salle. La requête de détection utilise le prédicat :
+
+```sql
+dateDebut < :fin AND dateFin > :debut AND salle.id = :salleId
+```
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class SalleController <<controller>> {
+  + ajouterDisponibilite(salleId : Long, dto : PlageDisponibiliteDTO) : ResponseEntity
+}
+
+class PlageDisponibiliteDTO <<dto>> {
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+}
+
+class ServiceSalle <<service>> {
+  + ajouterPlageDisponibilite(salleId : Long, dto : PlageDisponibiliteDTO)
+  - verifierConflit(salleId : Long, debut : LocalDateTime, fin : LocalDateTime)
+}
+
+class PlageDisponibiliteRepository <<repository>> {
+  + existsConflict(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
+  + save(pd : PlageDisponibilite) : PlageDisponibilite
+}
+
+class PlageDisponibilite <<entity>> {
+  id : Long
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+  salle : Salle
+}
+
+SalleController ..> PlageDisponibiliteDTO
+SalleController ..> ServiceSalle
+ServiceSalle ..> SalleRepository
+ServiceSalle ..> PlageDisponibiliteRepository
+ServiceSalle ..> PlageDisponibilite
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Responsable as r
+boundary SalleController as ctrl
+control ServiceSalle as svc
+participant SalleRepository as salleRepo <<repository>>
+participant PlageDisponibiliteRepository as pdRepo <<repository>>
+participant PlageDisponibilite as pd <<entity>>
+
+r -> ctrl : POST /api/salles/{salleId}/disponibilites (PlageDisponibiliteDTO)
+ctrl -> svc : ajouterPlageDisponibilite(salleId, dto)
+svc -> salleRepo : findById(salleId)
+salleRepo --> svc : salle
+svc -> svc : validerDonnees(dto)
+svc -> pdRepo : existsConflict(salleId, debut, fin)
+alt conflit détecté
+  pdRepo --> svc : true
+  svc --> ctrl : ConflictException
+  ctrl --> r : 409 Conflict
+else aucun conflit
+  pdRepo --> svc : false
+  svc -> pd : new(dateDebut, dateFin, salle)
+  svc -> pdRepo : save(pd)
+  svc --> ctrl : PlageDisponibiliteDTO
+  ctrl --> r : 201 Created
+end
+@enduml
+```
 
 #### 6.3.4. Consulter la liste des salles
 
-*(à compléter)*
+**Endpoint :** `GET /api/salles` (accès authentifié)
+
+##### Classes de conception
+
+Aucune nouvelle classe. `ServiceSalle` expose une méthode de listage simple.
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class SalleController <<controller>> {
+  + listerSalles() : ResponseEntity
+}
+
+class ServiceSalle <<service>> {
+  + listerSalles() : List<SalleResponseDTO>
+}
+
+class SalleRepository <<repository>> {
+  + findAll() : List<Salle>
+}
+
+SalleController ..> ServiceSalle
+ServiceSalle ..> SalleRepository
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary SalleController as ctrl
+control ServiceSalle as svc
+participant SalleRepository as repo <<repository>>
+
+u -> ctrl : GET /api/salles
+ctrl -> svc : listerSalles()
+svc -> repo : findAll()
+repo --> svc : List<Salle>
+svc --> ctrl : List<SalleResponseDTO>
+ctrl --> u : 200 OK
+@enduml
+```
 
 ### 6.4. Groupe 3 : Gestion des réservations
 
+Dans l'analyse, la classe `DemandeReservation` était distincte de `Reservation`. En conception, on simplifie : une seule entité `Reservation` suffit, dont le champ `etat` couvre tout le cycle de vie (`EN_ATTENTE_VALIDATION` → `CONFIRMEE` ou `REJETEE`, ou `ANNULEE`). Cette simplification réduit le nombre de tables et de jointures sans perte d'information.
+
+Les cas de ce groupe s'appuient sur `ReservationController` et `ServiceReservation`.
+
 #### 6.4.1. Rechercher une salle selon différents critères
 
-*(à compléter)*
+**Endpoint :** `GET /api/salles/recherche?nom=X&capaciteMin=N&type=Y&dateDebut=D&dateFin=F`
+
+La recherche multi-critères est implémentée via `JpaSpecificationExecutor<Salle>` et une `SalleSpecification` composable. Chaque paramètre optionnel donne lieu à un prédicat JPA indépendant, combiné avec `and`.
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class SalleController <<controller>> {
+  + rechercherSalles(criteres : SalleRechercheCriteres) : ResponseEntity
+}
+
+class SalleRechercheCriteres <<dto>> {
+  nom : String
+  localisation : String
+  capaciteMin : Integer
+  capaciteMax : Integer
+  equipements : List<String>
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+}
+
+class ServiceSalle <<service>> {
+  + rechercherSalles(criteres : SalleRechercheCriteres) : List<SalleResponseDTO>
+}
+
+class SalleSpecification <<specification>> {
+  + {static} avecNom(nom : String) : Specification<Salle>
+  + {static} avecCapaciteMin(min : Integer) : Specification<Salle>
+  + {static} disponibleSur(debut : LocalDateTime, fin : LocalDateTime) : Specification<Salle>
+}
+
+class SalleRepository <<repository>> {
+  + findAll(spec : Specification<Salle>) : List<Salle>
+}
+
+SalleController ..> SalleRechercheCriteres
+SalleController ..> ServiceSalle
+ServiceSalle ..> SalleSpecification
+ServiceSalle ..> SalleRepository
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary SalleController as ctrl
+control ServiceSalle as svc
+participant SalleSpecification as spec <<specification>>
+participant SalleRepository as repo <<repository>>
+
+u -> ctrl : GET /api/salles/recherche?...
+ctrl -> svc : rechercherSalles(criteres)
+svc -> spec : construire les prédicats (nom, capacite, dispo...)
+spec --> svc : Specification<Salle>
+svc -> repo : findAll(spec)
+repo --> svc : List<Salle>
+svc --> ctrl : List<SalleResponseDTO>
+ctrl --> u : 200 OK
+@enduml
+```
 
 #### 6.4.2. Réserver une salle
 
-*(à compléter)*
+**Endpoint :** `POST /api/reservations`
+
+Selon `salle.reservationSoumiseAValidation` :
+- `false` → la réservation passe directement à `CONFIRMEE` et un mail de confirmation est envoyé ;
+- `true` → la réservation passe à `EN_ATTENTE_VALIDATION` et un mail d'accusé de réception est envoyé.
+
+La disponibilité du créneau est vérifiée avant la création (même logique que pour les plages, en excluant les réservations `ANNULEE` et `REJETEE`).
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class ReservationController <<controller>> {
+  + creerReservation(dto : ReservationCreationDTO) : ResponseEntity
+}
+
+class ReservationCreationDTO <<dto>> {
+  salleId : Long
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+  motif : String
+}
+
+class ReservationResponseDTO <<dto>> {
+  id : Long
+  salleId : Long
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+  motif : String
+  etat : EtatReservation
+}
+
+class ServiceReservation <<service>> {
+  + creerReservation(dto : ReservationCreationDTO, demandeur : Compte) : ReservationResponseDTO
+  - verifierDisponibilite(salleId : Long, debut : LocalDateTime, fin : LocalDateTime)
+}
+
+class ReservationRepository <<repository>> {
+  + save(r : Reservation) : Reservation
+  + existsConflict(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
+}
+
+class Reservation <<entity>> {
+  id : Long
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+  dateCreation : LocalDateTime
+  motif : String
+  etat : EtatReservation
+  salle : Salle
+  demandeur : Compte
+}
+
+class ServiceNotification <<service>> {
+  + envoyerMailConfirmation(mail : String, reservation : Reservation)
+  + envoyerMailAccuseReception(mail : String, reservation : Reservation)
+}
+
+ReservationController ..> ReservationCreationDTO
+ReservationController ..> ServiceReservation
+ServiceReservation ..> ReservationRepository
+ServiceReservation ..> SalleRepository
+ServiceReservation ..> Reservation
+ServiceReservation ..> ServiceNotification
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary ReservationController as ctrl
+control ServiceReservation as svc
+participant SalleRepository as salleRepo <<repository>>
+participant ReservationRepository as resRepo <<repository>>
+participant Reservation as res <<entity>>
+control ServiceNotification as notif
+
+u -> ctrl : POST /api/reservations (ReservationCreationDTO)
+ctrl -> svc : creerReservation(dto, demandeur)
+svc -> salleRepo : findById(salleId)
+salleRepo --> svc : salle
+svc -> resRepo : existsConflict(salleId, debut, fin)
+alt créneau non disponible
+  resRepo --> svc : true
+  svc --> ctrl : ConflictException
+  ctrl --> u : 409 Conflict
+else créneau disponible
+  resRepo --> svc : false
+  svc -> res : new(salle, demandeur, debut, fin, motif)
+  alt salle sans validation
+    svc -> res : setEtat(CONFIRMEE)
+    svc -> resRepo : save(res)
+    svc -> notif : envoyerMailConfirmation(mail, res)
+  else salle avec validation
+    svc -> res : setEtat(EN_ATTENTE_VALIDATION)
+    svc -> resRepo : save(res)
+    svc -> notif : envoyerMailAccuseReception(mail, res)
+  end
+  svc --> ctrl : ReservationResponseDTO
+  ctrl --> u : 201 Created
+end
+@enduml
+```
 
 #### 6.4.3. Consulter une réservation
 
-*(à compléter)*
+**Endpoint :** `GET /api/reservations/{id}` (réservé au demandeur ou à un responsable)
+
+##### Classes de conception
+
+Aucune nouvelle classe.
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary ReservationController as ctrl
+control ServiceReservation as svc
+participant ReservationRepository as repo <<repository>>
+
+u -> ctrl : GET /api/reservations/{id}
+ctrl -> svc : consulterReservation(id, demandeur)
+svc -> repo : findById(id)
+repo --> svc : reservation
+svc -> svc : verifierDroitAcces(demandeur, reservation)
+svc --> ctrl : ReservationResponseDTO
+ctrl --> u : 200 OK
+@enduml
+```
 
 #### 6.4.4. Annuler une réservation
 
-*(à compléter)*
+**Endpoint :** `PUT /api/reservations/{id}/annuler` (réservé au demandeur)
+
+Seules les réservations en état `CONFIRMEE` ou `EN_ATTENTE_VALIDATION` peuvent être annulées.
+
+##### Classes de conception
+
+Aucune nouvelle classe.
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary ReservationController as ctrl
+control ServiceReservation as svc
+participant ReservationRepository as repo <<repository>>
+participant Reservation as res <<entity>>
+control ServiceNotification as notif
+
+u -> ctrl : PUT /api/reservations/{id}/annuler
+ctrl -> svc : annulerReservation(id, demandeur)
+svc -> repo : findById(id)
+repo --> svc : reservation
+svc -> svc : verifierDroitAnnulation(demandeur, reservation)
+alt annulation non autorisée
+  svc --> ctrl : ForbiddenException
+  ctrl --> u : 403 Forbidden
+else annulation autorisée
+  svc -> res : setEtat(ANNULEE)
+  svc -> repo : save(res)
+  svc -> notif : envoyerMailAnnulation(mail, res)
+  svc --> ctrl : ok
+  ctrl --> u : 200 OK
+end
+@enduml
+```
 
 #### 6.4.5. Valider une demande de réservation
 
-*(à compléter)*
+**Endpoint :** `PUT /api/reservations/{id}/valider` (accès réservé aux responsables)
+
+Seules les réservations en état `EN_ATTENTE_VALIDATION` peuvent être validées.
+
+##### Classes de conception
+
+Aucune nouvelle classe.
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Responsable as r
+boundary ReservationController as ctrl
+control ServiceReservation as svc
+participant ReservationRepository as repo <<repository>>
+participant Reservation as res <<entity>>
+control ServiceNotification as notif
+
+r -> ctrl : PUT /api/reservations/{id}/valider
+ctrl -> svc : validerReservation(id)
+svc -> repo : findById(id)
+repo --> svc : reservation
+svc -> svc : verifierEtat(reservation, EN_ATTENTE_VALIDATION)
+svc -> res : setEtat(CONFIRMEE)
+svc -> repo : save(res)
+svc -> notif : envoyerMailConfirmation(reservation.demandeur.mail, res)
+svc --> ctrl : ReservationResponseDTO
+ctrl --> r : 200 OK
+@enduml
+```
 
 #### 6.4.6. Rejeter une demande de réservation
 
-*(à compléter)*
+**Endpoint :** `PUT /api/reservations/{id}/rejeter` (accès réservé aux responsables)
+
+Un motif de rejet est attendu dans le corps de la requête.
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class RejetDTO <<dto>> {
+  motif : String
+}
+
+class ServiceReservation <<service>> {
+  + rejeterReservation(id : Long, motif : String)
+}
+
+ReservationController ..> RejetDTO
+ReservationController ..> ServiceReservation
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Responsable as r
+boundary ReservationController as ctrl
+control ServiceReservation as svc
+participant ReservationRepository as repo <<repository>>
+participant Reservation as res <<entity>>
+control ServiceNotification as notif
+
+r -> ctrl : PUT /api/reservations/{id}/rejeter (RejetDTO)
+ctrl -> svc : rejeterReservation(id, motif)
+svc -> repo : findById(id)
+repo --> svc : reservation
+svc -> svc : verifierEtat(reservation, EN_ATTENTE_VALIDATION)
+svc -> res : setEtat(REJETEE)
+svc -> repo : save(res)
+svc -> notif : envoyerMailRejet(reservation.demandeur.mail, res, motif)
+svc --> ctrl : ok
+ctrl --> r : 200 OK
+@enduml
+```
 
 ## 7. Regroupement des classes
 
 ### 7.1. Groupe domaine
 
-*(à compléter)*
+Le modèle de domaine final, raffiné par rapport à l'analyse :
+- `DemandeReservation` est supprimée et absorbée par `Reservation.etat` ;
+- `PlageDisponibilite` utilise `LocalDateTime` directement (plus de type `Heure` séparé) ;
+- `DemandeCreationCompte` ajoute `tokenValidation` pour la validation par mail.
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+title Modèle de domaine (conception)
+
+class Compte <<entity>> {
+  id : Long
+  login : String
+  motDePasseHash : String
+  mail : String
+  role : RoleCompte
+}
+
+enum RoleCompte {
+  UTILISATEUR
+  RESPONSABLE
+  ADMINISTRATEUR
+}
+
+class DemandeCreationCompte <<entity>> {
+  id : Long
+  login : String
+  motDePasseHash : String
+  mail : String
+  etat : EtatDemande
+  dateCreation : LocalDateTime
+  tokenValidation : String
+}
+
+enum EtatDemande {
+  CREEE
+  MAIL_ENVOYE
+  MAIL_VALIDE
+  VALIDEE
+  REFUSEE
+}
+
+class Salle <<entity>> {
+  id : Long
+  nom : String
+  localisation : String
+  capacite : int
+  description : String
+  reservationSoumiseAValidation : boolean
+}
+
+class Equipement <<entity>> {
+  id : Long
+  nom : String
+  description : String
+}
+
+class PlageDisponibilite <<entity>> {
+  id : Long
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+}
+
+class Reservation <<entity>> {
+  id : Long
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+  dateCreation : LocalDateTime
+  motif : String
+  etat : EtatReservation
+}
+
+enum EtatReservation {
+  EN_ATTENTE_VALIDATION
+  CONFIRMEE
+  ANNULEE
+  REJETEE
+}
+
+class ListeAttente <<entity>> {
+  id : Long
+  position : int
+  dateInscription : LocalDateTime
+}
+
+Compte -> RoleCompte
+DemandeCreationCompte -> EtatDemande
+
+Salle *-- "*" Equipement
+Salle *-- "*" PlageDisponibilite
+
+Reservation --> Salle
+Reservation --> Compte : > demandeur
+Reservation -> EtatReservation
+
+ListeAttente --> Salle
+ListeAttente --> Compte
+@enduml
+```
 
 ### 7.2. Groupe repositories
 
-*(à compléter)*
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+interface CompteRepository <<repository>> {
+  + existsByLogin(login : String) : boolean
+  + existsByMail(mail : String) : boolean
+  + findByLogin(login : String) : Optional<Compte>
+}
+
+interface DemandeCreationCompteRepository <<repository>> {
+  + findByEtat(etat : EtatDemande) : List<DemandeCreationCompte>
+  + findByTokenValidation(token : String) : Optional<DemandeCreationCompte>
+  + existsByLogin(login : String) : boolean
+}
+
+interface SalleRepository <<repository>> {
+  + findAll(spec : Specification<Salle>) : List<Salle>
+  + findAll() : List<Salle>
+}
+
+interface EquipementRepository <<repository>> {
+  + findBySalleId(salleId : Long) : List<Equipement>
+}
+
+interface PlageDisponibiliteRepository <<repository>> {
+  + findBySalleId(salleId : Long) : List<PlageDisponibilite>
+  + existsConflict(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
+}
+
+interface ReservationRepository <<repository>> {
+  + findByDemandeurId(demandeurId : Long) : List<Reservation>
+  + findByEtat(etat : EtatReservation) : List<Reservation>
+  + existsConflict(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
+}
+
+interface ListeAttenteRepository <<repository>> {
+  + findBySalleIdOrderByPosition(salleId : Long) : List<ListeAttente>
+}
+
+@enduml
+```
 
 ### 7.3. Groupe services
 
-*(à compléter)*
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class ServiceCompte <<service>> {
+  + deposerDemande(dto : DemandeCreationCompteDTO)
+  + validerMail(token : String)
+  + listerDemandesEnAttente() : List<DemandeCreationCompteResponseDTO>
+  + validerDemande(id : Long)
+  + refuserDemande(id : Long)
+}
+
+class ServiceSalle <<service>> {
+  + listerSalles() : List<SalleResponseDTO>
+  + rechercherSalles(criteres : SalleRechercheCriteres) : List<SalleResponseDTO>
+  + creerSalle(dto : SalleCreationDTO) : SalleResponseDTO
+  + creerEquipement(salleId : Long, dto : EquipementDTO) : EquipementDTO
+  + ajouterPlageDisponibilite(salleId : Long, dto : PlageDisponibiliteDTO)
+}
+
+class ServiceReservation <<service>> {
+  + creerReservation(dto : ReservationCreationDTO, demandeur : Compte) : ReservationResponseDTO
+  + consulterReservation(id : Long, demandeur : Compte) : ReservationResponseDTO
+  + annulerReservation(id : Long, demandeur : Compte)
+  + validerReservation(id : Long)
+  + rejeterReservation(id : Long, motif : String)
+}
+
+class ServiceNotification <<service>> {
+  + envoyerMailConfirmation(mail : String, reservation : Reservation)
+  + envoyerMailAccuseReception(mail : String, reservation : Reservation)
+  + envoyerMailValidation(mail : String)
+  + envoyerMailRefus(mail : String)
+  + envoyerMailAnnulation(mail : String, reservation : Reservation)
+  + envoyerMailRejet(mail : String, reservation : Reservation, motif : String)
+}
+
+ServiceCompte ..> ServiceNotification
+ServiceReservation ..> ServiceNotification
+@enduml
+```
 
 ### 7.4. Groupe contrôleurs REST
 
-*(à compléter)*
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class CompteController <<controller>> {
+  POST /api/comptes/demandes
+  GET /api/comptes/demandes/valider?token
+  GET /api/comptes/demandes
+  PUT /api/comptes/demandes/{id}/valider
+  PUT /api/comptes/demandes/{id}/refuser
+}
+
+class SalleController <<controller>> {
+  GET /api/salles
+  GET /api/salles/recherche
+  POST /api/salles
+  POST /api/salles/{id}/equipements
+  POST /api/salles/{id}/disponibilites
+}
+
+class ReservationController <<controller>> {
+  POST /api/reservations
+  GET /api/reservations/{id}
+  PUT /api/reservations/{id}/annuler
+  PUT /api/reservations/{id}/valider
+  PUT /api/reservations/{id}/rejeter
+}
+
+class AuthController <<controller>> {
+  POST /api/auth/login
+  POST /api/auth/refresh
+}
+
+CompteController ..> ServiceCompte
+SalleController ..> ServiceSalle
+ReservationController ..> ServiceReservation
+@enduml
+```
 
 ## 8. Choix, questions ouvertes et remarques
 
