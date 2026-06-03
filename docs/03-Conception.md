@@ -387,6 +387,7 @@ enum EtatReservation {
 }
 
 class ListeAttente <<entity>> {
+  id : Long
   position : int
   dateInscription : LocalDateTime
 }
@@ -1184,6 +1185,8 @@ else annulation autorisée
   svc -> res : setEtat(ANNULEE)
   svc -> repo : save(res)
   svc -> notif : envoyerMailAnnulation(mail, res)
+  svc -> svc : promouvoirListeAttente(res)
+  note right : voir §6.6.2
   svc --> ctrl : ok
   ctrl --> u : 200 OK
 end
@@ -1278,6 +1281,235 @@ ctrl --> r : 200 OK
 @enduml
 ```
 
+### 6.5. Groupe 4 : Authentification
+
+Ce groupe couvre le cas d'utilisation « Se connecter / S'authentifier ». Il s'appuie sur `AuthController`, `ServiceAuth` et `ServiceJwt`. Un `JwtFilter` (filtre Spring Security) valide le token sur chaque requête protégée ; ce composant est une infrastructure transversale et n'est pas détaillé ici.
+
+#### 6.5.1. Se connecter / S'authentifier
+
+**Endpoint :** `POST /api/auth/login`
+
+L'utilisateur soumet ses identifiants. `ServiceAuth` retrouve le compte via `CompteRepository`, vérifie le mot de passe (BCrypt), puis demande à `ServiceJwt` de générer un token JWT. En cas de succès, un `TokenResponseDTO` est retourné ; le client l'inclura dans l'en-tête `Authorization: Bearer <token>` de toutes les requêtes suivantes. Les erreurs d'authentification (compte introuvable ou mot de passe incorrect) retournent systématiquement un `401 Unauthorized` sans détailler la cause, pour éviter toute fuite d'information.
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class AuthController <<controller>> {
+  + login(dto : LoginDTO) : ResponseEntity
+}
+
+class LoginDTO <<dto>> {
+  login : String
+  motDePasse : String
+}
+
+class TokenResponseDTO <<dto>> {
+  token : String
+  type : String
+  expiresIn : long
+}
+
+class ServiceAuth <<service>> {
+  + authentifier(dto : LoginDTO) : TokenResponseDTO
+}
+
+class ServiceJwt <<service>> {
+  + genererToken(compte : Compte) : String
+  + validerToken(token : String) : boolean
+  + extraireLogin(token : String) : String
+}
+
+class CompteRepository <<repository>> {
+  + findByLogin(login : String) : Optional<Compte>
+}
+
+AuthController ..> LoginDTO
+AuthController ..> ServiceAuth
+ServiceAuth ..> CompteRepository
+ServiceAuth ..> ServiceJwt
+ServiceAuth ..> TokenResponseDTO
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary AuthController as ctrl
+control ServiceAuth as svc
+participant CompteRepository as repo <<repository>>
+control ServiceJwt as jwt
+
+u -> ctrl : POST /api/auth/login (LoginDTO)
+ctrl -> svc : authentifier(dto)
+svc -> repo : findByLogin(login)
+alt compte introuvable
+  repo --> svc : Optional.empty()
+  svc --> ctrl : AuthenticationException
+  ctrl --> u : 401 Unauthorized
+else compte trouvé
+  repo --> svc : compte
+  svc -> svc : verifierMotDePasse(dto.motDePasse, compte.motDePasseHash)
+  alt mot de passe incorrect
+    svc --> ctrl : AuthenticationException
+    ctrl --> u : 401 Unauthorized
+  else mot de passe correct
+    svc -> jwt : genererToken(compte)
+    jwt --> svc : token
+    svc --> ctrl : TokenResponseDTO
+    ctrl --> u : 200 OK
+  end
+end
+@enduml
+```
+
+### 6.6. Groupe 5 : Gestion de la liste d'attente
+
+La liste d'attente s'applique uniquement aux salles à réservation directe (`reservationSoumiseAValidation = false`). Elle permet à un utilisateur de prendre automatiquement la place d'un autre en cas de désistement.
+
+#### 6.6.1. S'inscrire en liste d'attente
+
+**Endpoint :** `POST /api/reservations/attente`
+
+Lorsqu'un créneau est déjà pris, l'utilisateur peut rejoindre la liste d'attente. Le système vérifie que la salle est bien à réservation directe, que le créneau est effectivement occupé, et que l'utilisateur n'y est pas déjà inscrit. La position est attribuée en fin de liste (`MAX(position) + 1`).
+
+##### Classes de conception
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class ReservationController <<controller>> {
+  + sInscrire(dto : ListeAttenteCreationDTO, demandeur : Compte) : ResponseEntity
+}
+
+class ListeAttenteCreationDTO <<dto>> {
+  salleId : Long
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+}
+
+class ListeAttenteResponseDTO <<dto>> {
+  id : Long
+  position : int
+  dateInscription : LocalDateTime
+}
+
+class ServiceReservation <<service>> {
+  + sInscrireListeAttente(dto : ListeAttenteCreationDTO, demandeur : Compte) : ListeAttenteResponseDTO
+}
+
+class ListeAttenteRepository <<repository>> {
+  + existsByCompteIdAndSalleIdAndDateDebutAndDateFin(...) : boolean
+  + findMaxPosition(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : Optional<Integer>
+  + save(la : ListeAttente) : ListeAttente
+}
+
+class ListeAttente <<entity>> {
+  id : Long
+  position : int
+  dateInscription : LocalDateTime
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
+}
+
+ReservationController ..> ListeAttenteCreationDTO
+ReservationController ..> ServiceReservation
+ServiceReservation ..> SalleRepository
+ServiceReservation ..> ReservationRepository
+ServiceReservation ..> ListeAttenteRepository
+ServiceReservation ..> ListeAttente
+ServiceReservation ..> ListeAttenteResponseDTO
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary ReservationController as ctrl
+control ServiceReservation as svc
+participant SalleRepository as salleRepo <<repository>>
+participant ReservationRepository as resRepo <<repository>>
+participant ListeAttenteRepository as laRepo <<repository>>
+participant ListeAttente as la <<entity>>
+
+u -> ctrl : POST /api/reservations/attente (ListeAttenteCreationDTO)
+ctrl -> svc : sInscrireListeAttente(dto, demandeur)
+svc -> salleRepo : findById(salleId)
+salleRepo --> svc : salle
+alt salle soumise à validation
+  svc --> ctrl : IllegalStateException
+  ctrl --> u : 400 Bad Request
+else salle à réservation directe
+  svc -> resRepo : existsConflict(salleId, debut, fin)
+  alt créneau libre
+    resRepo --> svc : false
+    svc --> ctrl : IllegalStateException
+    ctrl --> u : 400 Bad Request
+  else créneau pris
+    resRepo --> svc : true
+    svc -> laRepo : existsByCompteIdAndSalleIdAndDateDebutAndDateFin(...)
+    alt déjà inscrit
+      laRepo --> svc : true
+      svc --> ctrl : ConflictException
+      ctrl --> u : 409 Conflict
+    else pas encore inscrit
+      laRepo --> svc : false
+      svc -> laRepo : findMaxPosition(salleId, debut, fin)
+      laRepo --> svc : position
+      svc -> la : new(demandeur, salle, debut, fin, position + 1)
+      svc -> laRepo : save(la)
+      svc --> ctrl : ListeAttenteResponseDTO
+      ctrl --> u : 201 Created
+    end
+  end
+end
+@enduml
+```
+
+#### 6.6.2. Promotion automatique lors d'une annulation
+
+Ce cas n'est pas déclenché directement par un utilisateur : il est appelé par `ServiceReservation.annulerReservation` (§6.4.4) après chaque annulation d'une réservation `CONFIRMEE`. Si des inscrits existent pour le créneau libéré, le premier en liste est automatiquement promu : une `Reservation` `CONFIRMEE` est créée en son nom, son entrée est retirée de la liste d'attente, les positions des inscrits suivants sont décrémentées, et un mail de confirmation lui est envoyé.
+
+##### Séquence (appelée depuis `annulerReservation`)
+
+```plantuml
+@startuml
+skin rose
+
+control ServiceReservation as svc
+participant ListeAttenteRepository as laRepo <<repository>>
+participant ReservationRepository as resRepo <<repository>>
+participant Reservation as res <<entity>>
+control ServiceNotification as notif
+
+[-> svc : promouvoirListeAttente(reservationAnnulee)
+svc -> laRepo : findFirstBySalleIdAndDateDebutAndDateFinOrderByPosition(salleId, debut, fin)
+alt aucune entrée en liste d'attente
+  laRepo --> svc : Optional.empty()
+else premier inscrit trouvé
+  laRepo --> svc : listeAttente
+  svc -> res : new(salle, listeAttente.compte, debut, fin, CONFIRMEE)
+  svc -> resRepo : save(res)
+  svc -> laRepo : delete(listeAttente)
+  svc -> laRepo : decrementerPositions(salleId, debut, fin)
+  svc -> notif : envoyerMailConfirmation(listeAttente.compte.mail, res)
+end
+@enduml
+```
+
 ## 7. Regroupement des classes
 
 ### 7.1. Groupe domaine
@@ -1366,6 +1598,8 @@ class ListeAttente <<entity>> {
   id : Long
   position : int
   dateInscription : LocalDateTime
+  dateDebut : LocalDateTime
+  dateFin : LocalDateTime
 }
 
 Compte -> RoleCompte
@@ -1423,7 +1657,11 @@ interface ReservationRepository <<repository>> {
 }
 
 interface ListeAttenteRepository <<repository>> {
-  + findBySalleIdOrderByPosition(salleId : Long) : List<ListeAttente>
+  + findFirstBySalleIdAndDateDebutAndDateFinOrderByPosition(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : Optional<ListeAttente>
+  + existsByCompteIdAndSalleIdAndDateDebutAndDateFin(compteId : Long, salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
+  + findMaxPosition(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : Optional<Integer>
+  + decrementerPositions(salleId : Long, debut : LocalDateTime, fin : LocalDateTime)
+  + findByCompteId(compteId : Long) : List<ListeAttente>
 }
 
 @enduml
@@ -1458,6 +1696,8 @@ class ServiceReservation <<service>> {
   + annulerReservation(id : Long, demandeur : Compte)
   + validerReservation(id : Long)
   + rejeterReservation(id : Long, motif : String)
+  + sInscrireListeAttente(dto : ListeAttenteCreationDTO, demandeur : Compte) : ListeAttenteResponseDTO
+  - promouvoirListeAttente(reservation : Reservation)
 }
 
 class ServiceNotification <<service>> {
@@ -1469,8 +1709,19 @@ class ServiceNotification <<service>> {
   + envoyerMailRejet(mail : String, reservation : Reservation, motif : String)
 }
 
+class ServiceAuth <<service>> {
+  + authentifier(dto : LoginDTO) : TokenResponseDTO
+}
+
+class ServiceJwt <<service>> {
+  + genererToken(compte : Compte) : String
+  + validerToken(token : String) : boolean
+  + extraireLogin(token : String) : String
+}
+
 ServiceCompte ..> ServiceNotification
 ServiceReservation ..> ServiceNotification
+ServiceAuth ..> ServiceJwt
 @enduml
 ```
 
@@ -1503,6 +1754,7 @@ class ReservationController <<controller>> {
   PUT /api/reservations/{id}/annuler
   PUT /api/reservations/{id}/valider
   PUT /api/reservations/{id}/rejeter
+  POST /api/reservations/attente
 }
 
 class AuthController <<controller>> {
@@ -1513,6 +1765,7 @@ class AuthController <<controller>> {
 CompteController ..> ServiceCompte
 SalleController ..> ServiceSalle
 ReservationController ..> ServiceReservation
+AuthController ..> ServiceAuth
 @enduml
 ```
 
@@ -1521,8 +1774,6 @@ ReservationController ..> ServiceReservation
 - **Gestion des conflits de réservation** : la vérification qu'une salle est libre sur un créneau donné est une requête potentiellement complexe. Il faudra définir précisément la requête JPA ou SQL correspondante.
 
 - **Double mode de réservation** : le fait qu'une salle puisse être soit à réservation directe, soit à validation, implique deux branches dans le cycle de vie de `Reservation`. Le *Design Pattern* **State** pourrait être envisagé pour gérer proprement ces deux comportements.
-
-- **Liste d'attente** : la gestion de la liste d'attente (promotion automatique en cas d'annulation) est un mécanisme à préciser. Elle pourrait être traitée par un événement Spring déclenché lors de l'annulation d'une réservation.
 
 - **Annulation automatique** : quand une salle devient indisponible (travaux, événement prioritaire), les réservations existantes doivent être annulées automatiquement et les utilisateurs notifiés.
 

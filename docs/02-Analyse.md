@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Analyse v1.2
+# Projet *Réservation de salles* : Analyse v1.3
 
 ## 1. Table des matières
 
@@ -51,6 +51,7 @@ Pour la pertinence :
 | Compte      | Modifier un mot de passe                                | 3       | 2          | non         |
 | Compte      | Demander la réinitialisation d'un mot de passe          | 3       | 2          | non         |
 | Compte      | Modifier un mot de passe réinitialisé                   | 3       | 2          | non         |
+| Compte      | Se connecter / S'authentifier                           | 1       | 5          | oui         |
 | Salle       | Créer une salle                                         | 1       | 5          | oui         |
 | Salle       | Créer un équipement                                     | 1       | 3          | oui         |
 | Salle       | Ajouter une plage de disponibilité d'une salle          | 4       | 5          | oui         |
@@ -512,6 +513,73 @@ else données valides
   svc -> compte : majMotDePasse(nouveauMotDePasse)
   svc --> ui : confirmation
   ui --> u : confirmation
+end
+@enduml
+```
+
+#### 4.1.9. Se connecter / S'authentifier
+
+##### Classes candidates
+
+```plantuml
+@startuml
+skin rose
+
+class FormulaireConnexion <<boundary>> {
+  login : String
+  motDePasse : String
+}
+
+class ServiceAuth <<control>> {
+  authentifier(login : String, motDePasse : String)
+  genererToken(compte : Compte)
+}
+
+class Compte <<entity>> {
+  login : String
+  motDePasseHash : String
+  mail : String
+  role : RoleCompte
+}
+
+FormulaireConnexion ..> ServiceAuth
+ServiceAuth ..> Compte
+
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Utilisateur as u
+boundary FormulaireConnexion as ui
+control ServiceAuth as svc
+entity Compte as compte
+
+u -> ui : setLogin()
+u -> ui : setMotDePasse()
+alt données incorrectes
+  ui -> ui : verifierDonnees() : false
+  ui --> u : message d'erreur
+else données valides
+  ui -> ui : verifierDonnees()
+  ui -> svc : authentifier(login, motDePasse)
+end
+alt identifiants invalides
+  svc -> compte : findByLogin(login)
+  compte --> svc : null ou motDePasse incorrect
+  svc --> ui : echec authentification
+  ui --> u : message d'erreur générique
+else identifiants valides
+  svc -> compte : findByLogin(login)
+  compte --> svc : compte
+  svc -> svc : verifierMotDePasse(motDePasse, compte)
+  svc -> svc : genererToken(compte)
+  svc --> ui : token
+  ui --> u : redirection vers l'application
 end
 @enduml
 ```
@@ -2400,6 +2468,11 @@ class ServiceNotification <<boundary>> {
   envoyerNotificationAnnulation()
 }
 
+class ServiceAuth <<control>> {
+  authentifier(login : String, motDePasse : String)
+  genererToken(compte : Compte)
+}
+
 @enduml
 ```
 
@@ -2408,6 +2481,11 @@ class ServiceNotification <<boundary>> {
 ```plantuml
 @startuml
 skin rose
+
+class FormulaireConnexion <<boundary>> {
+  login : String
+  motDePasse : String
+}
 
 class ListeDemandesCompteUI <<boundary>> {}
 

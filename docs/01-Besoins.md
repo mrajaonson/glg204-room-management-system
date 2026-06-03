@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Expression des besoins v1.4
+# Projet *Réservation de salles* : Expression des besoins v1.5
 
 ## Table des matières
 
@@ -88,6 +88,7 @@ rectangle "Gestion des comptes" {
   usecase "Modifier les informations d'un compte" as UC_MODIFER_COMPTE
   usecase "Modifier un mot de passe" as UC_MODIFIER_PASSE
   usecase "Demande la réinitialisation d'un mot de passe" as UC_REINITIALISER_PASSE
+  usecase "Se connecter" as UC_CONNECTER
 }
 
 U <|-- E
@@ -98,8 +99,10 @@ U --> UC_CREER
 U --> UC_MODIFER_COMPTE
 U --> UC_MODIFIER_PASSE
 U --> UC_REINITIALISER_PASSE
+U --> UC_CONNECTER
 
 A --> UC_MODIFER_COMPTE
+A --> UC_CONNECTER
 A --> UC_CONSULTER_DEMANDE
 A --> UC_VALIDER
 A --> UC_REFUSER
@@ -287,6 +290,56 @@ En cas d'oubli d'un mot de passe, l'utilisateur peut demander à l'écran de con
 
 ##### Post-conditions
 Le nouveau mot de passe est pris en compte.
+
+#### 4.1.8. Se connecter
+
+##### Résumé
+Un utilisateur s'authentifie auprès du système pour accéder aux fonctionnalités de l'application.
+
+##### Acteurs
+- un utilisateur (enseignant, appariteur, responsable)
+- un administrateur
+
+##### Pré-conditions
+- le compte existe et a été validé par un administrateur
+
+##### Description
+1. l'utilisateur saisit son login et son mot de passe ;
+2. le système vérifie que les données sont bien formées ;
+3. le système vérifie que le login correspond à un compte existant et validé ;
+4. le système vérifie que le mot de passe correspond au compte ;
+5. l'utilisateur est authentifié et accède à l'application.
+
+##### Déroulement alternatif : données incorrectes
+- 2.1 le login ou le mot de passe est vide ;
+- 2.2 le système affiche un message et l'utilisateur peut corriger.
+
+##### Déroulement alternatif : identifiants invalides
+- 3.1 le login ne correspond à aucun compte, ou le mot de passe est incorrect ;
+- 3.2 le système affiche un message d'erreur générique (sans préciser lequel des deux est incorrect).
+
+##### Post-conditions
+- l'utilisateur est authentifié et accède à l'application.
+
+##### Diagramme d'activité
+
+```plantuml
+@startuml
+skin rose
+
+title connexion
+start
+repeat :saisie du login\net du mot de passe;
+repeat while (données correctes?) is (non) not (oui)
+if (identifiants valides?) then (oui)
+  :authentifier l'utilisateur;
+  stop
+else (non)
+  :message d'erreur générique;
+  end
+endif
+@enduml
+```
 
 ### 4.2. Groupe 2 : Gestion des salles
 
