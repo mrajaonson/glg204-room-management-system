@@ -359,7 +359,15 @@ class Salle <<entity>> {
   nom : String
   localisation : String
   capacite : int
+  type : TypeSalle
   reservationSoumiseAValidation : boolean
+}
+
+enum TypeSalle {
+  COURS
+  TP
+  REUNION
+  AMPHI
 }
 
 class Equipement <<entity>> {
@@ -395,6 +403,7 @@ class ListeAttente <<entity>> {
 Compte -> RoleCompte : > role
 DemandeCreationCompte -> EtatDemande : > etat
 
+Salle -> TypeSalle : > type
 Salle *-- "*" Equipement
 Salle *-- "*" PlageDisponibilite
 
@@ -660,6 +669,7 @@ class SalleCreationDTO <<dto>> {
   nom : String
   localisation : String
   capacite : int
+  type : TypeSalle
   description : String
   reservationSoumiseAValidation : boolean
 }
@@ -669,6 +679,7 @@ class SalleResponseDTO <<dto>> {
   nom : String
   localisation : String
   capacite : int
+  type : TypeSalle
   description : String
   reservationSoumiseAValidation : boolean
 }
@@ -686,8 +697,16 @@ class Salle <<entity>> {
   nom : String
   localisation : String
   capacite : int
+  type : TypeSalle
   description : String
   reservationSoumiseAValidation : boolean
+}
+
+enum TypeSalle {
+  COURS
+  TP
+  REUNION
+  AMPHI
 }
 
 SalleController ..> SalleCreationDTO
@@ -695,6 +714,7 @@ SalleController ..> ServiceSalle
 ServiceSalle ..> SalleRepository
 ServiceSalle ..> Salle
 ServiceSalle ..> SalleResponseDTO
+Salle -> TypeSalle : > type
 @enduml
 ```
 
@@ -713,7 +733,7 @@ participant SalleRepository as repo <<repository>>
 r -> ctrl : POST /api/salles (SalleCreationDTO)
 ctrl -> svc : creerSalle(dto)
 svc -> svc : validerDonnees(dto)
-svc -> salle : new(nom, localisation, capacite, description, reservationSoumiseAValidation)
+svc -> salle : new(nom, localisation, capacite, type, description, reservationSoumiseAValidation)
 svc -> repo : save(salle)
 repo --> svc : salle (avec id)
 svc --> ctrl : SalleResponseDTO
@@ -939,9 +959,14 @@ Les cas de ce groupe s'appuient sur `ReservationController` et `ServiceReservati
 
 #### 6.4.1. Rechercher une salle selon différents critères
 
-**Endpoint :** `GET /api/salles/recherche?nom=X&capaciteMin=N&type=Y&dateDebut=D&dateFin=F`
+**Endpoint :** `POST /api/salles/recherche` (corps de requête : un objet `Filtre`)
 
-La recherche multi-critères est implémentée via `JpaSpecificationExecutor<Salle>` et une `SalleSpecification` composable. Chaque paramètre optionnel donne lieu à un prédicat JPA indépendant, combiné avec `and`.
+Plutôt que de multiplier les paramètres de requête (`?nom=…&capaciteMin=…&…`), la recherche passe par un **`POST`** dont le corps porte un **objet unique `Filtre`**. Ce choix présente deux avantages :
+
+- **signature d'endpoint stable** : l'URL ne change pas quand on enrichit les critères ; seul le schéma de `Filtre` évolue ;
+- **`Filtre` évolutif** : ajouter un critère (étage, accessibilité PMR…) revient à ajouter un champ à `Filtre` et un prédicat correspondant, sans toucher à la signature de l'endpoint.
+
+La recherche multi-critères reste implémentée via `JpaSpecificationExecutor<Salle>` et une `SalleSpecification` composable : chaque champ renseigné de `Filtre` donne lieu à un prédicat JPA indépendant, combiné avec `and`.
 
 ##### Classes de conception
 
@@ -951,26 +976,29 @@ skin rose
 hide empty members
 
 class SalleController <<controller>> {
-  + rechercherSalles(criteres : SalleRechercheCriteres) : ResponseEntity
+  + rechercherSalles(filtre : Filtre) : ResponseEntity
 }
 
-class SalleRechercheCriteres <<dto>> {
+class Filtre <<dto>> {
   nom : String
   localisation : String
   capaciteMin : Integer
   capaciteMax : Integer
+  type : TypeSalle
   equipements : List<String>
   dateDebut : LocalDateTime
   dateFin : LocalDateTime
 }
 
 class ServiceSalle <<service>> {
-  + rechercherSalles(criteres : SalleRechercheCriteres) : List<SalleResponseDTO>
+  + rechercherSalles(filtre : Filtre) : List<SalleResponseDTO>
 }
 
 class SalleSpecification <<specification>> {
+  + {static} depuisFiltre(filtre : Filtre) : Specification<Salle>
   + {static} avecNom(nom : String) : Specification<Salle>
   + {static} avecCapaciteMin(min : Integer) : Specification<Salle>
+  + {static} avecType(type : TypeSalle) : Specification<Salle>
   + {static} disponibleSur(debut : LocalDateTime, fin : LocalDateTime) : Specification<Salle>
 }
 
@@ -978,10 +1006,11 @@ class SalleRepository <<repository>> {
   + findAll(spec : Specification<Salle>) : List<Salle>
 }
 
-SalleController ..> SalleRechercheCriteres
+SalleController ..> Filtre
 SalleController ..> ServiceSalle
 ServiceSalle ..> SalleSpecification
 ServiceSalle ..> SalleRepository
+SalleSpecification ..> Filtre
 @enduml
 ```
 
@@ -997,9 +1026,10 @@ control ServiceSalle as svc
 participant SalleSpecification as spec <<specification>>
 participant SalleRepository as repo <<repository>>
 
-u -> ctrl : GET /api/salles/recherche?...
-ctrl -> svc : rechercherSalles(criteres)
-svc -> spec : construire les prédicats (nom, capacite, dispo...)
+u -> ctrl : POST /api/salles/recherche (Filtre)
+ctrl -> svc : rechercherSalles(filtre)
+svc -> spec : depuisFiltre(filtre)
+note right : un prédicat par champ renseigné, combinés avec and
 spec --> svc : Specification<Salle>
 svc -> repo : findAll(spec)
 repo --> svc : List<Salle>
@@ -1016,7 +1046,12 @@ Selon `salle.reservationSoumiseAValidation` :
 - `false` → la réservation passe directement à `CONFIRMEE` et un mail de confirmation est envoyé ;
 - `true` → la réservation passe à `EN_ATTENTE_VALIDATION` et un mail d'accusé de réception est envoyé.
 
-La disponibilité du créneau est vérifiée avant la création (même logique que pour les plages, en excluant les réservations `ANNULEE` et `REJETEE`).
+Deux vérifications précèdent la création :
+
+1. **Le créneau tombe dans une plage de disponibilité** de la salle : on s'assure que `[dateDebut, dateFin]` est couvert par une `PlageDisponibilite` de la salle. Sans cela, le concept de `PlageDisponibilite` serait inopérant : une salle pourrait être réservée en dehors de tout créneau déclaré ouvert.
+2. **Aucun conflit avec une réservation existante** : même logique de chevauchement que pour les plages, en excluant les réservations `ANNULEE` et `REJETEE` (le filtre sur l'état fait partie de la requête `existsConflict`).
+
+> **Concurrence (mécanisme simple, v1)** : on ne verrouille pas le créneau pendant que le client réfléchit. Le déroulement se fait en deux temps : le client consulte la liste des salles disponibles, puis il soumet sa réservation. Si, entre les deux, un autre client a réservé le même créneau, le contrôle `existsConflict` au moment de la soumission échoue et la demande est rejetée (`409 Conflict`). C'est donc le premier à enregistrer qui l'emporte ; le second est informé que le créneau n'est plus libre et peut relancer une recherche.
 
 ##### Classes de conception
 
@@ -1047,12 +1082,17 @@ class ReservationResponseDTO <<dto>> {
 
 class ServiceReservation <<service>> {
   + creerReservation(dto : ReservationCreationDTO, demandeur : Compte) : ReservationResponseDTO
+  - verifierDansPlageDisponible(salleId : Long, debut : LocalDateTime, fin : LocalDateTime)
   - verifierDisponibilite(salleId : Long, debut : LocalDateTime, fin : LocalDateTime)
 }
 
 class ReservationRepository <<repository>> {
   + save(r : Reservation) : Reservation
   + existsConflict(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
+}
+
+class PlageDisponibiliteRepository <<repository>> {
+  + couvreCreneau(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
 }
 
 class Reservation <<entity>> {
@@ -1075,6 +1115,7 @@ ReservationController ..> ReservationCreationDTO
 ReservationController ..> ServiceReservation
 ServiceReservation ..> ReservationRepository
 ServiceReservation ..> SalleRepository
+ServiceReservation ..> PlageDisponibiliteRepository
 ServiceReservation ..> Reservation
 ServiceReservation ..> ServiceNotification
 @enduml
@@ -1090,6 +1131,7 @@ actor Utilisateur as u
 boundary ReservationController as ctrl
 control ServiceReservation as svc
 participant SalleRepository as salleRepo <<repository>>
+participant PlageDisponibiliteRepository as pdRepo <<repository>>
 participant ReservationRepository as resRepo <<repository>>
 participant Reservation as res <<entity>>
 control ServiceNotification as notif
@@ -1098,25 +1140,33 @@ u -> ctrl : POST /api/reservations (ReservationCreationDTO)
 ctrl -> svc : creerReservation(dto, demandeur)
 svc -> salleRepo : findById(salleId)
 salleRepo --> svc : salle
-svc -> resRepo : existsConflict(salleId, debut, fin)
-alt créneau non disponible
-  resRepo --> svc : true
-  svc --> ctrl : ConflictException
-  ctrl --> u : 409 Conflict
-else créneau disponible
-  resRepo --> svc : false
-  svc -> res : new(salle, demandeur, debut, fin, motif)
-  alt salle sans validation
-    svc -> res : setEtat(CONFIRMEE)
-    svc -> resRepo : save(res)
-    svc -> notif : envoyerMailConfirmation(mail, res)
-  else salle avec validation
-    svc -> res : setEtat(EN_ATTENTE_VALIDATION)
-    svc -> resRepo : save(res)
-    svc -> notif : envoyerMailAccuseReception(mail, res)
+svc -> pdRepo : couvreCreneau(salleId, debut, fin)
+alt créneau hors plage de disponibilité
+  pdRepo --> svc : false
+  svc --> ctrl : IllegalStateException
+  ctrl --> u : 400 Bad Request
+else créneau dans une plage disponible
+  pdRepo --> svc : true
+  svc -> resRepo : existsConflict(salleId, debut, fin)
+  alt créneau déjà réservé
+    resRepo --> svc : true
+    svc --> ctrl : ConflictException
+    ctrl --> u : 409 Conflict
+  else créneau libre
+    resRepo --> svc : false
+    svc -> res : new(salle, demandeur, debut, fin, motif)
+    alt salle sans validation
+      svc -> res : setEtat(CONFIRMEE)
+      svc -> resRepo : save(res)
+      svc -> notif : envoyerMailConfirmation(mail, res)
+    else salle avec validation
+      svc -> res : setEtat(EN_ATTENTE_VALIDATION)
+      svc -> resRepo : save(res)
+      svc -> notif : envoyerMailAccuseReception(mail, res)
+    end
+    svc --> ctrl : ReservationResponseDTO
+    ctrl --> u : 201 Created
   end
-  svc --> ctrl : ReservationResponseDTO
-  ctrl --> u : 201 Created
 end
 @enduml
 ```
@@ -1186,14 +1236,62 @@ else annulation autorisée
   svc -> repo : save(res)
   svc -> notif : envoyerMailAnnulation(mail, res)
   svc -> svc : promouvoirListeAttente(res)
-  note right : voir §6.6.2
+  note right : voir #6.6.2
   svc --> ctrl : ok
   ctrl --> u : 200 OK
 end
 @enduml
 ```
 
-#### 6.4.5. Valider une demande de réservation
+#### 6.4.5. Consulter les demandes de réservation en attente
+
+**Endpoint :** `GET /api/reservations?etat=EN_ATTENTE_VALIDATION` (accès réservé aux responsables)
+
+Ce cas permet à un responsable de lister les réservations qu'il doit traiter avant de les valider ou de les rejeter. Il s'appuie sur `ReservationRepository.findByEtat`.
+
+##### Classes de conception
+
+Aucune nouvelle classe. On ajoute une méthode de listage à `ServiceReservation`.
+
+```plantuml
+@startuml
+skin rose
+hide empty members
+
+class ServiceReservation <<service>> {
+  + listerDemandesEnAttente() : List<ReservationResponseDTO>
+}
+
+class ReservationRepository <<repository>> {
+  + findByEtat(etat : EtatReservation) : List<Reservation>
+}
+
+ServiceReservation ..> ReservationRepository
+ServiceReservation ..> ReservationResponseDTO
+@enduml
+```
+
+##### Séquence
+
+```plantuml
+@startuml
+skin rose
+
+actor Responsable as r
+boundary ReservationController as ctrl
+control ServiceReservation as svc
+participant ReservationRepository as repo <<repository>>
+
+r -> ctrl : GET /api/reservations?etat=EN_ATTENTE_VALIDATION
+ctrl -> svc : listerDemandesEnAttente()
+svc -> repo : findByEtat(EN_ATTENTE_VALIDATION)
+repo --> svc : List<Reservation>
+svc --> ctrl : List<ReservationResponseDTO>
+ctrl --> r : 200 OK
+@enduml
+```
+
+#### 6.4.6. Valider une demande de réservation
 
 **Endpoint :** `PUT /api/reservations/{id}/valider` (accès réservé aux responsables)
 
@@ -1229,7 +1327,7 @@ ctrl --> r : 200 OK
 @enduml
 ```
 
-#### 6.4.6. Rejeter une demande de réservation
+#### 6.4.7. Rejeter une demande de réservation
 
 **Endpoint :** `PUT /api/reservations/{id}/rejeter` (accès réservé aux responsables)
 
@@ -1374,6 +1472,8 @@ end
 
 La liste d'attente s'applique uniquement aux salles à réservation directe (`reservationSoumiseAValidation = false`). Elle permet à un utilisateur de prendre automatiquement la place d'un autre en cas de désistement.
 
+> **Note sur l'appariement des créneaux** : contrairement à la détection de conflit de réservation, qui raisonne par *chevauchement* (`dateDebut < fin AND dateFin > debut`), la liste d'attente apparie les créneaux par **égalité exacte** des bornes `(salle, dateDebut, dateFin)`. On ne met donc en file d'attente que des demandes portant exactement sur le même créneau qu'une réservation existante, et la promotion ne concerne que les inscrits dont le créneau coïncide avec celui libéré. C'est une simplification assumée pour la v1 : la généralisation à des créneaux chevauchants (promouvoir le premier inscrit *compatible* avec le créneau libéré) est laissée en évolution.
+
 #### 6.6.1. S'inscrire en liste d'attente
 
 **Endpoint :** `POST /api/reservations/attente`
@@ -1481,7 +1581,7 @@ end
 
 #### 6.6.2. Promotion automatique lors d'une annulation
 
-Ce cas n'est pas déclenché directement par un utilisateur : il est appelé par `ServiceReservation.annulerReservation` (§6.4.4) après chaque annulation d'une réservation `CONFIRMEE`. Si des inscrits existent pour le créneau libéré, le premier en liste est automatiquement promu : une `Reservation` `CONFIRMEE` est créée en son nom, son entrée est retirée de la liste d'attente, les positions des inscrits suivants sont décrémentées, et un mail de confirmation lui est envoyé.
+Ce cas n'est pas déclenché directement par un utilisateur : il est appelé par `ServiceReservation.annulerReservation` après chaque annulation d'une réservation `CONFIRMEE`. Si des inscrits existent pour le créneau libéré, le premier en liste est automatiquement promu : une `Reservation` `CONFIRMEE` est créée en son nom, son entrée est retirée de la liste d'attente, les positions des inscrits suivants sont décrémentées, et un mail de confirmation lui est envoyé.
 
 ##### Séquence (appelée depuis `annulerReservation`)
 
@@ -1517,7 +1617,9 @@ end
 Le modèle de domaine final, raffiné par rapport à l'analyse :
 - `DemandeReservation` est supprimée et absorbée par `Reservation.etat` ;
 - `PlageDisponibilite` utilise `LocalDateTime` directement (plus de type `Heure` séparé) ;
-- `DemandeCreationCompte` ajoute `tokenValidation` pour la validation par mail.
+- `DemandeCreationCompte` ajoute `tokenValidation` pour la validation par mail ;
+- `Salle` conserve son `type` (`TypeSalle`) issu de l'analyse : il sert de critère de recherche ;
+- `ListeAttente` est introduite en conception pour gérer les désistements sur les salles à réservation directe.
 
 ```plantuml
 @startuml
@@ -1562,8 +1664,16 @@ class Salle <<entity>> {
   nom : String
   localisation : String
   capacite : int
+  type : TypeSalle
   description : String
   reservationSoumiseAValidation : boolean
+}
+
+enum TypeSalle {
+  COURS
+  TP
+  REUNION
+  AMPHI
 }
 
 class Equipement <<entity>> {
@@ -1605,6 +1715,7 @@ class ListeAttente <<entity>> {
 Compte -> RoleCompte
 DemandeCreationCompte -> EtatDemande
 
+Salle -> TypeSalle : > type
 Salle *-- "*" Equipement
 Salle *-- "*" PlageDisponibilite
 
@@ -1648,6 +1759,7 @@ interface EquipementRepository <<repository>> {
 interface PlageDisponibiliteRepository <<repository>> {
   + findBySalleId(salleId : Long) : List<PlageDisponibilite>
   + existsConflict(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
+  + couvreCreneau(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
 }
 
 interface ReservationRepository <<repository>> {
@@ -1684,7 +1796,7 @@ class ServiceCompte <<service>> {
 
 class ServiceSalle <<service>> {
   + listerSalles() : List<SalleResponseDTO>
-  + rechercherSalles(criteres : SalleRechercheCriteres) : List<SalleResponseDTO>
+  + rechercherSalles(filtre : Filtre) : List<SalleResponseDTO>
   + creerSalle(dto : SalleCreationDTO) : SalleResponseDTO
   + creerEquipement(salleId : Long, dto : EquipementDTO) : EquipementDTO
   + ajouterPlageDisponibilite(salleId : Long, dto : PlageDisponibiliteDTO)
@@ -1693,6 +1805,7 @@ class ServiceSalle <<service>> {
 class ServiceReservation <<service>> {
   + creerReservation(dto : ReservationCreationDTO, demandeur : Compte) : ReservationResponseDTO
   + consulterReservation(id : Long, demandeur : Compte) : ReservationResponseDTO
+  + listerDemandesEnAttente() : List<ReservationResponseDTO>
   + annulerReservation(id : Long, demandeur : Compte)
   + validerReservation(id : Long)
   + rejeterReservation(id : Long, motif : String)
@@ -1742,7 +1855,7 @@ class CompteController <<controller>> {
 
 class SalleController <<controller>> {
   GET /api/salles
-  GET /api/salles/recherche
+  POST /api/salles/recherche
   POST /api/salles
   POST /api/salles/{id}/equipements
   POST /api/salles/{id}/disponibilites
@@ -1751,6 +1864,7 @@ class SalleController <<controller>> {
 class ReservationController <<controller>> {
   POST /api/reservations
   GET /api/reservations/{id}
+  GET /api/reservations?etat
   PUT /api/reservations/{id}/annuler
   PUT /api/reservations/{id}/valider
   PUT /api/reservations/{id}/rejeter
@@ -1759,7 +1873,6 @@ class ReservationController <<controller>> {
 
 class AuthController <<controller>> {
   POST /api/auth/login
-  POST /api/auth/refresh
 }
 
 CompteController ..> ServiceCompte
@@ -1772,6 +1885,10 @@ AuthController ..> ServiceAuth
 ## 8. Choix, questions ouvertes et remarques
 
 - **Gestion des conflits de réservation** : la vérification qu'une salle est libre sur un créneau donné est une requête potentiellement complexe. Il faudra définir précisément la requête JPA ou SQL correspondante.
+
+- **Concurrence sur la création de réservation** : pour la v1, on retient un mécanisme simple et optimiste : la disponibilité est consultée puis la réservation soumise séparément, et toute demande arrivant après qu'un autre client a pris le créneau est rejetée (`409 Conflict`). Le premier à enregistrer l'emporte, sans verrou ni session réservant le créneau. Une évolution pourra être envisagée si une vraie atomicité devient nécessaire sous forte charge.
+
+- **Liste d'attente sur créneaux chevauchants** : la v1 apparie les inscriptions par créneau exact. Généraliser à la promotion du premier inscrit *compatible* avec un créneau libéré (chevauchement) est une évolution à étudier.
 
 - **Double mode de réservation** : le fait qu'une salle puisse être soit à réservation directe, soit à validation, implique deux branches dans le cycle de vie de `Reservation`. Le *Design Pattern* **State** pourrait être envisagé pour gérer proprement ces deux comportements.
 

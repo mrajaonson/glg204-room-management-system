@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Analyse v1.3
+# Projet *Réservation de salles* : Analyse v1.4
 
 ## 1. Table des matières
 
@@ -799,13 +799,12 @@ skin rose
 
 class ListeSallesUI <<boundary>> {
   sallesAffichees : Liste<Salle>
-  filtreType : TypeSalle
-  filtreRecherche : String
+  filtre : Filtre
 }
 
 class ServiceSalle <<control>> {
   listerSalles()
-  filtrerSalles()
+  rechercherSalles(filtre : Filtre)
 }
 
 class Salle <<entity>> {
@@ -824,6 +823,8 @@ ServiceSalle ..> Salle
 @enduml
 ```
 
+Le filtrage de la liste s'appuie sur l'objet `Filtre` et la méthode unique `rechercherSalles(filtre)` ; il n'y a plus d'attributs de filtre dédiés ni de méthodes de filtrage spécifiques.
+
 ##### Séquence
 
 ```plantuml
@@ -836,11 +837,11 @@ control ServiceSalle as svc
 entity Salle as salle
 
 r -> ui : consulterListeSalles()
-alt filtrage par type
-  r -> ui : setFiltreType(type)
-  ui -> svc : filtrerSallesByType(type)
-  svc -> salle : findByType(type)
-  salle --> svc : liste des salles
+alt avec filtre
+  r -> ui : renseignerFiltre()
+  ui -> ui : construireFiltre()
+  ui -> svc : rechercherSalles(filtre)
+  note right : filtrage détaillé en 4.3.2
   svc --> ui : liste filtrée
   ui --> r : affiche la liste filtrée
 else sans filtre
@@ -1342,15 +1343,12 @@ skin rose
 
 class ListeSallesReservationUI <<boundary>> {
   sallesAffichees : Liste<Salle>
-  filtreType : TypeSalle
-  filtreCapaciteMin : Integer
-  filtreCapaciteMax : Integer
-  disponibilite : Boolean
+  filtre : Filtre
 }
 
 class ServiceSalle <<control>> {
   listerSalles()
-  filtrerSalles()
+  rechercherSalles(filtre : Filtre)
 }
 
 class Salle <<entity>> {
@@ -1371,6 +1369,8 @@ ServiceSalle ..> Salle
 @enduml
 ```
 
+Le filtrage de la liste s'appuie sur l'objet `Filtre` et la méthode unique `rechercherSalles(filtre)` ; il n'y a plus d'attributs de filtre dédiés ni de méthodes de filtrage spécifiques.
+
 ##### Séquence
 
 ```plantuml
@@ -1383,13 +1383,11 @@ control ServiceSalle as svc
 entity Salle as salle
 
 u -> ui : afficherListeSalles()
-alt filtrage par type et capacité
-  u -> ui : setFiltreType(type)
-  u -> ui : setCapaciteMin(min)
-  u -> ui : setCapaciteMax(max)
-  ui -> svc : filtrerSalles(type, min, max)
-  svc -> salle : findByTypeAndCapacite(type, min, max)
-  salle --> svc : liste des salles filtrées
+alt avec filtre
+  u -> ui : renseignerFiltre()
+  ui -> ui : construireFiltre()
+  ui -> svc : rechercherSalles(filtre)
+  note right : filtrage détaillé en 4.3.2
   svc --> ui : liste filtrée
   ui --> u : affiche la liste filtrée
 else sans filtre
@@ -1403,6 +1401,8 @@ end
 ```
 
 #### 4.3.2. Rechercher une salle selon différents critères
+
+Les critères de recherche sont regroupés dans un **objet unique `Filtre`** passé en paramètre à `ServiceSalle.rechercherSalles(filtre)`. Ce regroupement évite de multiplier les paramètres et rend la recherche **évolutive** : ajouter un critère revient à enrichir `Filtre`, sans changer la signature du service. Le formulaire construit ce `Filtre` à partir des saisies de l'utilisateur.
 
 ##### Classes candidates
 
@@ -1425,7 +1425,7 @@ class FormulaireRechercheSalle <<boundary>> {
 }
 
 class ServiceSalle <<control>> {
-  rechercherSalles()
+  rechercherSalles(filtre : Filtre)
   appliquerFiltres()
 }
 
@@ -1484,9 +1484,9 @@ entity Salle as salle
 u -> ui : setNom()
 u -> ui : setLocalisation()
 ui -> ui : verifierDonnees()
-ui -> svc : rechercherSalles(formulaire)
-svc -> f : new Filtre(nom, localisation)
-f --> svc : filtre
+ui -> f : new Filtre(nom, localisation)
+f --> ui : filtre
+ui -> svc : rechercherSalles(filtre)
 svc -> filtre : creerFiltre(filtre)
 svc -> salle : findAll()
 salle --> svc : toutes les salles
@@ -1518,9 +1518,9 @@ u -> ui : setDate()
 u -> ui : setHeureDebut()
 u -> ui : setHeureFin()
 ui -> ui : verifierDonnees()
-ui -> svc : rechercherSalles(formulaire)
-svc -> f : new Filtre(capaciteMin, type, disponibilite, dateDebut, dateFin, heureDebut, heureFin)
-f --> svc : filtre
+ui -> f : new Filtre(capaciteMin, type, disponibilite, dateDebut, dateFin, heureDebut, heureFin)
+f --> ui : filtre
+ui -> svc : rechercherSalles(filtre)
 svc -> filtre : creerFiltre(filtre)
 svc -> salle : findByCapaciteAndType(capaciteMin, type)
 salle --> svc : salles candidates
@@ -2426,8 +2426,7 @@ class ServiceCompte <<control>> {
 
 class ServiceSalle <<control>> {
   listerSalles()
-  rechercherSalles()
-  filtrerSalles()
+  rechercherSalles(filtre : Filtre)
   creerSalle()
   modifierSalle()
   supprimerSalle()
@@ -2532,16 +2531,12 @@ class FormulaireDisponibiliteSalle <<boundary>> {
 
 class ListeSallesUI <<boundary>> {
   sallesAffichees : Liste<Salle>
-  filtreType : TypeSalle
-  filtreRecherche : String
+  filtre : Filtre
 }
 
 class ListeSallesReservationUI <<boundary>> {
   sallesAffichees : Liste<Salle>
-  filtreType : TypeSalle
-  filtreCapaciteMin : Integer
-  filtreCapaciteMax : Integer
-  disponibilite : Boolean
+  filtre : Filtre
 }
 
 class ListeDemandesReservationUI <<boundary>> {
