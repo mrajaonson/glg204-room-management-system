@@ -229,7 +229,7 @@ end note
 
 #### 4.11.2. Architecture avec load balancer (évolution horizontale)
 
-Si la charge augmente, on peut multiplier les instances backend derrière un **load balancer**. Le frontend reste servi par un **Nginx** unique — les fichiers statiques Vue.js n'ont pas besoin d'être scalés. L'authentification **JWT** (*stateless*) rend cette évolution naturelle : aucune session serveur à synchroniser entre les instances.
+Si la charge augmente, on peut multiplier les instances backend derrière un **load balancer**. Le frontend reste servi par un **Nginx** unique, les fichiers statiques Vue.js n'ont pas besoin d'être scalés. L'authentification **JWT** (*stateless*) rend cette évolution naturelle : aucune session serveur à synchroniser entre les instances.
 
 ```plantuml
 @startuml
@@ -288,7 +288,7 @@ end note
 @enduml
 ```
 
-- le frontend Vue.js est servi par un **Nginx** unique — les fichiers statiques étant identiques pour tous les utilisateurs, il n'y a aucun intérêt à les dupliquer ;
+- le frontend Vue.js est servi par un **Nginx** unique, les fichiers statiques étant identiques pour tous les utilisateurs, il n'y a aucun intérêt à les dupliquer ;
 - le **load balancer** distribue les appels API REST entre les instances Spring Boot ;
 - les tokens **JWT étant sans état**, n'importe quelle instance peut traiter n'importe quelle requête sans partage de session ;
 - la base de données PostgreSQL reste centralisée ; elle peut évoluer vers un cluster (primary + replicas en lecture) si elle devenait un goulot d'étranglement ;
@@ -305,8 +305,12 @@ Les entités principales identifiées lors de l'analyse sont :
 - `Salle` : représente une salle pouvant être réservée ;
 - `Equipement` : représente un équipement disponible dans une salle ;
 - `PlageDisponibilite` : représente une plage horaire durant laquelle une salle est disponible ;
-- `Reservation` : représente une réservation effective ou une demande de réservation ;
-- `ListeAttente` : représente une position dans la liste d'attente pour une salle.
+- `Reservation` : représente une réservation effective ;
+- `DemandeReservation` : représente une demande de réservation en attente de traitement.
+
+À cette liste, la conception ajoute une entité :
+
+- `ListeAttente` : représente une position dans la liste d'attente pour une salle (gestion des désistements sur les salles à réservation directe).
 
 Un point important à noter : la gestion de la **disponibilité des salles** et la **détection des conflits de réservation** constituent la complexité principale de ce projet. Il faudra traiter ces *use cases* en priorité pour valider le modèle.
 
@@ -339,12 +343,12 @@ enum RoleCompte {
   ADMINISTRATEUR
 }
 
-class DemandeCreationCompte <<entity>> {
+class DemandeCreationCompte <<lifecycle>> {
   login : String
   motDePasse : String
   mail : String
   etat : EtatDemande
-  dateCreation : LocalDateTime
+  dateCreation : Date
 }
 
 enum EtatDemande {
@@ -360,7 +364,7 @@ class Salle <<entity>> {
   localisation : String
   capacite : int
   type : TypeSalle
-  reservationSoumiseAValidation : boolean
+  reservationAvecValidation : boolean
 }
 
 enum TypeSalle {
@@ -375,29 +379,43 @@ class Equipement <<entity>> {
   description : String
 }
 
-class PlageDisponibilite <<entity>> {
-  dateDebut : LocalDateTime
-  dateFin : LocalDateTime
+class PlageDisponibilite <<lifecycle>> {
+  dateDebut : Date
+  heureDebut : Heure
+  dateFin : Date
+  heureFin : Heure
+}
+
+class Heure <<value>> {
+  heure : Integer
+  minute : Integer
 }
 
 class Reservation <<entity>> {
-  dateDebut : LocalDateTime
-  dateFin : LocalDateTime
-  dateCreation : LocalDateTime
-  etat : EtatReservation
+  dateDebut : Date
+  heureDebut : Heure
+  dateFin : Date
+  heureFin : Heure
+  motif : String
+  statut : EtatReservation
 }
 
 enum EtatReservation {
-  EN_ATTENTE_VALIDATION
+  EN_ATTENTE
   CONFIRMEE
+  REFUSEE
   ANNULEE
-  REJETEE
 }
 
-class ListeAttente <<entity>> {
-  id : Long
-  position : int
-  dateInscription : LocalDateTime
+class DemandeReservation <<lifecycle>> {
+  dateCreation : Date
+  etat : EtatDemandeReservation
+}
+
+enum EtatDemandeReservation {
+  CREEE
+  VALIDEE
+  REJETEE
 }
 
 Compte -> RoleCompte : > role
@@ -406,13 +424,15 @@ DemandeCreationCompte -> EtatDemande : > etat
 Salle -> TypeSalle : > type
 Salle *-- "*" Equipement
 Salle *-- "*" PlageDisponibilite
+PlageDisponibilite --> Heure : > heureDebut / heureFin
 
 Reservation --> Salle : > salle
-Reservation --> Compte : > utilisateur
-Reservation -> EtatReservation : > etat
+Reservation --> Compte : > demandeur
+Reservation -> EtatReservation : > statut
+Reservation --> Heure : > heureDebut / heureFin
 
-ListeAttente --> Salle
-ListeAttente --> Compte
+DemandeReservation --> Reservation : > reservation
+DemandeReservation -> EtatDemandeReservation : > etat
 @enduml
 ```
 
@@ -423,10 +443,10 @@ Les quatre cas de gestion des comptes s'appuient sur `CompteController` et `Serv
 #### 6.2.1. Déposer une demande de création de compte
 
 **Endpoints :**
-- `POST /api/comptes/demandes` — soumettre la demande
-- `GET /api/comptes/demandes/valider?token={token}` — valider le mail via le lien reçu
+- `POST /api/comptes/demandes` : soumettre la demande
+- `GET /api/comptes/demandes/valider?token={token}` : valider le mail via le lien reçu
 
-Un champ `tokenValidation` est ajouté à `DemandeCreationCompte` pour sécuriser le lien de validation envoyé par mail. Le mot de passe est haché (BCrypt) avant la persistance.
+Un champ `tokenValidation` est ajouté à `DemandeCreationCompte` pour sécuriser le lien de validation envoyé par mail. Le mot de passe est haché (BCrypt) avant la persistance. Lorsque l'utilisateur clique sur le lien reçu, `validerMail` retrouve la demande via son token et la fait passer à l'état `MAIL_VALIDE` ; elle devient alors visible des administrateurs.
 
 ##### Classes de conception
 
@@ -461,6 +481,7 @@ class DemandeCreationCompteRepository <<repository>> {
   + save(d : DemandeCreationCompte) : DemandeCreationCompte
   + findByTokenValidation(token : String) : Optional<DemandeCreationCompte>
   + existsByLogin(login : String) : boolean
+  + existsByMail(mail : String) : boolean
 }
 
 class DemandeCreationCompte <<entity>> {
@@ -506,8 +527,8 @@ alt données invalides
   svc --> ctrl : ValidationException
   ctrl --> u : 400 Bad Request
 else login ou mail déjà existant
-  svc -> compteRepo : existsByLogin(login)
-  svc -> dcmRepo : existsByLogin(login)
+  svc -> compteRepo : existsByLogin(login) / existsByMail(mail)
+  svc -> dcmRepo : existsByLogin(login) / existsByMail(mail)
   svc --> ctrl : ConflictException
   ctrl --> u : 409 Conflict
 else données valides et login disponible
@@ -953,9 +974,9 @@ ctrl --> u : 200 OK
 
 ### 6.4. Groupe 3 : Gestion des réservations
 
-Dans l'analyse, la classe `DemandeReservation` était distincte de `Reservation`. En conception, on simplifie : une seule entité `Reservation` suffit, dont le champ `etat` couvre tout le cycle de vie (`EN_ATTENTE_VALIDATION` → `CONFIRMEE` ou `REJETEE`, ou `ANNULEE`). Cette simplification réduit le nombre de tables et de jointures sans perte d'information.
+Dans l'analyse, la classe `DemandeReservation` était distincte de `Reservation`, chacune avec son propre état (`EtatDemandeReservation` et `EtatReservation`). En conception, on simplifie : une seule entité `Reservation`, dont le champ `etat` fusionne les deux enums et couvre tout le cycle de vie (`EN_ATTENTE_VALIDATION` → `CONFIRMEE` ou `REJETEE`, ou `ANNULEE`).
 
-Les cas de ce groupe s'appuient sur `ReservationController` et `ServiceReservation`.
+Les cas de ce groupe s'appuient sur `ReservationController` et `ServiceReservation`, à l'exception de la recherche de salle qui relève de `SalleController` et `ServiceSalle`.
 
 #### 6.4.1. Rechercher une salle selon différents critères
 
@@ -1521,6 +1542,9 @@ class ListeAttente <<entity>> {
   dateFin : LocalDateTime
 }
 
+ListeAttente --> Salle : > salle
+ListeAttente --> Compte : > compte
+
 ReservationController ..> ListeAttenteCreationDTO
 ReservationController ..> ServiceReservation
 ServiceReservation ..> SalleRepository
@@ -1581,7 +1605,7 @@ end
 
 #### 6.6.2. Promotion automatique lors d'une annulation
 
-Ce cas n'est pas déclenché directement par un utilisateur : il est appelé par `ServiceReservation.annulerReservation` après chaque annulation d'une réservation `CONFIRMEE`. Si des inscrits existent pour le créneau libéré, le premier en liste est automatiquement promu : une `Reservation` `CONFIRMEE` est créée en son nom, son entrée est retirée de la liste d'attente, les positions des inscrits suivants sont décrémentées, et un mail de confirmation lui est envoyé.
+Ce cas n'est pas déclenché directement par un utilisateur : il est appelé par `ServiceReservation.annulerReservation` après chaque annulation. Pour les salles soumises à validation, la liste d'attente est vide par construction, l'inscription y est refusée et l'appel est sans effet. Si des inscrits existent pour le créneau libéré, le premier en liste est automatiquement promu : une `Reservation` `CONFIRMEE` est créée en son nom, son entrée est retirée de la liste d'attente, les positions des inscrits suivants sont décrémentées, et un mail de confirmation lui est envoyé.
 
 ##### Séquence (appelée depuis `annulerReservation`)
 
@@ -1614,11 +1638,11 @@ end
 
 ### 7.1. Groupe domaine
 
-Le modèle de domaine final, raffiné par rapport à l'analyse :
-- `DemandeReservation` est supprimée et absorbée par `Reservation.etat` ;
-- `PlageDisponibilite` utilise `LocalDateTime` directement (plus de type `Heure` séparé) ;
-- `DemandeCreationCompte` ajoute `tokenValidation` pour la validation par mail ;
-- `Salle` conserve son `type` (`TypeSalle`) issu de l'analyse : il sert de critère de recherche ;
+Le modèle de domaine final par rapport à l'analyse :
+- `DemandeReservation` est supprimée et absorbée par `Reservation.etat` : les enums `EtatDemandeReservation` et `EtatReservation` de l'analyse sont fusionnés en un seul `EtatReservation` (`EN_ATTENTE_VALIDATION`, `CONFIRMEE`, `REJETEE`, `ANNULEE`) ;
+- les couples `Date` + `Heure` de l'analyse sont remplacés par `LocalDateTime` (plus de type valeur `Heure` séparé), pour `PlageDisponibilite` comme pour `Reservation` ;
+- `DemandeCreationCompte` ajoute `tokenValidation` pour la validation par mail ; le mot de passe est stocké haché (`motDePasseHash`) ;
+- `Salle` conserve son `type` (`TypeSalle`) issu de l'analyse : il sert de critère de recherche ; l'attribut `reservationAvecValidation` est renommé `reservationSoumiseAValidation` ;
 - `ListeAttente` est introduite en conception pour gérer les désistements sur les salles à réservation directe.
 
 ```plantuml
@@ -1745,6 +1769,7 @@ interface DemandeCreationCompteRepository <<repository>> {
   + findByEtat(etat : EtatDemande) : List<DemandeCreationCompte>
   + findByTokenValidation(token : String) : Optional<DemandeCreationCompte>
   + existsByLogin(login : String) : boolean
+  + existsByMail(mail : String) : boolean
 }
 
 interface SalleRepository <<repository>> {
