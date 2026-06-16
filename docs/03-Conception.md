@@ -24,7 +24,7 @@ Les points à considérer sont en particulier :
 
 - la complexité de l'interface utilisateur ;
 - les contraintes de déploiement ;
-- le nombre et le type d'utilisateurs ;
+- le nombre d'utilisateurs ;
 - la sécurité ;
 - les performances et le passage à l'échelle.
 
@@ -40,8 +40,7 @@ Une interface web classique est suffisante. La même application Vue.js pourra p
 
 - les utilisateurs consultent et filtrent la liste des salles disponibles ;
 - ils effectuent, modifient et annulent des réservations ;
-- ils reçoivent des notifications par mail ;
-- une interface web responsive est souhaitée.
+- ils reçoivent des notifications par mail.
 
 L'application Vue.js fournit une interface fluide sans rechargement de page complet. Les interactions avec l'API REST permettent de filtrer les salles dynamiquement et de gérer les réservations en temps réel.
 
@@ -49,7 +48,7 @@ L'application Vue.js fournit une interface fluide sans rechargement de page comp
 
 - les responsables gèrent les salles, les équipements et les plages de disponibilité ;
 - ils valident ou rejettent les demandes de réservation ;
-- l'interface est plus riche que celle des utilisateurs simples, mais reste dans les capacités d'une SPA Vue.js.
+- l'interface est plus riche que celle des utilisateurs simples, mais reste dans les capacités d'une SPA (Single Page Application) Vue.js.
 
 ### 3.2. Contraintes techniques
 
@@ -58,7 +57,7 @@ L'application Vue.js fournit une interface fluide sans rechargement de page comp
 - le système doit être fiable pour l'envoi de mails (confirmation de réservation, annulation, etc) ;
 - l'application doit être raisonnablement sécurisée (authentification JWT, HTTPS, validation des données côté serveur).
 
-**Deux architectures de déploiement sont envisagées**, décrites en détail en section 4.11 :
+**Deux architectures de déploiement sont envisagées** :
 
 - **Architecture simple** (cible initiale) : un seul conteneur backend, un seul conteneur frontend, une seule base de données PostgreSQL. Suffisante pour un établissement d'enseignement à charge modérée. C'est cette architecture qui sera mise en place en premier.
 - **Architecture avec load balancer** (évolution possible) : si la charge augmente, on peut passer à une architecture horizontalement scalable avec un load balancer devant plusieurs instances du backend. L'utilisation de **tokens JWT sans état** (*stateless*) facilite cette évolution : aucune session côté serveur n'est à partager entre les instances.
@@ -67,7 +66,7 @@ L'application Vue.js fournit une interface fluide sans rechargement de page comp
 
 ### 4.1. Serveur web
 
-Pour des raisons de facilité de maintenance, on choisit d'utiliser une application **Spring Boot** hébergée dans un conteneur Docker. Le serveur utilisé sera un serveur **Tomcat embarqué**. Le backend expose uniquement des endpoints REST (pas de rendu de templates côté serveur).
+Pour des raisons de facilité de maintenance, on choisit d'utiliser une application **Spring Boot** hébergée dans un conteneur Docker. Le serveur utilisé sera le serveur **Tomcat embarqué**. Le backend expose uniquement des endpoints REST (pas de rendu de templates côté serveur).
 
 ### 4.2. Stockage des données
 
@@ -75,7 +74,7 @@ Les données seront stockées dans une base **PostgreSQL**, aussi bien en dével
 
 ### 4.3. Couche de persistance
 
-La couche de persistance sera **JPA / Hibernate**, que l'équipe maîtrise bien. Les entités seront annotées JPA, et les repositories seront des interfaces Spring Data JPA.
+La couche de persistance sera **JPA/Hibernate**. Les entités seront annot   ées JPA, et les repositories seront des interfaces Spring Data JPA.
 
 ### 4.4. Couche métier
 
@@ -87,7 +86,7 @@ La couche service est isolée de la couche présentation via des **DTOs**. Les *
 
 ### 4.6. Couche présentation
 
-La couche présentation est entièrement gérée par **Vue.js**, une application SPA (Single Page Application). Elle communique avec le backend via des appels HTTP (Axios ou Fetch). Le build Vue.js produit des fichiers statiques (HTML, CSS, JS) qui sont servis par **Nginx** directement, indépendamment du backend Spring Boot. Ce choix est cohérent avec l'architecture horizontalement scalable retenue : les instances Spring Boot ne gèrent que l'API REST, et Nginx reste le seul point de distribution du frontend.
+La couche présentation est entièrement gérée par **Vue.js**, une application SPA. Elle communique avec le backend via des appels HTTP (Axios). Le build Vue.js produit des fichiers statiques (HTML, CSS, JS) qui sont servis par **Nginx** directement, indépendamment du backend Spring Boot. Ce choix est cohérent avec l'architecture horizontalement scalable retenue : les instances Spring Boot ne gèrent que l'API REST, et Nginx reste le seul point de distribution du frontend.
 
 ### 4.7. Authentification
 
@@ -107,11 +106,11 @@ Les projets backend seront manipulés via **Gradle**. Le projet frontend utilise
 
 ### 4.10. Packages et dépendances
 
-L'approche **Acteur/Action** permet de proposer les composants backend suivants :
+Un découpage par modules permet de proposer les composants backend suivants :
 
 - `compte` : gestion des demandes de création de compte, validation, refus, et gestion des informations utilisateur ;
 - `salle` : gestion des salles, des équipements et des plages de disponibilité ;
-- `reservation` : cycle de vie des réservations (création, validation, rejet, annulation, liste d'attente) ;
+- `reservation` : cycle de vie des réservations (création, validation, rejet, annulation) ;
 - `notification` : envoi de mails (confirmation de réservation, annulation, validation de compte) ;
 - `auth` : authentification et gestion des tokens JWT.
 
@@ -189,7 +188,7 @@ package roomreservation {
 
 #### 4.11.1. Architecture simple (cible initiale)
 
-Un seul conteneur par composant : frontend, backend, base de données. Orchestration via **Docker Compose**.
+Un seul conteneur par composant : frontend, backend, base de données. Orchestration via **Ansible playbook** ou **Docker Compose**.
 
 ```plantuml
 @startuml
@@ -224,12 +223,12 @@ end note
 
 - le frontend Vue.js est servi par **Nginx** comme fichiers statiques ;
 - le backend Spring Boot expose l'API REST sur un port dédié ;
-- la base de données PostgreSQL est dans son propre conteneur avec un volume persistant ;
-- les trois conteneurs sont orchestrés via **Docker Compose**.
+- la base de données PostgreSQL est dans son propre conteneur avec un volume persistant.
 
 #### 4.11.2. Architecture avec load balancer (évolution horizontale)
 
-Si la charge augmente, on peut multiplier les instances backend derrière un **load balancer**. Le frontend reste servi par un **Nginx** unique, les fichiers statiques Vue.js n'ont pas besoin d'être scalés. L'authentification **JWT** (*stateless*) rend cette évolution naturelle : aucune session serveur à synchroniser entre les instances.
+
+Si la charge augmente, on peut multiplier les instances backend derrière un **load balancer**. Le frontend reste servi par un **Nginx** unique, les fichiers statiques Vue.js n'ont pas besoin d'être scalés.
 
 ```plantuml
 @startuml
@@ -288,11 +287,11 @@ end note
 @enduml
 ```
 
-- le frontend Vue.js est servi par un **Nginx** unique, les fichiers statiques étant identiques pour tous les utilisateurs, il n'y a aucun intérêt à les dupliquer ;
+- le frontend Vue.js est servi par un **Nginx** unique, les fichiers statiques étant identiques pour tous les utilisateurs ;
 - le **load balancer** distribue les appels API REST entre les instances Spring Boot ;
 - les tokens **JWT étant sans état**, n'importe quelle instance peut traiter n'importe quelle requête sans partage de session ;
 - la base de données PostgreSQL reste centralisée ; elle peut évoluer vers un cluster (primary + replicas en lecture) si elle devenait un goulot d'étranglement ;
-- cette architecture peut être gérée avec **Docker Swarm** ou **Kubernetes** selon les besoins.
+- cette architecture peut être gérée **Ansible** ou **Kubernetes** selon les besoins.
 
 ## 5. Préliminaire à la conception
 
@@ -308,13 +307,9 @@ Les entités principales identifiées lors de l'analyse sont :
 - `Reservation` : représente une réservation effective ;
 - `DemandeReservation` : représente une demande de réservation en attente de traitement.
 
-À cette liste, la conception ajoute une entité :
+Un point à noter : la gestion de la **disponibilité des salles** et la **détection des conflits de réservation** constituent la complexité principale de ce projet. Il faudra traiter ces *use cases* en priorité pour valider le modèle.
 
-- `ListeAttente` : représente une position dans la liste d'attente pour une salle (gestion des désistements sur les salles à réservation directe).
-
-Un point important à noter : la gestion de la **disponibilité des salles** et la **détection des conflits de réservation** constituent la complexité principale de ce projet. Il faudra traiter ces *use cases* en priorité pour valider le modèle.
-
-Un second point concerne le **double mode de réservation** : certaines salles sont réservées directement (premier arrivé, premier servi avec liste d'attente), d'autres nécessitent la validation d'un responsable. Ce choix influe sur le cycle de vie de la `Reservation` et son état.
+Un second point concerne le **double mode de réservation** : certaines salles sont réservées directement (premier arrivé, premier servi), d'autres nécessitent la validation d'un responsable. Ce choix influe sur le cycle de vie de la `Reservation` et son état.
 
 ## 6. Cas d'utilisation
 
@@ -442,7 +437,7 @@ Les quatre cas de gestion des comptes s'appuient sur `CompteController` et `Serv
 
 #### 6.2.1. Déposer une demande de création de compte
 
-**Endpoints :**
+##### Endpoints :
 - `POST /api/comptes/demandes` : soumettre la demande
 - `GET /api/comptes/demandes/valider?token={token}` : valider le mail via le lien reçu
 
@@ -545,7 +540,8 @@ end
 
 #### 6.2.2. Consulter les demandes de création de compte en attente
 
-**Endpoint :** `GET /api/comptes/demandes` (accès restreint aux administrateurs ; retourne les demandes en état `MAIL_VALIDE`)
+##### Endpoints :
+- `GET /api/comptes/demandes` (accès restreint aux administrateurs ; retourne les demandes en état `MAIL_VALIDE`)
 
 ##### Classes de conception
 
@@ -599,7 +595,8 @@ ctrl --> a : 200 OK
 
 #### 6.2.3. Valider une demande de création de compte
 
-**Endpoint :** `PUT /api/comptes/demandes/{id}/valider` (accès restreint aux administrateurs)
+##### Endpoints : 
+- `PUT /api/comptes/demandes/{id}/valider` (accès restreint aux administrateurs)
 
 La validation crée un `Compte` à partir des données de la `DemandeCreationCompte`, puis passe la demande à l'état `VALIDEE`.
 
@@ -637,7 +634,8 @@ ctrl --> a : 200 OK
 
 #### 6.2.4. Refuser une demande de création de compte
 
-**Endpoint :** `PUT /api/comptes/demandes/{id}/refuser` (accès restreint aux administrateurs)
+##### Endpoints :
+- `PUT /api/comptes/demandes/{id}/refuser` (accès restreint aux administrateurs)
 
 ##### Classes de conception
 
@@ -673,7 +671,8 @@ Les quatre cas s'appuient sur `SalleController` et `ServiceSalle`. La persistanc
 
 #### 6.3.1. Créer une salle
 
-**Endpoint :** `POST /api/salles` (accès réservé aux responsables)
+##### Endpoints :
+- `POST /api/salles` (accès réservé aux responsables)
 
 ##### Classes de conception
 
@@ -764,7 +763,8 @@ ctrl --> r : 201 Created
 
 #### 6.3.2. Créer un équipement
 
-**Endpoint :** `POST /api/salles/{salleId}/equipements` (accès réservé aux responsables)
+##### Endpoints :
+- `POST /api/salles/{salleId}/equipements` (accès réservé aux responsables)
 
 L'équipement est rattaché à une salle existante via `salleId`.
 
@@ -840,7 +840,8 @@ ctrl --> r : 201 Created
 
 #### 6.3.3. Ajouter une plage de disponibilité d'une salle
 
-**Endpoint :** `POST /api/salles/{salleId}/disponibilites` (accès réservé aux responsables)
+##### Endpoints :
+- `POST /api/salles/{salleId}/disponibilites` (accès réservé aux responsables)
 
 La vérification des conflits est une opération clé : on s'assure que la nouvelle plage ne chevauche aucune plage existante de la même salle. La requête de détection utilise le prédicat :
 
@@ -924,7 +925,8 @@ end
 
 #### 6.3.4. Consulter la liste des salles
 
-**Endpoint :** `GET /api/salles` (accès authentifié)
+##### Endpoints :
+- `GET /api/salles` (accès authentifié)
 
 ##### Classes de conception
 
@@ -980,7 +982,8 @@ Les cas de ce groupe s'appuient sur `ReservationController` et `ServiceReservati
 
 #### 6.4.1. Rechercher une salle selon différents critères
 
-**Endpoint :** `POST /api/salles/recherche` (corps de requête : un objet `Filtre`)
+##### Endpoints :
+- `POST /api/salles/recherche` (corps de requête : un objet `Filtre`)
 
 Plutôt que de multiplier les paramètres de requête (`?nom=…&capaciteMin=…&…`), la recherche passe par un **`POST`** dont le corps porte un **objet unique `Filtre`**. Ce choix présente deux avantages :
 
@@ -1061,7 +1064,8 @@ ctrl --> u : 200 OK
 
 #### 6.4.2. Réserver une salle
 
-**Endpoint :** `POST /api/reservations`
+##### Endpoints :
+- `POST /api/reservations`
 
 Selon `salle.reservationSoumiseAValidation` :
 - `false` → la réservation passe directement à `CONFIRMEE` et un mail de confirmation est envoyé ;
@@ -1194,7 +1198,8 @@ end
 
 #### 6.4.3. Consulter une réservation
 
-**Endpoint :** `GET /api/reservations/{id}` (réservé au demandeur ou à un responsable)
+##### Endpoints :
+- `GET /api/reservations/{id}` (réservé au demandeur ou à un responsable)
 
 ##### Classes de conception
 
@@ -1223,7 +1228,8 @@ ctrl --> u : 200 OK
 
 #### 6.4.4. Annuler une réservation
 
-**Endpoint :** `PUT /api/reservations/{id}/annuler` (réservé au demandeur)
+##### Endpoints :
+- `PUT /api/reservations/{id}/annuler` (réservé au demandeur)
 
 Seules les réservations en état `CONFIRMEE` ou `EN_ATTENTE_VALIDATION` peuvent être annulées.
 
@@ -1256,8 +1262,6 @@ else annulation autorisée
   svc -> res : setEtat(ANNULEE)
   svc -> repo : save(res)
   svc -> notif : envoyerMailAnnulation(mail, res)
-  svc -> svc : promouvoirListeAttente(res)
-  note right : voir #6.6.2
   svc --> ctrl : ok
   ctrl --> u : 200 OK
 end
@@ -1266,7 +1270,8 @@ end
 
 #### 6.4.5. Consulter les demandes de réservation en attente
 
-**Endpoint :** `GET /api/reservations?etat=EN_ATTENTE_VALIDATION` (accès réservé aux responsables)
+##### Endpoints :
+- `GET /api/reservations?etat=EN_ATTENTE_VALIDATION` (accès réservé aux responsables)
 
 Ce cas permet à un responsable de lister les réservations qu'il doit traiter avant de les valider ou de les rejeter. Il s'appuie sur `ReservationRepository.findByEtat`.
 
@@ -1314,7 +1319,8 @@ ctrl --> r : 200 OK
 
 #### 6.4.6. Valider une demande de réservation
 
-**Endpoint :** `PUT /api/reservations/{id}/valider` (accès réservé aux responsables)
+##### Endpoints :
+- `PUT /api/reservations/{id}/valider` (accès réservé aux responsables)
 
 Seules les réservations en état `EN_ATTENTE_VALIDATION` peuvent être validées.
 
@@ -1350,7 +1356,8 @@ ctrl --> r : 200 OK
 
 #### 6.4.7. Rejeter une demande de réservation
 
-**Endpoint :** `PUT /api/reservations/{id}/rejeter` (accès réservé aux responsables)
+##### Endpoints :
+- `PUT /api/reservations/{id}/rejeter` (accès réservé aux responsables)
 
 Un motif de rejet est attendu dans le corps de la requête.
 
@@ -1406,7 +1413,8 @@ Ce groupe couvre le cas d'utilisation "Se connecter / S'authentifier". Il s'appu
 
 #### 6.5.1. Se connecter / S'authentifier
 
-**Endpoint :** `POST /api/auth/login`
+##### Endpoints :
+- `POST /api/auth/login`
 
 L'utilisateur soumet ses identifiants. `ServiceAuth` retrouve le compte via `CompteRepository`, vérifie le mot de passe (BCrypt), puis demande à `ServiceJwt` de générer un token JWT. En cas de succès, un `TokenResponseDTO` est retourné ; le client l'inclura dans l'en-tête `Authorization: Bearer <token>` de toutes les requêtes suivantes. Les erreurs d'authentification (compte introuvable ou mot de passe incorrect) retournent systématiquement un `401 Unauthorized` sans détailler la cause, pour éviter toute fuite d'information.
 
@@ -1489,151 +1497,6 @@ end
 @enduml
 ```
 
-### 6.6. Groupe 5 : Gestion de la liste d'attente
-
-La liste d'attente s'applique uniquement aux salles à réservation directe (`reservationSoumiseAValidation = false`). Elle permet à un utilisateur de prendre automatiquement la place d'un autre en cas de désistement.
-
-> **Note sur l'appariement des créneaux** : contrairement à la détection de conflit de réservation, qui raisonne par *chevauchement* (`dateDebut < fin AND dateFin > debut`), la liste d'attente apparie les créneaux par **égalité exacte** des bornes `(salle, dateDebut, dateFin)`. On ne met donc en file d'attente que des demandes portant exactement sur le même créneau qu'une réservation existante, et la promotion ne concerne que les inscrits dont le créneau coïncide avec celui libéré. C'est une simplification assumée pour la v1 : la généralisation à des créneaux chevauchants (promouvoir le premier inscrit *compatible* avec le créneau libéré) est laissée en évolution.
-
-#### 6.6.1. S'inscrire en liste d'attente
-
-**Endpoint :** `POST /api/reservations/attente`
-
-Lorsqu'un créneau est déjà pris, l'utilisateur peut rejoindre la liste d'attente. Le système vérifie que la salle est bien à réservation directe, que le créneau est effectivement occupé, et que l'utilisateur n'y est pas déjà inscrit. La position est attribuée en fin de liste (`MAX(position) + 1`).
-
-##### Classes de conception
-
-```plantuml
-@startuml
-skin rose
-hide empty members
-
-class ReservationController <<controller>> {
-  + sInscrire(dto : ListeAttenteCreationDTO, demandeur : Compte) : ResponseEntity
-}
-
-class ListeAttenteCreationDTO <<dto>> {
-  salleId : Long
-  dateDebut : LocalDateTime
-  dateFin : LocalDateTime
-}
-
-class ListeAttenteResponseDTO <<dto>> {
-  id : Long
-  position : int
-  dateInscription : LocalDateTime
-}
-
-class ServiceReservation <<service>> {
-  + sInscrireListeAttente(dto : ListeAttenteCreationDTO, demandeur : Compte) : ListeAttenteResponseDTO
-}
-
-class ListeAttenteRepository <<repository>> {
-  + existsByCompteIdAndSalleIdAndDateDebutAndDateFin(...) : boolean
-  + findMaxPosition(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : Optional<Integer>
-  + save(la : ListeAttente) : ListeAttente
-}
-
-class ListeAttente <<entity>> {
-  id : Long
-  position : int
-  dateInscription : LocalDateTime
-  dateDebut : LocalDateTime
-  dateFin : LocalDateTime
-}
-
-ListeAttente --> Salle : > salle
-ListeAttente --> Compte : > compte
-
-ReservationController ..> ListeAttenteCreationDTO
-ReservationController ..> ServiceReservation
-ServiceReservation ..> SalleRepository
-ServiceReservation ..> ReservationRepository
-ServiceReservation ..> ListeAttenteRepository
-ServiceReservation ..> ListeAttente
-ServiceReservation ..> ListeAttenteResponseDTO
-@enduml
-```
-
-##### Séquence
-
-```plantuml
-@startuml
-skin rose
-
-actor Utilisateur as u
-boundary ReservationController as ctrl
-control ServiceReservation as svc
-participant SalleRepository as salleRepo <<repository>>
-participant ReservationRepository as resRepo <<repository>>
-participant ListeAttenteRepository as laRepo <<repository>>
-participant ListeAttente as la <<entity>>
-
-u -> ctrl : POST /api/reservations/attente (ListeAttenteCreationDTO)
-ctrl -> svc : sInscrireListeAttente(dto, demandeur)
-svc -> salleRepo : findById(salleId)
-salleRepo --> svc : salle
-alt salle soumise à validation
-  svc --> ctrl : IllegalStateException
-  ctrl --> u : 400 Bad Request
-else salle à réservation directe
-  svc -> resRepo : existsConflict(salleId, debut, fin)
-  alt créneau libre
-    resRepo --> svc : false
-    svc --> ctrl : IllegalStateException
-    ctrl --> u : 400 Bad Request
-  else créneau pris
-    resRepo --> svc : true
-    svc -> laRepo : existsByCompteIdAndSalleIdAndDateDebutAndDateFin(...)
-    alt déjà inscrit
-      laRepo --> svc : true
-      svc --> ctrl : ConflictException
-      ctrl --> u : 409 Conflict
-    else pas encore inscrit
-      laRepo --> svc : false
-      svc -> laRepo : findMaxPosition(salleId, debut, fin)
-      laRepo --> svc : position
-      svc -> la : new(demandeur, salle, debut, fin, position + 1)
-      svc -> laRepo : save(la)
-      svc --> ctrl : ListeAttenteResponseDTO
-      ctrl --> u : 201 Created
-    end
-  end
-end
-@enduml
-```
-
-#### 6.6.2. Promotion automatique lors d'une annulation
-
-Ce cas n'est pas déclenché directement par un utilisateur : il est appelé par `ServiceReservation.annulerReservation` après chaque annulation. Pour les salles soumises à validation, la liste d'attente est vide par construction, l'inscription y est refusée et l'appel est sans effet. Si des inscrits existent pour le créneau libéré, le premier en liste est automatiquement promu : une `Reservation` `CONFIRMEE` est créée en son nom, son entrée est retirée de la liste d'attente, les positions des inscrits suivants sont décrémentées, et un mail de confirmation lui est envoyé.
-
-##### Séquence (appelée depuis `annulerReservation`)
-
-```plantuml
-@startuml
-skin rose
-
-control ServiceReservation as svc
-participant ListeAttenteRepository as laRepo <<repository>>
-participant ReservationRepository as resRepo <<repository>>
-participant Reservation as res <<entity>>
-control ServiceNotification as notif
-
-[-> svc : promouvoirListeAttente(reservationAnnulee)
-svc -> laRepo : findFirstBySalleIdAndDateDebutAndDateFinOrderByPosition(salleId, debut, fin)
-alt aucune entrée en liste d'attente
-  laRepo --> svc : Optional.empty()
-else premier inscrit trouvé
-  laRepo --> svc : listeAttente
-  svc -> res : new(salle, listeAttente.compte, debut, fin, CONFIRMEE)
-  svc -> resRepo : save(res)
-  svc -> laRepo : delete(listeAttente)
-  svc -> laRepo : decrementerPositions(salleId, debut, fin)
-  svc -> notif : envoyerMailConfirmation(listeAttente.compte.mail, res)
-end
-@enduml
-```
-
 ## 7. Regroupement des classes
 
 ### 7.1. Groupe domaine
@@ -1642,8 +1505,7 @@ Le modèle de domaine final par rapport à l'analyse :
 - `DemandeReservation` est supprimée et absorbée par `Reservation.etat` : les enums `EtatDemandeReservation` et `EtatReservation` de l'analyse sont fusionnés en un seul `EtatReservation` (`EN_ATTENTE_VALIDATION`, `CONFIRMEE`, `REJETEE`, `ANNULEE`) ;
 - les couples `Date` + `Heure` de l'analyse sont remplacés par `LocalDateTime` (plus de type valeur `Heure` séparé), pour `PlageDisponibilite` comme pour `Reservation` ;
 - `DemandeCreationCompte` ajoute `tokenValidation` pour la validation par mail ; le mot de passe est stocké haché (`motDePasseHash`) ;
-- `Salle` conserve son `type` (`TypeSalle`) issu de l'analyse : il sert de critère de recherche ; l'attribut `reservationAvecValidation` est renommé `reservationSoumiseAValidation` ;
-- `ListeAttente` est introduite en conception pour gérer les désistements sur les salles à réservation directe.
+- `Salle` conserve son `type` (`TypeSalle`) issu de l'analyse : il sert de critère de recherche ; l'attribut `reservationAvecValidation` est renommé `reservationSoumiseAValidation`.
 
 ```plantuml
 @startuml
@@ -1728,14 +1590,6 @@ enum EtatReservation {
   REJETEE
 }
 
-class ListeAttente <<entity>> {
-  id : Long
-  position : int
-  dateInscription : LocalDateTime
-  dateDebut : LocalDateTime
-  dateFin : LocalDateTime
-}
-
 Compte -> RoleCompte
 DemandeCreationCompte -> EtatDemande
 
@@ -1747,8 +1601,6 @@ Reservation --> Salle
 Reservation --> Compte : > demandeur
 Reservation -> EtatReservation
 
-ListeAttente --> Salle
-ListeAttente --> Compte
 @enduml
 ```
 
@@ -1793,14 +1645,6 @@ interface ReservationRepository <<repository>> {
   + existsConflict(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
 }
 
-interface ListeAttenteRepository <<repository>> {
-  + findFirstBySalleIdAndDateDebutAndDateFinOrderByPosition(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : Optional<ListeAttente>
-  + existsByCompteIdAndSalleIdAndDateDebutAndDateFin(compteId : Long, salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : boolean
-  + findMaxPosition(salleId : Long, debut : LocalDateTime, fin : LocalDateTime) : Optional<Integer>
-  + decrementerPositions(salleId : Long, debut : LocalDateTime, fin : LocalDateTime)
-  + findByCompteId(compteId : Long) : List<ListeAttente>
-}
-
 @enduml
 ```
 
@@ -1834,8 +1678,6 @@ class ServiceReservation <<service>> {
   + annulerReservation(id : Long, demandeur : Compte)
   + validerReservation(id : Long)
   + rejeterReservation(id : Long, motif : String)
-  + sInscrireListeAttente(dto : ListeAttenteCreationDTO, demandeur : Compte) : ListeAttenteResponseDTO
-  - promouvoirListeAttente(reservation : Reservation)
 }
 
 class ServiceNotification <<service>> {
@@ -1893,7 +1735,6 @@ class ReservationController <<controller>> {
   PUT /api/reservations/{id}/annuler
   PUT /api/reservations/{id}/valider
   PUT /api/reservations/{id}/rejeter
-  POST /api/reservations/attente
 }
 
 class AuthController <<controller>> {
@@ -1912,8 +1753,6 @@ AuthController ..> ServiceAuth
 - **Gestion des conflits de réservation** : la vérification qu'une salle est libre sur un créneau donné est une requête potentiellement complexe. Il faudra définir précisément la requête JPA ou SQL correspondante.
 
 - **Concurrence sur la création de réservation** : pour la v1, on retient un mécanisme simple et optimiste : la disponibilité est consultée puis la réservation soumise séparément, et toute demande arrivant après qu'un autre client a pris le créneau est rejetée (`409 Conflict`). Le premier à enregistrer l'emporte, sans verrou ni session réservant le créneau. Une évolution pourra être envisagée si une vraie atomicité devient nécessaire sous forte charge.
-
-- **Liste d'attente sur créneaux chevauchants** : la v1 apparie les inscriptions par créneau exact. Généraliser à la promotion du premier inscrit *compatible* avec un créneau libéré (chevauchement) est une évolution à étudier.
 
 - **Double mode de réservation** : le fait qu'une salle puisse être soit à réservation directe, soit à validation, implique deux branches dans le cycle de vie de `Reservation`. Le *Design Pattern* **State** pourrait être envisagé pour gérer proprement ces deux comportements.
 

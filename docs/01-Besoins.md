@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Expression des besoins v1.6
+# Projet *Réservation de salles* : Expression des besoins v1.7
 
 ## Table des matières
 
@@ -22,7 +22,7 @@ Il s'agit donc de créer une application permettant :
 - aux utilisateurs de consulter la liste des salles disponibles selon divers critères comme la date, la capacité ou la présence de certains équipements ;
 - aux utilisateurs d'effectuer une réservation de salle ;
 - le responsable précisera pour chaque salle si la réservation est soumis à validation ou non ;
-- pour le cas d'une réservation sans validation d'un responsable, le premier utilisateur qui effectue une réservation l'emporte, les autres utilisateurs peuvent se mettre en liste d'attente en cas de désistement ;
+- pour le cas d'une réservation sans validation d'un responsable, le premier utilisateur qui effectue une réservation l'emporte ;
 - pour le cas d'une réservation soumise à validation d'un responsable, les utilisateurs déposent une demande de réservation et un administrateur valide une des demandes ;
 - après avoir déposé une demande de réservation, l'utilisateur reçoit un mail de confirmation lorsque sa demande est validée (en instantané ou après la validation d'un responsable) ;
 - les utilisateurs peuvent modifier ou annuler leurs réservations ;
