@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Analyse v1.4
+# Projet *Réservation de salles* : Analyse v1.5
 
 ## 1. Table des matières
 
@@ -45,7 +45,7 @@ Pour la pertinence :
 |-------------|---------------------------------------------------------|---------|------------|-------------|
 | Compte      | Déposer une demande de création de compte               | 1       | 5          | oui         |
 | Compte      | Consulter les demandes de création de compte en attente | 1       | 5          | oui         |
-| Compte      | Valider une demande de création de compte               | 1       | 5          | oui         |                                                                                                    
+| Compte      | Valider une demande de création de compte               | 1       | 5          | oui         |
 | Compte      | Refuser une demande de création de compte               | 1       | 4          | non         |
 | Compte      | Modifier les informations d'un compte                   | 1       | 2          | non         |
 | Compte      | Modifier un mot de passe                                | 3       | 2          | non         |
@@ -58,21 +58,21 @@ Pour la pertinence :
 | Salle       | Consulter la liste des salles                           | 1       | 4          | oui         |
 | Salle       | Modifier une salle                                      | 1       | 2          | non         |
 | Salle       | Supprimer une salle                                     | 1       | 2          | non         |
-| Salle       | Modifier un équipement                                  | 1       | 1          | non         | 
+| Salle       | Modifier un équipement                                  | 1       | 1          | non         |
 | Salle       | Supprimer un équipement                                 | 1       | 1          | non         |
-| Salle       | Modifier une plage de disponibilité d'une salle         | 3       | 2          | non         | 
+| Salle       | Modifier une plage de disponibilité d'une salle         | 3       | 2          | non         |
 | Salle       | Supprimer une plage de disponibilité d'une salle        | 3       | 2          | non         |
 | Réservation | Afficher la liste des salles                            | 1       | 5          | oui         |
-| Réservation | Rechercher une salle selon différents critères          | 4       | 4          | oui         |                                                                                                           
-| Réservation | Réserver une salle                                      | 3       | 5          | oui         |                                                                                                            
+| Réservation | Rechercher une salle selon différents critères          | 4       | 4          | oui         |
+| Réservation | Réserver une salle                                      | 3       | 5          | oui         |
 | Réservation | Consulter une réservation                               | 1       | 4          | oui         |
 | Réservation | Annuler une réservation                                 | 3       | 4          | oui         |
-| Réservation | Consulter les demandes de réservation en attente        | 1       | 5          | oui         | 
+| Réservation | Consulter les demandes de réservation en attente        | 1       | 5          | oui         |
 | Réservation | Valider une demande de réservation                      | 3       | 5          | oui         |
 | Réservation | Rejeter une demande de réservation                      | 1       | 4          | oui         |
 | Réservation | Modifier une réservation                                | 3       | 3          | non         |
 
-## 4. Cas d’utilisation
+## 4. Cas d'utilisation
 
 ### 4.1. Groupe 1 : gestion des comptes
 

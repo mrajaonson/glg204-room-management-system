@@ -7,11 +7,11 @@
 
 ## 2. Objectif du document
 
-Ce document aborde l'architecture, la conception et les choix techniques pour l'implémentation du projet « Réservation de salles ». Les diagrammes suivent le langage de modélisation UML et la méthodologie Arrington.
+Ce document aborde l'architecture, la conception et les choix techniques pour l'implémentation du projet "Réservation de salles". Les diagrammes suivent le langage de modélisation UML et la méthodologie Arrington.
 
 - On commencera par énumérer les diverses contraintes techniques qui pèsent sur notre projet ;
 - on décrira ensuite les technologies choisies ;
-- puis l'architecture (les deux étant évidemment liés) ;
+- puis l'architecture ;
 - et enfin, nous décrirons le design de notre système en revenant sur les *use cases*.
 
 ## 3. Architecture
@@ -985,7 +985,7 @@ Les cas de ce groupe s'appuient sur `ReservationController` et `ServiceReservati
 Plutôt que de multiplier les paramètres de requête (`?nom=…&capaciteMin=…&…`), la recherche passe par un **`POST`** dont le corps porte un **objet unique `Filtre`**. Ce choix présente deux avantages :
 
 - **signature d'endpoint stable** : l'URL ne change pas quand on enrichit les critères ; seul le schéma de `Filtre` évolue ;
-- **`Filtre` évolutif** : ajouter un critère (étage, accessibilité PMR…) revient à ajouter un champ à `Filtre` et un prédicat correspondant, sans toucher à la signature de l'endpoint.
+- **`Filtre` évolutif** : ajouter un critère (étage, accessibilité PMR...) revient à ajouter un champ à `Filtre` et un prédicat correspondant, sans toucher à la signature de l'endpoint.
 
 La recherche multi-critères reste implémentée via `JpaSpecificationExecutor<Salle>` et une `SalleSpecification` composable : chaque champ renseigné de `Filtre` donne lieu à un prédicat JPA indépendant, combiné avec `and`.
 
@@ -1402,7 +1402,7 @@ ctrl --> r : 200 OK
 
 ### 6.5. Groupe 4 : Authentification
 
-Ce groupe couvre le cas d'utilisation « Se connecter / S'authentifier ». Il s'appuie sur `AuthController`, `ServiceAuth` et `ServiceJwt`. Un `JwtFilter` (filtre Spring Security) valide le token sur chaque requête protégée ; ce composant est une infrastructure transversale et n'est pas détaillé ici.
+Ce groupe couvre le cas d'utilisation "Se connecter / S'authentifier". Il s'appuie sur `AuthController`, `ServiceAuth` et `ServiceJwt`. Un `JwtFilter` (filtre Spring Security) valide le token sur chaque requête protégée ; ce composant est une infrastructure transversale et n'est pas détaillé ici.
 
 #### 6.5.1. Se connecter / S'authentifier
 
@@ -1920,26 +1920,3 @@ AuthController ..> ServiceAuth
 - **Annulation automatique** : quand une salle devient indisponible (travaux, événement prioritaire), les réservations existantes doivent être annulées automatiquement et les utilisateurs notifiés.
 
 - **JWT et sécurité** : il faudra préciser la durée de vie des tokens, le mécanisme de refresh, et les règles CORS pour autoriser les appels depuis le frontend Vue.js.
-
-## 9. Annexes
-
-### 9.1. Terminologie
-
-| Terme                  | Définition                                                                           |
-|------------------------|--------------------------------------------------------------------------------------|
-| Salle                  | Espace physique pouvant être réservé par les utilisateurs                            |
-| Plage de disponibilité | Créneau horaire durant lequel une salle peut être réservée                           |
-| Réservation            | Occupation d'une salle sur un créneau par un utilisateur                             |
-| Responsable            | Utilisateur ayant les droits de gestion des salles et de validation des réservations |
-| Administrateur         | Utilisateur ayant les droits de gestion des comptes                                  |
-
-### 9.2. Bibliographie
-
-- Avram A., Marinescu F. *Domain-Driven Design Quickly: A Summary of Eric Evans’ Domain-Driven Design* [En ligne]. C4Media, 2006. (Enterprise Software Development Series). [lien](https://www.infoq.com/fr/minibooks/domain-driven-design-quickly)
-- Evans E. *Domain-driven design: tackling complexity in the heart of software.* Boston : Addison-Wesley, 2004.
-- Evans E. *Domain-driven design reference: definitions and pattern summaries.* Indianapolis, 2015. [lien](https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf) (résumé des patterns)
-- Gandhi, Raju, Mark Richards, and Neal Ford. 2024. *Head First Software Architecture.* First edition. Head First. O’Reilly Media, Inc.
-- Martin R. C. Clean architecture: a craftsman’s guide to software structure and design. London, England : Prentice Hall, 2018.
-- [Projet Cargo](https://github.com/citerus/dddsample-core) un projet qui implémente l'exemple du livre d'Evans
-- [Domain Driven Design and Development In Practice](https://www.infoq.com/articles/ddd-in-practice/)
-

@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Expression des besoins v1.5
+# Projet *Réservation de salles* : Expression des besoins v1.6
 
 ## Table des matières
 
@@ -9,7 +9,7 @@
 
 Ce document contient l'expression des besoins du projet **Réservation de salles**.
 
-Les besoins ont été exprimés selon le langage de modélisation UML. Les différentes catégories d'usagers du système ont été classés en différents types d' « acteurs ». Les interactions entre les usagers et le système ont été découpées en diagrammes de « cas d'utilisation » (use cases), chaque cas d'utilisation ayant à son tour un diagramme « d'activités » qui permet d'en modéliser la dynamique.
+Les besoins ont été exprimés selon le langage de modélisation UML. Les différentes catégories d'usagers du système ont été classés en différents types d'**acteurs**. Les interactions entre les usagers et le système ont été découpées en diagrammes de "cas d'utilisation" (use cases), chaque cas d'utilisation ayant à son tour un diagramme "d'activités" qui permet d'en modéliser la dynamique.
 
 ## 2. Présentation
 
@@ -17,16 +17,16 @@ Les besoins ont été exprimés selon le langage de modélisation UML. Les diff�
 
 L'objectif est de concevoir une application de gestion de réservations de salles pour un établissement d'enseignement. Les responsables devront pouvoir gérer les salles qui seront disponibles pour une réservation et les utilisateurs effectueront des réservations.
 
-Il s’agit donc de créer une application permettant :
-- aux responsables de créer, modifier ou supprimer des salles en précisant la localisation, la capacité d'accueil, les disponibilités et les équipements présents dans une salle (chaises, tables, ordinateurs, tableaux, rétroprojecteurs etc);
-- aux utilisateurs de consulter la liste des salles disponibles selon divers critères comme la date, la capacité ou la présence de certains équipements;
-- aux utilisateurs d'effectuer une réservation de salle;
-- le responsable précisera pour chaque salle si la réservation est soumis à validation ou non;
-- pour le cas d'une réservation sans validation d'un responsable, le premier utilisateur qui effectue une réservation l'emporte, les autres utilisateurs peuvent se mettre en liste d'attente en cas de désistement;
-- pour le cas d'une réservation soumise à validation d'un responsable, les utilisateurs déposent une demande de réservation et un administrateur valide une des demandes;
-- après avoir déposé une demande de réservation, l'utilisateur reçoit un mail de confirmation lorsque sa demande est validée (en instantané ou après la validation d'un responsable);
-- les utilisateurs peuvent modifier ou annuler leurs réservations;
-- en cas d'évènements particuliers, une salle peut ne plus être disponible (travaux, maintenances, évènement prioritaire etc), les réservations devront donc être annulées automatiquement et la liste des salles disponibles mise à jour, un mail d'annulation devra être envoyé;
+Il s'agit donc de créer une application permettant :
+- aux responsables de créer, modifier ou supprimer des salles en précisant la localisation, la capacité d'accueil, les disponibilités et les équipements présents dans une salle (chaises, tables, ordinateurs, tableaux, rétroprojecteurs etc) ;
+- aux utilisateurs de consulter la liste des salles disponibles selon divers critères comme la date, la capacité ou la présence de certains équipements ;
+- aux utilisateurs d'effectuer une réservation de salle ;
+- le responsable précisera pour chaque salle si la réservation est soumis à validation ou non ;
+- pour le cas d'une réservation sans validation d'un responsable, le premier utilisateur qui effectue une réservation l'emporte, les autres utilisateurs peuvent se mettre en liste d'attente en cas de désistement ;
+- pour le cas d'une réservation soumise à validation d'un responsable, les utilisateurs déposent une demande de réservation et un administrateur valide une des demandes ;
+- après avoir déposé une demande de réservation, l'utilisateur reçoit un mail de confirmation lorsque sa demande est validée (en instantané ou après la validation d'un responsable) ;
+- les utilisateurs peuvent modifier ou annuler leurs réservations ;
+- en cas d'évènements particuliers, une salle peut ne plus être disponible (travaux, maintenances, évènement prioritaire etc), les réservations devront donc être annulées automatiquement et la liste des salles disponibles mise à jour, un mail d'annulation devra être envoyé ;
 
 ### 2.2. Situation actuelle
 
@@ -43,7 +43,7 @@ N/A
 ## 3. Acteurs
 
 ### 3.1. Utilisateur
-Il s’agit d’un utilisateur enregistré de l'application, il peut être un enseignant ou un appariteur. Lors de sa première connexion, l'utilisateur effectue une demande de création de compte avec validation de l'adresse mail. Un administrateur valide la demande de création de compte lorsque le mail est validé.
+Il s'agit d'un utilisateur enregistré de l'application, il peut être un enseignant ou un appariteur. Lors de sa première connexion, l'utilisateur effectue une demande de création de compte avec validation de l'adresse mail. Un administrateur valide la demande de création de compte lorsque le mail est validé.
 
 ### 3.2. Responsable
 Utilisateur disposant de droits supplémentaires permettant de gérer les salles et les demandes de réservations.
@@ -64,7 +64,7 @@ skin rose
 @enduml
 ```
 
-## 4. Cas d’utilisation
+## 4. Cas d'utilisation
 
 ### 4.1. Groupe 1 : Gestion des comptes
 
@@ -111,7 +111,7 @@ A --> UC_REFUSER
 @enduml
 ```
 
-#### 4.1.1. Cas d'utilisation « Déposer une demande de création de compte »
+#### 4.1.1. Cas d'utilisation "Déposer une demande de création de compte"
 
 ##### Résumé
 L'utilisateur dépose une demande de création un compte et valide son adresse mail.
@@ -133,7 +133,7 @@ L'utilisateur dépose une demande de création un compte et valide son adresse m
     - que les deux mots de passe saisis coïncident ;
     - que le mail est bien formé.
 3. le système vérifie que le compte n'existe pas déjà
-4. si le login n'est pas vide et que le compte n'existe pas déjà, un mail est envoyé à l'utilisateur pour confirmer son mail 
+4. si le login n'est pas vide et que le compte n'existe pas déjà, un mail est envoyé à l'utilisateur pour confirmer son mail
 5. l'utilisateur valide son mail grâce au lien reçu
 
 ##### Déroulement alternatif : données incorrectes
@@ -178,7 +178,7 @@ endif
 
 - lors du premier déploiement du serveur de l'application un administrateur et son mot de passe sont définis dans les fichiers de configuration. Le mot de passe peut ensuite être modifié.
 
-#### 4.1.2. Cas d'utilisation « Consulter les demandes de création de compte »
+#### 4.1.2. Cas d'utilisation "Consulter les demandes de création de compte"
 
 ##### Résumé
 L'administrateur consulte les demandes de création de compte et valide ou refuse une demande.
@@ -231,7 +231,7 @@ Après avoir consulté la liste des demandes de création de compte en attente, 
 #### 4.1.5. Modifier les informations d'un compte
 
 ##### Résumé
-Un utilisateur peut consulter et modifier les informations concernant son compte. Le système vérifie si le login est disponible, un mail de vérification est envoyé à la nouvelle adresse mail. Un mail d'information est envoyé à l'ancienne adresse mail. 
+Un utilisateur peut consulter et modifier les informations concernant son compte. Le système vérifie si le login est disponible, un mail de vérification est envoyé à la nouvelle adresse mail. Un mail d'information est envoyé à l'ancienne adresse mail.
 
 ##### Acteurs
 - un utilisateur
@@ -267,7 +267,7 @@ Un utilisateur peut modifier son mot de passe actuel.
 1. l'utilisateur renseigne son ancien mot de passe ainsi que le nouveau mot de passe en double
 2. le système vérifie si les données sont correctes
 
-#### 4.1.7. Demander la réinitialisation d'un mot de passe 
+#### 4.1.7. Demander la réinitialisation d'un mot de passe
 
 ##### Résumé
 En cas d'oubli d'un mot de passe, l'utilisateur peut demander à l'écran de connexion la réinitialisation de son mot de passe.
@@ -286,7 +286,7 @@ En cas d'oubli d'un mot de passe, l'utilisateur peut demander à l'écran de con
 4. le système envoie un lien de réinitialisation à l'adresse mail
 5. au clic sur le lien, l'utilisateur est redirigé sur un formulaire et renseigne un nouveau mot de passe en double
 6. le système vérifie les données saisies
-7. le système informe par mail l'utilisateur  
+7. le système informe par mail l'utilisateur
 
 ##### Post-conditions
 Le nouveau mot de passe est pris en compte.
@@ -407,13 +407,13 @@ L'appariteur est connecté.
 
 ##### Description
 
-1. l'appariteur donne un titre à la salle;
-2. il renseigne la localisation de la salle;
-3. il ajoute une description de la salle (type de salle, amphi, tp etc);
-4. il ajoute la capacité de la salle;
-5. il ajoute les équipements présents dans la salle;
-6. il définit les disponibilités de la salle (créneaux jours et heures pendant lesquelles la salle est reservable si besoin);
-7. le système vérifie que la salle a un titre, une localisation, une description, une capacité, une liste des équipements et des disponibilités;
+1. l'appariteur donne un titre à la salle ;
+2. il renseigne la localisation de la salle ;
+3. il ajoute une description de la salle (type de salle, amphi, tp etc) ;
+4. il ajoute la capacité de la salle ;
+5. il ajoute les équipements présents dans la salle ;
+6. il définit les disponibilités de la salle (créneaux jours et heures pendant lesquelles la salle est reservable si besoin) ;
+7. le système vérifie que la salle a un titre, une localisation, une description, une capacité, une liste des équipements et des disponibilités ;
 8. la salle est enregistrée.
 
 ##### Post-conditions
@@ -433,9 +433,9 @@ L'appariteur est connecté.
 
 ##### Description
 
-1. l'appariteur renseigne le nom de l'équipement;
-2. il renseigne la description de l'équipement;
-3. le système vérifie que le nom n'est pas vide;
+1. l'appariteur renseigne le nom de l'équipement ;
+2. il renseigne la description de l'équipement ;
+3. le système vérifie que le nom n'est pas vide ;
 4. l'équipement est enregistré.
 
 ##### Post-conditions
@@ -455,11 +455,11 @@ L'appariteur est connecté. La salle existe.
 
 ##### Description
 
-1. l'appariteur sélectionne une salle;
-2. il renseigne la date et l'heure de début de la plage;
-3. il renseigne la date et l'heure de fin de la plage;
-4. le système vérifie la cohérence des données saisies;
-5. le système vérifie l'absence de conflit avec les plages existantes de la salle;
+1. l'appariteur sélectionne une salle ;
+2. il renseigne la date et l'heure de début de la plage ;
+3. il renseigne la date et l'heure de fin de la plage ;
+4. le système vérifie la cohérence des données saisies ;
+5. le système vérifie l'absence de conflit avec les plages existantes de la salle ;
 6. la plage de disponibilité est enregistrée.
 
 ##### Déroulement alternatif : conflit de disponibilité
@@ -480,8 +480,8 @@ Un utilisateur consulte la liste des salles de l'établissement.
 
 Un utilisateur ayant le droit de consulter la liste des salles:
 
-- un enseignant;
-- un appariteur;
+- un enseignant ;
+- un appariteur ;
 - un responsable.
 
 ##### Pré-conditions
@@ -513,9 +513,9 @@ L'appariteur est connecté. La salle existe.
 
 ##### Description
 
-1. l'appariteur sélectionne une salle dans la liste;
-2. il modifie un ou plusieurs champs : titre, localisation, description, capacité, type de réservation;
-3. le système vérifie que les données saisies sont valides;
+1. l'appariteur sélectionne une salle dans la liste ;
+2. il modifie un ou plusieurs champs : titre, localisation, description, capacité, type de réservation ;
+3. le système vérifie que les données saisies sont valides ;
 4. les modifications sont enregistrées.
 
 ##### Post-conditions
@@ -535,9 +535,9 @@ L'appariteur est connecté. La salle existe.
 
 ##### Description
 
-1. l'appariteur sélectionne une salle dans la liste;
-2. il demande la suppression de la salle;
-3. le système vérifie qu'aucune réservation active n'est associée à la salle;
+1. l'appariteur sélectionne une salle dans la liste ;
+2. il demande la suppression de la salle ;
+3. le système vérifie qu'aucune réservation active n'est associée à la salle ;
 4. la salle est supprimée.
 
 ##### Déroulement alternatif : réservations actives
@@ -562,9 +562,9 @@ L'appariteur est connecté. L'équipement existe.
 
 ##### Description
 
-1. l'appariteur sélectionne un équipement;
-2. il modifie le nom ou la description de l'équipement;
-3. le système vérifie que les données saisies sont valides;
+1. l'appariteur sélectionne un équipement ;
+2. il modifie le nom ou la description de l'équipement ;
+3. le système vérifie que les données saisies sont valides ;
 4. les modifications sont enregistrées.
 
 ##### Post-conditions
@@ -584,8 +584,8 @@ L'appariteur est connecté. L'équipement existe.
 
 ##### Description
 
-1. l'appariteur sélectionne un équipement;
-2. il confirme la suppression;
+1. l'appariteur sélectionne un équipement ;
+2. il confirme la suppression ;
 3. l'équipement est supprimé.
 
 ##### Post-conditions
@@ -605,10 +605,10 @@ L'appariteur est connecté. La plage de disponibilité existe.
 
 ##### Description
 
-1. l'appariteur sélectionne une plage de disponibilité d'une salle;
-2. il modifie les dates et heures de début ou de fin;
-3. le système vérifie la cohérence des données saisies;
-4. le système vérifie l'absence de conflit avec les autres plages de la salle;
+1. l'appariteur sélectionne une plage de disponibilité d'une salle ;
+2. il modifie les dates et heures de début ou de fin ;
+3. le système vérifie la cohérence des données saisies ;
+4. le système vérifie l'absence de conflit avec les autres plages de la salle ;
 5. les modifications sont enregistrées.
 
 ##### Déroulement alternatif : conflit de disponibilité
@@ -633,9 +633,9 @@ L'appariteur est connecté. La plage de disponibilité existe.
 
 ##### Description
 
-1. l'appariteur sélectionne une plage de disponibilité d'une salle;
-2. il confirme la suppression;
-3. le système vérifie qu'aucune réservation n'est associée à cette plage;
+1. l'appariteur sélectionne une plage de disponibilité d'une salle ;
+2. il confirme la suppression ;
+3. le système vérifie qu'aucune réservation n'est associée à cette plage ;
 4. la plage est supprimée.
 
 ##### Déroulement alternatif : réservations associées
@@ -727,9 +727,9 @@ L'utilisateur est connecté.
 
 ##### Description
 
-1. le système affiche la liste de toutes les salles;
-2. l'utilisateur peut filtrer la liste par type de salle et par capacité;
-3. le système met à jour la liste en fonction des filtres appliqués;
+1. le système affiche la liste de toutes les salles ;
+2. l'utilisateur peut filtrer la liste par type de salle et par capacité ;
+3. le système met à jour la liste en fonction des filtres appliqués ;
 4. l'utilisateur sélectionne une salle pour consulter son détail.
 
 ##### Post-conditions
@@ -749,9 +749,9 @@ L'utilisateur est connecté.
 
 ##### Description
 
-1. l'utilisateur renseigne un ou plusieurs critères de recherche : nom, localisation, capacité minimale et maximale, type de salle, équipements requis;
-2. l'utilisateur peut également filtrer par disponibilité en précisant une date et un créneau horaire;
-3. le système filtre les salles correspondant aux critères;
+1. l'utilisateur renseigne un ou plusieurs critères de recherche : nom, localisation, capacité minimale et maximale, type de salle, équipements requis ;
+2. l'utilisateur peut également filtrer par disponibilité en précisant une date et un créneau horaire ;
+3. le système filtre les salles correspondant aux critères ;
 4. la liste des salles correspondantes est affichée.
 
 ##### Post-conditions
@@ -775,12 +775,12 @@ Il existe une salle à réserver.
 
 ##### Description
 
-1. l'utilisateur visualise la liste des salles;
-2. il effectue une recherche des salles disponibles (par jour et heure de disponibilité, capacité, équipements);
-3. il en choisit un; 
-4. il consulte sa description; 
-5. il choisit le créneau à reserver; 
-6. si la réservation de la salle n'est pas soumis à la validation d'un responsable, l'utilisateur reçoit un mail de confirmation et la salle apparait maintenant avec le statut réservé;
+1. l'utilisateur visualise la liste des salles ;
+2. il effectue une recherche des salles disponibles (par jour et heure de disponibilité, capacité, équipements) ;
+3. il en choisit un ;
+4. il consulte sa description ;
+5. il choisit le créneau à reserver ;
+6. si la réservation de la salle n'est pas soumis à la validation d'un responsable, l'utilisateur reçoit un mail de confirmation et la salle apparait maintenant avec le statut réservé ;
 
 ##### Post-conditions
 
@@ -806,8 +806,8 @@ L'utilisateur est connecté. La réservation existe.
 
 ##### Description
 
-1. l'utilisateur visualise la liste de ses réservations;
-2. il en sélectionne une;
+1. l'utilisateur visualise la liste de ses réservations ;
+2. il en sélectionne une ;
 3. le système affiche toutes les informations de la réservation : salle, dates et heures, motif, statut.
 
 ##### Post-conditions
@@ -831,10 +831,10 @@ La réservation est modifiée (date). L'utilisateur est notifié par mail lorsqu
 
 ##### Description
 
-1. l'utilisateur visualise ses réservations; 
-2. il en choisit une; 
-3. il modifie les dates de réservations ou ajoute un commentaire (le système vérifie si le nouveau créneau ne rentre pas en concurrence avec une réservation existante); 
-4. l'utilisateur reçoit un mail de confirmation;
+1. l'utilisateur visualise ses réservations ;
+2. il en choisit une ;
+3. il modifie les dates de réservations ou ajoute un commentaire (le système vérifie si le nouveau créneau ne rentre pas en concurrence avec une réservation existante) ;
+4. l'utilisateur reçoit un mail de confirmation ;
 
 ##### Post-conditions
 
@@ -858,10 +858,10 @@ La réservation est annulée. L'utilisateur est notifié par mail lorsque l'annu
 
 ##### Description
 
-1. l'utilisateur visualise ses réservations;
-2. il en choisit une;
-3. il annule sa demande de réservation;
-4. l'utilisateur reçoit un mail de confirmation;
+1. l'utilisateur visualise ses réservations ;
+2. il en choisit une ;
+3. il annule sa demande de réservation ;
+4. l'utilisateur reçoit un mail de confirmation ;
 
 ##### Post-conditions
 
@@ -880,7 +880,7 @@ Le responsable est connecté.
 
 ##### Description
 
-1. le responsable consulte la liste des demandes de réservation dont l'état est « en attente »;
+1. le responsable consulte la liste des demandes de réservation dont l'état est "en attente" ;
 2. le système affiche pour chaque demande : la salle concernée, l'utilisateur demandeur, la date et le créneau souhaités, le motif.
 
 #### 4.3.8. Valider une demande de réservation
@@ -896,9 +896,9 @@ Le responsable est connecté. Une demande de réservation est en attente.
 
 ##### Description
 
-1. le responsable sélectionne une demande de réservation en attente;
-2. il valide la demande;
-3. la réservation passe au statut confirmé;
+1. le responsable sélectionne une demande de réservation en attente ;
+2. il valide la demande ;
+3. la réservation passe au statut confirmé ;
 4. l'utilisateur reçoit un mail de confirmation.
 
 ##### Post-conditions
@@ -918,10 +918,10 @@ Le responsable est connecté. Une demande de réservation est en attente.
 
 ##### Description
 
-1. le responsable sélectionne une demande de réservation en attente;
-2. il renseigne un motif de rejet;
-3. il confirme le rejet;
-4. la demande de réservation passe au statut rejeté;
+1. le responsable sélectionne une demande de réservation en attente ;
+2. il renseigne un motif de rejet ;
+3. il confirme le rejet ;
+4. la demande de réservation passe au statut rejeté ;
 5. l'utilisateur reçoit un mail l'informant du rejet et du motif.
 
 ##### Post-conditions
