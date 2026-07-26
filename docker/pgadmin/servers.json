@@ -1,0 +1,16 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "room-management-system-postgres",
+            "Host": "postgres",
+            "Port": 5432,
+            "Username": "rms-dev",
+            "Password": "devpassword",
+            "DBname": "room_management_system",
+            "SSLMode": "prefer",
+            "MaintenanceDB": "room_management_system",
+            "UseSSHTunnel": 0,
+            "Group": "Servers"
+        }
+    }
+}

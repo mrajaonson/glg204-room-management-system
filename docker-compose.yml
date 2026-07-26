@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:18-alpine3.24
+    container_name: rms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-rms-dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
+      POSTGRES_DB: ${DB_NAME:-room_management_system}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    container_name: rms-pgadmin
+    image: dpage/pgadmin4:9.16
+    restart: unless-stopped
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/misc/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  flyway:
+    container_name: rms-flyway
+    image: flyway/flyway:13-alpine
+    restart: "no"
+    command: >
+      -url=jdbc:postgresql://postgres:5432/${DB_NAME:-room_management_system}
+      -user=${DB_USER:-rms-dev}
+      -password=${DB_PASSWORD:-devpassword}
+      -locations=filesystem:/flyway/migrations migrate
+    volumes:
+      - ./docker/flyway/migrations:/flyway/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    container_name: rms-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-room_management_system}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-rms-dev}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-devpassword}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      flyway:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+  pgadmin_data:

@@ -31,6 +31,7 @@ Les utilisateurs sont notifiés par mail à chaque étape clé (validation de co
 |-------------|-------------------------------------------------|
 | Backend     | Java 21, Spring Boot 4.x, Gradle                |
 | Frontend    | Vue.js 3, Vite 8, TypeScript, Pinia, Vue Router |
+| Base de données | PostgreSQL 18, Flyway (migrations)          |
 | Tests       | JUnit 5 (backend), Vitest + Cypress (frontend)  |
 | Lint/Format | ESLint, oxlint, Prettier                        |
 
@@ -38,8 +39,18 @@ Les utilisateurs sont notifiés par mail à chaque étape clé (validation de co
 
 - **Java 21+**
 - **Node.js 22.18+ ou 24.12+**
+- **Docker** et **Docker Compose** (pour la base de données et/ou la stack complète)
 
 ## Lancement
+
+### Base de données (Docker Compose)
+
+```bash
+cp .env.example .env
+docker compose up -d postgres pgadmin flyway
+```
+
+PostgreSQL est disponible sur `localhost:5432` et pgAdmin sur `http://localhost:5050`.
 
 ### Backend
 
@@ -49,6 +60,12 @@ cd backend
 ```
 
 L'API est disponible sur `http://localhost:8080`.
+
+Pour lancer le backend en conteneur avec la base de données :
+
+```bash
+docker compose up -d
+```
 
 ### Frontend
 
