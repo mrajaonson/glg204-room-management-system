@@ -52,8 +52,8 @@ L'application Vue.js fournit une interface fluide sans rechargement de page comp
 
 ### 3.2. Contraintes techniques
 
-- le système doit être accessible de l'extérieur via HTTPS ;
-- le backend expose une API REST ; le frontend Vue.js est une application distincte qui consomme cette API ;
+- le système doit être accessible de l'extérieur via HTTPS ; le conteneur frontend (Nginx) est le seul point d'entrée exposé, le backend n'est joignable que depuis le réseau interne ;
+- le backend expose une API REST ; le frontend Vue.js est une application distincte qui consomme cette API à travers le reverse proxy Nginx ;
 - le système doit être fiable pour l'envoi de mails (confirmation de réservation, annulation, etc) ;
 - l'application doit être raisonnablement sécurisée (authentification JWT, HTTPS, validation des données côté serveur).
 
@@ -86,7 +86,14 @@ La couche service est isolée de la couche présentation via des **DTOs**. Les *
 
 ### 4.6. Couche présentation
 
-La couche présentation est entièrement gérée par **Vue.js**, une application SPA. Elle communique avec le backend via des appels HTTP (Axios). Le build Vue.js produit des fichiers statiques (HTML, CSS, JS) qui sont servis par **Nginx** directement, indépendamment du backend Spring Boot. Ce choix est cohérent avec l'architecture horizontalement scalable retenue : les instances Spring Boot ne gèrent que l'API REST, et Nginx reste le seul point de distribution du frontend.
+La couche présentation est entièrement gérée par **Vue.js**, une application SPA. Elle communique avec le backend via des appels HTTP (Axios) adressés à des **URL relatives** (`/api/…`). Le build Vue.js produit des fichiers statiques (HTML, CSS, JS) qui sont servis par **Nginx**.
+
+Nginx assure deux rôles dans le même conteneur frontend :
+
+- **serveur de fichiers statiques** pour l'application Vue.js ;
+- **reverse proxy** vers l'API : les requêtes `/api/` sont relayées vers le conteneur backend.
+
+Le navigateur ne dialogue donc qu'avec Nginx, sur une **origine unique**, ce qui supprime le besoin de configuration CORS et évite d'exposer le backend directement. Ce choix est cohérent avec l'architecture horizontalement scalable retenue : les instances Spring Boot ne gèrent que l'API REST, et Nginx reste le seul point d'entrée du système.
 
 ### 4.7. Authentification
 
@@ -200,7 +207,7 @@ node "Machine client" {
 }
 
 node "Conteneur Docker frontend" {
-  component "Nginx\n(fichiers statiques Vue.js)" as nginx
+  component "Nginx\n(fichiers statiques Vue.js\n+ reverse proxy)" as nginx
 }
 
 node "Conteneur Docker backend" {
@@ -212,8 +219,14 @@ node "Conteneur Docker base de données" {
 }
 
 navigateur --> nginx : HTTPS
-navigateur --> spring : HTTPS (API REST/JSON)
+nginx --> spring : HTTP interne\n(proxy /api → API REST/JSON)
 spring --> db : TCP
+
+note right of nginx
+  Seul point d'entrée exposé :
+  /      → fichiers statiques Vue.js
+  /api/  → backend:8080
+end note
 
 note right of db
   Volume Docker persistant
@@ -221,14 +234,15 @@ end note
 @enduml
 ```
 
-- le frontend Vue.js est servi par **Nginx** comme fichiers statiques ;
-- le backend Spring Boot expose l'API REST sur un port dédié ;
+- le conteneur frontend est le **seul point d'entrée exposé** : Nginx sert les fichiers statiques Vue.js et relaie les requêtes `/api/` vers le backend ;
+- le navigateur ne connaît donc qu'une seule origine : aucun appel direct à l'API, pas de configuration CORS, et un seul certificat HTTPS à gérer ;
+- le backend Spring Boot expose l'API REST sur le réseau interne Docker uniquement (`backend:8080`) ; son port n'est pas publié vers l'extérieur ;
 - la base de données PostgreSQL est dans son propre conteneur avec un volume persistant.
 
 #### 4.11.2. Architecture avec load balancer (évolution horizontale)
 
 
-Si la charge augmente, on peut multiplier les instances backend derrière un **load balancer**. Le frontend reste servi par un **Nginx** unique, les fichiers statiques Vue.js n'ont pas besoin d'être scalés.
+Si la charge augmente, on peut multiplier les instances backend derrière un **load balancer**. Le frontend reste servi par un **Nginx** unique, les fichiers statiques Vue.js n'ont pas besoin d'être scalés. Le principe du point d'entrée unique est conservé : le navigateur ne s'adresse toujours qu'à Nginx, qui relaie les requêtes `/api/` vers le load balancer au lieu de les relayer vers un backend unique.
 
 ```plantuml
 @startuml
@@ -239,7 +253,7 @@ node "Machine client" {
   component navigateur
 }
 
-node "Nginx\n(fichiers statiques Vue.js)" as cdn {
+node "Nginx\n(fichiers statiques Vue.js\n+ reverse proxy)" as cdn {
 }
 
 node "Load balancer\n(Nginx / HAProxy)" as lb {
@@ -261,8 +275,8 @@ node "Conteneur base de données" {
   database "PostgreSQL" as db
 }
 
-navigateur --> cdn : HTTPS (pages)
-navigateur --> lb : HTTPS (API REST)
+navigateur --> cdn : HTTPS (pages + API)
+cdn --> lb : proxy /api
 lb --> spring1
 lb --> spring2
 lb --> springN
@@ -287,15 +301,13 @@ end note
 @enduml
 ```
 
-- le frontend Vue.js est servi par un **Nginx** unique, les fichiers statiques étant identiques pour tous les utilisateurs ;
-- le **load balancer** distribue les appels API REST entre les instances Spring Boot ;
+- le frontend Vue.js est servi par un **Nginx** unique, les fichiers statiques étant identiques pour tous les utilisateurs ; il reste le seul point d'entrée exposé et relaie les requêtes `/api/` vers le load balancer ;
+- le **load balancer** distribue les appels API REST entre les instances Spring Boot ; il n'est pas joignable directement depuis l'extérieur ;
 - les tokens **JWT étant sans état**, n'importe quelle instance peut traiter n'importe quelle requête sans partage de session ;
 - la base de données PostgreSQL reste centralisée ; elle peut évoluer vers un cluster (primary + replicas en lecture) si elle devenait un goulot d'étranglement ;
 - cette architecture peut être gérée **Ansible** ou **Kubernetes** selon les besoins.
 
 ## 5. Préliminaire à la conception
-
-La conception est un processus itératif. Avant de traiter les *use cases* un par un, il est utile de faire un premier passage sur les classes métier identifiées en analyse, afin d'anticiper les difficultés.
 
 Les entités principales identifiées lors de l'analyse sont :
 
@@ -306,10 +318,6 @@ Les entités principales identifiées lors de l'analyse sont :
 - `PlageDisponibilite` : représente une plage horaire durant laquelle une salle est disponible ;
 - `Reservation` : représente une réservation effective ;
 - `DemandeReservation` : représente une demande de réservation en attente de traitement.
-
-Un point à noter : la gestion de la **disponibilité des salles** et la **détection des conflits de réservation** constituent la complexité principale de ce projet. Il faudra traiter ces *use cases* en priorité pour valider le modèle.
-
-Un second point concerne le **double mode de réservation** : certaines salles sont réservées directement (premier arrivé, premier servi), d'autres nécessitent la validation d'un responsable. Ce choix influe sur le cycle de vie de la `Reservation` et son état.
 
 ## 6. Cas d'utilisation
 
@@ -595,7 +603,7 @@ ctrl --> a : 200 OK
 
 #### 6.2.3. Valider une demande de création de compte
 
-##### Endpoints : 
+##### Endpoints :
 - `PUT /api/comptes/demandes/{id}/valider` (accès restreint aux administrateurs)
 
 La validation crée un `Compte` à partir des données de la `DemandeCreationCompte`, puis passe la demande à l'état `VALIDEE`.
@@ -1758,4 +1766,4 @@ AuthController ..> ServiceAuth
 
 - **Annulation automatique** : quand une salle devient indisponible (travaux, événement prioritaire), les réservations existantes doivent être annulées automatiquement et les utilisateurs notifiés.
 
-- **JWT et sécurité** : il faudra préciser la durée de vie des tokens, le mécanisme de refresh, et les règles CORS pour autoriser les appels depuis le frontend Vue.js.
+- **JWT et sécurité** : il faudra préciser la durée de vie des tokens et le mécanisme de refresh.
