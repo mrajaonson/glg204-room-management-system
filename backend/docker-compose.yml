@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${PG_USER}
       POSTGRES_PASSWORD: ${PG_PASSWORD}
-      POSTGRES_DB: ${PG_DB}
+      POSTGRES_DB: ${PG_DATABASE}
     ports:
       - "${PG_PORT}:5432"
     volumes:
@@ -44,7 +44,7 @@ services:
     image: flyway/flyway:13-alpine
     restart: "no"
     command: >
-      -url=jdbc:postgresql://postgres:5432/${PG_DB}
+      -url=jdbc:postgresql://postgres:5432/${PG_DATABASE}
       -user=${PG_USER}
       -password=${PG_PASSWORD}
       -locations=filesystem:/flyway/migrations migrate
@@ -61,7 +61,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${PG_DB}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${PG_DATABASE}
       SPRING_DATASOURCE_USERNAME: ${PG_USER}
       SPRING_DATASOURCE_PASSWORD: ${PG_PASSWORD}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
