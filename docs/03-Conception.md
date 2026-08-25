@@ -1,4 +1,4 @@
-# Projet *Réservation de salles* : Conception v1.0
+# Projet *Réservation de salles* : Conception v1.1
 
 ## 1. Table des matières
 
