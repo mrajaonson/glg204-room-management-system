@@ -74,7 +74,7 @@ Les données seront stockées dans une base **PostgreSQL**, aussi bien en dével
 
 ### 4.3. Couche de persistance
 
-La couche de persistance sera **JPA/Hibernate**. Les entités seront annot   ées JPA, et les repositories seront des interfaces Spring Data JPA.
+La couche de persistance sera **JPA/Hibernate**. Les entités seront annotées JPA, et les repositories seront des interfaces Spring Data JPA.
 
 ### 4.4. Couche métier
 
