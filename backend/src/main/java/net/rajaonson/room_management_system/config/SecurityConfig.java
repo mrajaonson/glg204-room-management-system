@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,13 +19,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
         return http
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/accounts/requests").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/accounts/requests/validate").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/accounts/requests").hasRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/accounts/requests/*/approve").hasRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.PUT, "/api/accounts/requests/*/refuse").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/accounts/requests").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/accounts/requests/validate").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/accounts/requests").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/accounts/requests/*/approve").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/accounts/requests/*/refuse").hasRole(Role.ADMIN.name())
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .build();

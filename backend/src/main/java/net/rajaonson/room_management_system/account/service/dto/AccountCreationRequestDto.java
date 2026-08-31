@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.Locale;
+
 public class AccountCreationRequestDto {
 
     @NotBlank
@@ -28,10 +30,10 @@ public class AccountCreationRequestDto {
     }
 
     public AccountCreationRequestDto(String login, String password, String passwordConfirmation, String email) {
-        this.login = login;
+        this.setLogin(login);
         this.password = password;
         this.passwordConfirmation = passwordConfirmation;
-        this.email = email;
+        this.setEmail(email);
     }
 
     @JsonIgnore
@@ -45,7 +47,7 @@ public class AccountCreationRequestDto {
     }
 
     public void setLogin(String login) {
-        this.login = login;
+        this.login = login.toLowerCase(Locale.ROOT);
     }
 
     public String getPassword() {
@@ -69,6 +71,6 @@ public class AccountCreationRequestDto {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email.toLowerCase(Locale.ROOT);
     }
 }
