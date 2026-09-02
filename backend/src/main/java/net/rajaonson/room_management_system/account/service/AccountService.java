@@ -1,9 +1,11 @@
 package net.rajaonson.room_management_system.account.service;
 
 import net.rajaonson.room_management_system.account.model.AccountCreationRequest;
+import net.rajaonson.room_management_system.account.model.RequestStatus;
 import net.rajaonson.room_management_system.account.repository.AccountCreationRequestRepository;
 import net.rajaonson.room_management_system.account.repository.AccountRepository;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestDto;
+import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestResponseDto;
 import net.rajaonson.room_management_system.notification.service.NotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,8 @@ import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
 
 @Service
 public class AccountService {
@@ -66,5 +70,12 @@ public class AccountService {
         }
 
         requestRepository.save(request);
+    }
+
+    public List<AccountCreationRequestResponseDto> findEmailValidatedRequests() {
+        return requestRepository.findByStatus(RequestStatus.EMAIL_VALIDATED)
+                .stream()
+                .map(AccountCreationRequestResponseDto::from)
+                .toList();
     }
 }
