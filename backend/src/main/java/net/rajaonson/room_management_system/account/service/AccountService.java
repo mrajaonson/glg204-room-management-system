@@ -37,4 +37,18 @@ public class AccountService {
                 new AccountCreationRequest(login, passwordEncoder.encode(dto.getPassword()), email);
         requestRepository.save(request);
     }
+
+    public void validateEmail(String token) {
+        AccountCreationRequest request = requestRepository
+                .findByValidationToken(token)
+                .orElseThrow(() -> new ErrorResponseException(HttpStatus.NOT_FOUND));
+
+        try {
+            request.markEmailValidated();
+        } catch (IllegalStateException e) {
+            throw new ErrorResponseException(HttpStatus.CONFLICT);
+        }
+
+        requestRepository.save(request);
+    }
 }

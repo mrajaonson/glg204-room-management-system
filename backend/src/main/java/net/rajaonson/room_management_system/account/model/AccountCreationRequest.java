@@ -7,9 +7,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import net.rajaonson.room_management_system.common.model.BaseEntity;
 import org.apache.commons.lang3.NotImplementedException;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Entity
@@ -29,8 +30,13 @@ public class AccountCreationRequest extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private RequestStatus status;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @Column(name = "validation_token", nullable = false, unique = true, length = 36)
     private String validationToken;
@@ -42,7 +48,6 @@ public class AccountCreationRequest extends BaseEntity {
         this.passwordHash = passwordHash;
         this.email = email;
         this.status = RequestStatus.CREATED;
-        this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
         this.validationToken = UUID.randomUUID().toString();
     }
 
@@ -51,7 +56,11 @@ public class AccountCreationRequest extends BaseEntity {
     }
 
     public void markEmailValidated() {
-        throw new NotImplementedException("Not yet implemented");
+        if (status != RequestStatus.CREATED && status != RequestStatus.EMAIL_SENT) {
+            throw new IllegalStateException(
+                    "cannot validate email for a request in status %s".formatted(status));
+        }
+        this.status = RequestStatus.EMAIL_VALIDATED;
     }
 
     public void approve() {
@@ -82,13 +91,17 @@ public class AccountCreationRequest extends BaseEntity {
         return createdAt;
     }
 
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
     public String getValidationToken() {
         return validationToken;
     }
 
     @Override
     public String toString() {
-        return "AccountCreationRequest[id=%s, login=%s, email=%s, status=%s, createdAt=%s]"
-                .formatted(getId(), login, email, status, createdAt);
+        return "AccountCreationRequest[id=%s, login=%s, email=%s, status=%s, createdAt=%s, updatedAt=%s]"
+                .formatted(getId(), login, email, status, createdAt, updatedAt);
     }
 }

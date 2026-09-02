@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/accounts")
@@ -24,5 +26,11 @@ public class AccountController {
     @ResponseStatus(HttpStatus.CREATED)
     public void createAccountCreationRequest(@Valid @RequestBody AccountCreationRequestDto request) {
         accountService.createAccountCreationRequest(request);
+    }
+
+    @GetMapping("/requests/validate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void validateEmail(@RequestParam String token) {
+        accountService.validateEmail(token);
     }
 }
