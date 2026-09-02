@@ -52,7 +52,11 @@ public class AccountCreationRequest extends BaseEntity {
     }
 
     public void markEmailSent() {
-        throw new NotImplementedException("Not yet implemented");
+        if (status != RequestStatus.CREATED) {
+            throw new IllegalStateException(
+                    "cannot mark email sent for a request in status %s".formatted(status));
+        }
+        this.status = RequestStatus.EMAIL_SENT;
     }
 
     public void markEmailValidated() {
