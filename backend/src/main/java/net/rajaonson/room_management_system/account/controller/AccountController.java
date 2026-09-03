@@ -5,15 +5,10 @@ import jakarta.validation.Valid;
 import net.rajaonson.room_management_system.account.service.AccountService;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestDto;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestResponseDto;
+import net.rajaonson.room_management_system.account.service.dto.AccountResponseDto;
 import net.rajaonson.room_management_system.common.dto.StatusResponseDto;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -44,5 +39,10 @@ public class AccountController {
     @GetMapping("/requests")
     public List<AccountCreationRequestResponseDto> getEmailValidatedRequests() {
         return accountService.findEmailValidatedRequests();
+    }
+
+    @PutMapping("/requests/{id}/validate")
+    public AccountResponseDto validateAccountCreationRequest(@PathVariable Long id) {
+        return accountService.validateAccountCreationRequest(id);
     }
 }

@@ -1,11 +1,14 @@
 package net.rajaonson.room_management_system.account.service;
 
+import net.rajaonson.room_management_system.account.model.Account;
 import net.rajaonson.room_management_system.account.model.AccountCreationRequest;
 import net.rajaonson.room_management_system.account.model.RequestStatus;
+import net.rajaonson.room_management_system.account.model.Role;
 import net.rajaonson.room_management_system.account.repository.AccountCreationRequestRepository;
 import net.rajaonson.room_management_system.account.repository.AccountRepository;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestDto;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestResponseDto;
+import net.rajaonson.room_management_system.account.service.dto.AccountResponseDto;
 import net.rajaonson.room_management_system.notification.service.NotificationService;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
@@ -17,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -86,6 +90,27 @@ public class AccountService implements UserDetailsService {
         }
 
         requestRepository.save(request);
+    }
+
+    @Transactional
+    public AccountResponseDto validateAccountCreationRequest(Long id) {
+        AccountCreationRequest request = requestRepository.findById(id)
+                .orElseThrow(() -> new ErrorResponseException(HttpStatus.NOT_FOUND));
+
+        if (accountRepository.existsByLogin(request.getLogin())
+                || accountRepository.existsByEmail(request.getEmail())) {
+            throw new ErrorResponseException(HttpStatus.CONFLICT);
+        }
+
+        request.approve();
+        requestRepository.save(request);
+
+        Account account = accountRepository.save(new Account(
+                request.getLogin(), request.getPasswordHash(), request.getEmail(), Role.USER));
+
+        log.info("validated account creation request {} into account {}", id, account.getId());
+
+        return AccountResponseDto.from(account);
     }
 
     public List<AccountCreationRequestResponseDto> findEmailValidatedRequests() {

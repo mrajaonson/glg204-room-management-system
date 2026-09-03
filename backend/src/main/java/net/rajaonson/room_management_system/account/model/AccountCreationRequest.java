@@ -6,7 +6,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import net.rajaonson.room_management_system.common.model.BaseEntity;
-import org.apache.commons.lang3.NotImplementedException;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -68,11 +67,11 @@ public class AccountCreationRequest extends BaseEntity {
     }
 
     public void approve() {
-        throw new NotImplementedException("Not yet implemented");
+        this.status = RequestStatus.VALIDATED;
     }
 
     public void refuse() {
-        throw new NotImplementedException("Not yet implemented");
+        status = RequestStatus.REFUSED;
     }
 
     public String getLogin() {
