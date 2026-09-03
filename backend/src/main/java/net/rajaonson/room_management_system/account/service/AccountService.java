@@ -7,10 +7,15 @@ import net.rajaonson.room_management_system.account.repository.AccountRepository
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestDto;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestResponseDto;
 import net.rajaonson.room_management_system.notification.service.NotificationService;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,7 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
 @Service
-public class AccountService {
+@NullMarked
+public class AccountService implements UserDetailsService {
 
     private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
@@ -32,6 +38,16 @@ public class AccountService {
         this.requestRepository = requestRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return accountRepository.findByLogin(username)
+                .map(account -> User.withUsername(account.getLogin())
+                        .password(account.getPasswordHash())
+                        .roles(account.getRole().name())
+                        .build())
+                .orElseThrow(() -> new UsernameNotFoundException("account not found"));
     }
 
     public void createAccountCreationRequest(AccountCreationRequestDto dto) {

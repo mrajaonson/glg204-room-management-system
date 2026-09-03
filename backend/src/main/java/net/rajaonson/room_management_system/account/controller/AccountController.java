@@ -1,9 +1,11 @@
 package net.rajaonson.room_management_system.account.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import net.rajaonson.room_management_system.account.service.AccountService;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestDto;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestResponseDto;
+import net.rajaonson.room_management_system.common.dto.StatusResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,16 +27,18 @@ public class AccountController {
         this.accountService = accountService;
     }
 
+    @SecurityRequirements
     @PostMapping("/requests")
     @ResponseStatus(HttpStatus.CREATED)
     public void createAccountCreationRequest(@Valid @RequestBody AccountCreationRequestDto request) {
         accountService.createAccountCreationRequest(request);
     }
 
+    @SecurityRequirements
     @GetMapping("/requests/validate")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void validateEmail(@RequestParam String token) {
+    public StatusResponseDto validateEmail(@RequestParam String token) {
         accountService.validateEmail(token);
+        return StatusResponseDto.ok();
     }
 
     @GetMapping("/requests")

@@ -71,6 +71,8 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
       MAIL_FROM: ${MAIL_FROM}
       APP_VALIDATION_URL: ${APP_VALIDATION_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
