@@ -71,7 +71,7 @@ public class AccountCreationRequest extends BaseEntity {
     }
 
     public void refuse() {
-        status = RequestStatus.REFUSED;
+        this.status = RequestStatus.REFUSED;
     }
 
     public String getLogin() {

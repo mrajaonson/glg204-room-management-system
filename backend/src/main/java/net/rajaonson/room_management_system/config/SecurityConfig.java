@@ -43,7 +43,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/accounts/requests").permitAll()
                         .requestMatchers(HttpMethod.GET, "/accounts/requests/validate").permitAll()
                         .requestMatchers(HttpMethod.GET, "/accounts/requests").hasRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.PUT, "/accounts/requests/*/approve").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/accounts/requests/*/validate").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/accounts/requests/*/refuse").hasRole(Role.ADMIN.name())
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())

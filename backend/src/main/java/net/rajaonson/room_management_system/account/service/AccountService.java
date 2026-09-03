@@ -14,7 +14,6 @@ import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.MailException;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -69,12 +68,9 @@ public class AccountService implements UserDetailsService {
                 new AccountCreationRequest(login, passwordEncoder.encode(dto.getPassword()), email);
         AccountCreationRequest saved = requestRepository.save(request);
 
-        try {
-            notificationService.sendConfirmationEmail(saved.getEmail(), saved.getValidationToken());
+        if (notificationService.sendConfirmationEmail(saved.getEmail(), saved.getValidationToken())) {
             saved.markEmailSent();
             requestRepository.save(saved);
-        } catch (MailException e) {
-            log.error("failed to send confirmation email for request {}", saved.getId(), e);
         }
     }
 
@@ -108,6 +104,8 @@ public class AccountService implements UserDetailsService {
         Account account = accountRepository.save(new Account(
                 request.getLogin(), request.getPasswordHash(), request.getEmail(), Role.USER));
 
+        notificationService.sendApprovalEmail(account.getEmail(), account.getLogin());
+
         log.info("validated account creation request {} into account {}", id, account.getId());
 
         return AccountResponseDto.from(account);
@@ -118,5 +116,20 @@ public class AccountService implements UserDetailsService {
                 .stream()
                 .map(AccountCreationRequestResponseDto::from)
                 .toList();
+    }
+
+    @Transactional
+    public AccountCreationRequestResponseDto refuseAccountCreationRequest(Long id) {
+        AccountCreationRequest request = requestRepository.findById(id)
+                .orElseThrow(() -> new ErrorResponseException(HttpStatus.NOT_FOUND));
+
+        request.refuse();
+        requestRepository.save(request);
+
+        notificationService.sendRefusalEmail(request.getEmail());
+
+        log.info("refused account creation request {}", id);
+
+        return AccountCreationRequestResponseDto.from(request);
     }
 }

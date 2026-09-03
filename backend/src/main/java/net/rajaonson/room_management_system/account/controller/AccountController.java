@@ -45,4 +45,9 @@ public class AccountController {
     public AccountResponseDto validateAccountCreationRequest(@PathVariable Long id) {
         return accountService.validateAccountCreationRequest(id);
     }
+
+    @PutMapping("/requests/{id}/refuse")
+    public AccountCreationRequestResponseDto refuseAccountCreationRequest(@PathVariable Long id) {
+        return accountService.refuseAccountCreationRequest(id);
+    }
 }
