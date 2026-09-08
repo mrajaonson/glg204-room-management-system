@@ -38,4 +38,8 @@ public class JwtService {
 
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }
+
+    public long getExpiresIn() {
+        return jwtProperties.expiration().toSeconds();
+    }
 }
