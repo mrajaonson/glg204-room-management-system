@@ -49,6 +49,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/rooms/*/equipments").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/rooms/*/availabilities").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
                         .requestMatchers(HttpMethod.GET, "/rooms").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/rooms/search").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/reservations").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/reservations/*/approve").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/reservations/*/reject").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/reservations").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/reservations/*").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/reservations/*/cancel").authenticated()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2

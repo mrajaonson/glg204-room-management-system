@@ -49,6 +49,10 @@ public class Account extends BaseEntity {
         return role;
     }
 
+    public boolean isManager() {
+        return role == Role.MANAGER || role == Role.ADMIN;
+    }
+
     @Override
     public String toString() {
         return "Account[id=%s, login=%s, email=%s, role=%s]".formatted(getId(), login, email, role);

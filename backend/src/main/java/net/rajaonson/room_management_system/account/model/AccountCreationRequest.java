@@ -51,18 +51,10 @@ public class AccountCreationRequest extends BaseEntity {
     }
 
     public void markEmailSent() {
-        if (status != RequestStatus.CREATED) {
-            throw new IllegalStateException(
-                    "cannot mark email sent for a request in status %s".formatted(status));
-        }
         this.status = RequestStatus.EMAIL_SENT;
     }
 
     public void markEmailValidated() {
-        if (status != RequestStatus.CREATED && status != RequestStatus.EMAIL_SENT) {
-            throw new IllegalStateException(
-                    "cannot validate email for a request in status %s".formatted(status));
-        }
         this.status = RequestStatus.EMAIL_VALIDATED;
     }
 

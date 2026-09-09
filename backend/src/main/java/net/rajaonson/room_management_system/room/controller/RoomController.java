@@ -8,6 +8,7 @@ import net.rajaonson.room_management_system.room.service.dto.EquipmentCreationRe
 import net.rajaonson.room_management_system.room.service.dto.EquipmentResponseDto;
 import net.rajaonson.room_management_system.room.service.dto.RoomCreationRequestDto;
 import net.rajaonson.room_management_system.room.service.dto.RoomResponseDto;
+import net.rajaonson.room_management_system.room.service.dto.RoomSearchFilterDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,6 +39,11 @@ public class RoomController {
     @GetMapping
     public List<RoomResponseDto> listRooms() {
         return roomService.listRooms();
+    }
+
+    @PostMapping("/search")
+    public List<RoomResponseDto> searchRooms(@Valid @RequestBody RoomSearchFilterDto filterDto) {
+        return roomService.searchRooms(filterDto);
     }
 
     @PostMapping("/{roomId}/equipments")

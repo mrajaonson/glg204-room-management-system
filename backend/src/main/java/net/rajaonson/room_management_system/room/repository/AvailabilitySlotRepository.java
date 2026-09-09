@@ -9,4 +9,7 @@ public interface AvailabilitySlotRepository extends JpaRepository<AvailabilitySl
 
     boolean existsByRoomIdAndStartAtLessThanAndEndAtGreaterThan(
             Long roomId, LocalDateTime end, LocalDateTime start);
+
+    boolean existsByRoomIdAndStartAtLessThanEqualAndEndAtGreaterThanEqual(
+            Long roomId, LocalDateTime start, LocalDateTime end);
 }

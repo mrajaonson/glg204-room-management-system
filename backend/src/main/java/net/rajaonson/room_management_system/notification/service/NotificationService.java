@@ -1,5 +1,6 @@
 package net.rajaonson.room_management_system.notification.service;
 
+import net.rajaonson.room_management_system.reservation.model.Reservation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,6 +61,73 @@ public class NotificationService {
                 Votre demande de création de compte a été refusée.
 
                 """);
+    }
+
+    public boolean sendReservationConfirmationEmail(String email, Reservation reservation) {
+        return send("reservation confirmation", email,
+                "Votre réservation est confirmée",
+                """
+                Bonjour,
+
+                Votre réservation est confirmée :
+
+                %s
+
+                """.formatted(describe(reservation)));
+    }
+
+    public boolean sendReservationPendingEmail(String email, Reservation reservation) {
+        return send("reservation pending", email,
+                "Votre demande de réservation a bien été reçue",
+                """
+                Bonjour,
+
+                Votre demande de réservation a bien été reçue et attend la validation d'un responsable :
+
+                %s
+
+                """.formatted(describe(reservation)));
+    }
+
+    public boolean sendReservationCancellationEmail(String email, Reservation reservation) {
+        return send("reservation cancellation", email,
+                "Votre réservation a été annulée",
+                """
+                Bonjour,
+
+                Votre réservation a été annulée :
+
+                %s
+
+                """.formatted(describe(reservation)));
+    }
+
+    public boolean sendReservationRejectionEmail(String email, Reservation reservation, String reason) {
+        return send("reservation rejection", email,
+                "Votre demande de réservation a été rejetée",
+                """
+                Bonjour,
+
+                Votre demande de réservation a été rejetée :
+
+                %s
+
+                Motif : %s
+
+                """.formatted(describe(reservation), reason));
+    }
+
+    private String describe(Reservation reservation) {
+        return """
+                Salle : %s
+                Du : %s
+                Au : %s
+                Motif : %s"""
+                .formatted(
+                        reservation.getRoom().getName(),
+                        reservation.getStartAt(),
+                        reservation.getEndAt(),
+                        reservation.getPurpose());
     }
 
     private boolean send(String kind, String to, String subject, String body) {

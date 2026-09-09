@@ -1,5 +1,6 @@
 package net.rajaonson.room_management_system.room.service;
 
+import net.rajaonson.room_management_system.common.error.ApiErrors;
 import net.rajaonson.room_management_system.room.model.AvailabilitySlot;
 import net.rajaonson.room_management_system.room.model.Equipment;
 import net.rajaonson.room_management_system.room.model.Room;
@@ -11,13 +12,13 @@ import net.rajaonson.room_management_system.room.service.dto.AvailabilitySlotRes
 import net.rajaonson.room_management_system.room.service.dto.EquipmentCreationRequestDto;
 import net.rajaonson.room_management_system.room.service.dto.EquipmentResponseDto;
 import net.rajaonson.room_management_system.room.service.dto.RoomCreationRequestDto;
+import net.rajaonson.room_management_system.room.service.dto.RoomSearchFilterDto;
 import net.rajaonson.room_management_system.room.service.dto.RoomResponseDto;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.ErrorResponseException;
 
 import java.util.List;
 
@@ -41,7 +42,7 @@ public class RoomService {
 
     public RoomResponseDto createRoom(RoomCreationRequestDto dto) {
         if (roomRepository.existsByName(dto.name())) {
-            throw new ErrorResponseException(HttpStatus.CONFLICT);
+            throw ApiErrors.conflict("a room named '%s' already exists".formatted(dto.name()));
         }
 
         Room room = roomRepository.save(new Room(
@@ -64,6 +65,22 @@ public class RoomService {
                 .toList();
     }
 
+    public List<RoomResponseDto> searchRooms(RoomSearchFilterDto filter) {
+        Specification<Room> spec = new RoomSpecification()
+                .nameContains(filter.name())
+                .locationContains(filter.location())
+                .capacityAtLeast(filter.capacityMin())
+                .capacityAtMost(filter.capacityMax())
+                .type(filter.type())
+                .hasAllEquipments(filter.equipments())
+                .availableBetween(filter.startAt(), filter.endAt());
+
+        return roomRepository.findAll(spec)
+                .stream()
+                .map(RoomResponseDto::from)
+                .toList();
+    }
+
     public EquipmentResponseDto createEquipment(Long roomId, EquipmentCreationRequestDto dto) {
         Room room = findRoom(roomId);
 
@@ -80,7 +97,7 @@ public class RoomService {
 
         if (availabilitySlotRepository.existsByRoomIdAndStartAtLessThanAndEndAtGreaterThan(
                 roomId, dto.endAt(), dto.startAt())) {
-            throw new ErrorResponseException(HttpStatus.CONFLICT);
+            throw ApiErrors.conflict("this period overlaps an existing availability slot of the room");
         }
 
         AvailabilitySlot slot = availabilitySlotRepository.save(
@@ -93,6 +110,6 @@ public class RoomService {
 
     private Room findRoom(Long roomId) {
         return roomRepository.findById(roomId)
-                .orElseThrow(() -> new ErrorResponseException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> ApiErrors.notFound("no room with id %d".formatted(roomId)));
     }
 }

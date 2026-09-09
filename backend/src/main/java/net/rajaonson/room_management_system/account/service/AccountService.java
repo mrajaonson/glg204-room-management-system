@@ -9,18 +9,17 @@ import net.rajaonson.room_management_system.account.repository.AccountRepository
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestDto;
 import net.rajaonson.room_management_system.account.service.dto.AccountCreationRequestResponseDto;
 import net.rajaonson.room_management_system.account.service.dto.AccountResponseDto;
+import net.rajaonson.room_management_system.common.error.ApiErrors;
 import net.rajaonson.room_management_system.notification.service.NotificationService;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.ErrorResponseException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -57,11 +56,9 @@ public class AccountService implements UserDetailsService {
         String login = dto.getLogin();
         String email = dto.getEmail();
 
-        if (accountRepository.existsByLogin(login) || requestRepository.existsByLogin(login)) {
-            throw new ErrorResponseException(HttpStatus.CONFLICT);
-        }
-        if (accountRepository.existsByEmail(email) || requestRepository.existsByEmail(email)) {
-            throw new ErrorResponseException(HttpStatus.CONFLICT);
+        if (accountRepository.existsByLogin(login) || requestRepository.existsByLogin(login)
+                || accountRepository.existsByEmail(email) || requestRepository.existsByEmail(email)) {
+            throw ApiErrors.conflict("an account or a pending request already exists for this login or email");
         }
 
         AccountCreationRequest request =
@@ -77,13 +74,9 @@ public class AccountService implements UserDetailsService {
     public void validateEmail(String token) {
         AccountCreationRequest request = requestRepository
                 .findByValidationToken(token)
-                .orElseThrow(() -> new ErrorResponseException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> ApiErrors.notFound("no pending request matches this validation token"));
 
-        try {
-            request.markEmailValidated();
-        } catch (IllegalStateException e) {
-            throw new ErrorResponseException(HttpStatus.CONFLICT);
-        }
+        request.markEmailValidated();
 
         requestRepository.save(request);
     }
@@ -91,11 +84,11 @@ public class AccountService implements UserDetailsService {
     @Transactional
     public AccountResponseDto validateAccountCreationRequest(Long id) {
         AccountCreationRequest request = requestRepository.findById(id)
-                .orElseThrow(() -> new ErrorResponseException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> ApiErrors.notFound("no account creation request with id %d".formatted(id)));
 
         if (accountRepository.existsByLogin(request.getLogin())
                 || accountRepository.existsByEmail(request.getEmail())) {
-            throw new ErrorResponseException(HttpStatus.CONFLICT);
+            throw ApiErrors.conflict("an account already exists with this login or email");
         }
 
         request.approve();
@@ -121,7 +114,7 @@ public class AccountService implements UserDetailsService {
     @Transactional
     public AccountCreationRequestResponseDto refuseAccountCreationRequest(Long id) {
         AccountCreationRequest request = requestRepository.findById(id)
-                .orElseThrow(() -> new ErrorResponseException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> ApiErrors.notFound("no account creation request with id %d".formatted(id)));
 
         request.refuse();
         requestRepository.save(request);
