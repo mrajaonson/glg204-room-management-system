@@ -45,6 +45,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/accounts/requests").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/accounts/requests/*/validate").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/accounts/requests/*/refuse").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/rooms").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/rooms/*/equipments").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/rooms/*/availabilities").hasAnyRole(Role.MANAGER.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/rooms").authenticated()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
