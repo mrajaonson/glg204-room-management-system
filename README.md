@@ -109,6 +109,14 @@ La documentation du projet suit la méthodologie Arrington avec des diagrammes U
 
 Les PDF correspondants sont générés via Pandoc (voir [`pandoc/`](pandoc/)).
 
+## Ressources
+
+- [REST Query Language with Spring Data JPA Specifications](https://www.baeldung.com/rest-api-search-language-spring-data-specifications) — Baeldung : construction d'un langage de recherche REST avec les `Specification` de Spring Data JPA.
+- [Email](https://docs.spring.io/spring-framework/reference/integration/email.html) — Documentation Spring Framework : envoi d'e-mails avec `JavaMailSender`.
+- [Sending Email](https://docs.spring.io/spring-boot/reference/io/email.html) — Documentation Spring Boot : auto-configuration du `JavaMailSender` via les propriétés `spring.mail.*`.
+- [Spring Security OAuth](https://www.baeldung.com/spring-security-oauth) — Baeldung : série d'articles de référence sur Spring Security OAuth2.
+- [Spring Security OAuth2 Login](https://www.baeldung.com/spring-security-5-oauth2-login) — Baeldung : mise en place du login OAuth2 avec Spring Security.
+
 ## Licence
 
 [MIT](LICENSE)
