@@ -1,5 +1,5 @@
 import { defineRouter } from '#q-app';
-import { routes, handleHotUpdate } from 'vue-router/auto-routes';
+import { routes, handleHotUpdate, type RouteNamedMap } from 'vue-router/auto-routes';
 import {
   createMemoryHistory,
   createRouter,
@@ -34,17 +34,22 @@ export default defineRouter(({ store }) => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE),
   });
 
-  // Every page requires a valid session, except the login page
+  // Reachable by anyone
+  const publicRoutes: Set<keyof RouteNamedMap> = new Set(['/', '/accounts/requests/validate']);
+  // Reachable only without a session: a logged-in user is sent home
+  const guestOnlyRoutes: Set<keyof RouteNamedMap> = new Set(['/login', '/register']);
+
+  // Every other page requires a valid session
   Router.beforeEach((to) => {
     const authenticated = useUserStore(store).hasValidSession();
 
-    if (to.name === '/login') {
+    if (guestOnlyRoutes.has(to.name)) {
       return authenticated ? { path: '/' } : true;
     }
-    if (!authenticated) {
-      return { name: '/login', query: { redirect: to.fullPath } };
+    if (publicRoutes.has(to.name) || authenticated) {
+      return true;
     }
-    return true;
+    return { name: '/login', query: { redirect: to.fullPath } };
   });
 
   // enable HMR for it
