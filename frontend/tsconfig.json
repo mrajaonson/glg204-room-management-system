@@ -1,3 +1,7 @@
 {
-  "extends": "./.quasar/tsconfig.json"
+  "extends": "./.quasar/tsconfig.json",
+  "compilerOptions": {
+    // Used by vue-router's Volar plugin to match pages against typed-router.d.ts paths
+    "rootDir": "."
+  }
 }
