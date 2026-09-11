@@ -39,8 +39,11 @@ export const useUserStore = defineStore('user', {
     roles(): Role[] {
       return this.claims?.roles ?? [];
     },
-    hasRole() {
-      return (...roles: Role[]) => roles.some((role) => this.roles.includes(role));
+    isAdmin(): boolean {
+      return this.roles.includes('ADMIN');
+    },
+    isManager(): boolean {
+      return this.isAdmin || this.roles.includes('MANAGER');
     },
   },
 

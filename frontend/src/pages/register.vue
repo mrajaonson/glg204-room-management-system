@@ -1,61 +1,56 @@
 <template>
-  <q-layout>
-    <q-page-container>
-      <q-page class="flex flex-center">
-        <q-card>
-          <q-card-section>
-            <div class="text-h5">Gestion de salles</div>
-            <div class="text-h6">Demande de création de compte</div>
-          </q-card-section>
+  <q-page class="flex flex-center">
+    <q-card>
+      <q-card-section>
+        <div class="text-h6">Demande de création de compte</div>
+      </q-card-section>
 
-          <q-card-section v-if="submitted">
-            <p>Votre demande a bien été enregistrée.</p>
-            <p>Un mail de confirmation a été envoyé à {{ form.email }}.</p>
-            <q-btn color="primary" label="Retour à l'accueil" to="/" />
-          </q-card-section>
+      <q-card-section v-if="submitted">
+        <p>Votre demande a bien été enregistrée.</p>
+        <p>Un mail de confirmation a été envoyé à {{ form.email }}.</p>
+        <q-btn color="primary" label="Retour à l'accueil" to="/" />
+      </q-card-section>
 
-          <q-card-section v-else>
-            <q-form class="q-gutter-md" @submit="onSubmit">
-              <q-input
-                v-model="form.login"
-                label="Identifiant"
-                :rules="rules.login"
-                autocomplete="username"
-                autofocus
-                stack-label
-              />
-              <q-input
-                v-model="form.email"
-                type="email"
-                label="Email"
-                :rules="rules.email"
-                autocomplete="email"
-                stack-label
-              />
-              <q-input
-                v-model="form.password"
-                type="password"
-                label="Mot de passe"
-                :rules="rules.password"
-                autocomplete="new-password"
-                stack-label
-              />
-              <q-input
-                v-model="form.passwordConfirmation"
-                type="password"
-                label="Confirmation du mot de passe"
-                :rules="rules.passwordConfirmation"
-                autocomplete="new-password"
-                stack-label
-              />
-              <div v-if="errorMessage" class="text-negative">{{ errorMessage }}</div>
-              <q-btn type="submit" color="primary" label="Envoyer la demande" :loading="loading" />
-            </q-form>
-          </q-card-section>
-        </q-card>
-      </q-page>
-    </q-page-container>
-  </q-layout>
+      <q-card-section v-else>
+        <q-form class="q-gutter-md" @submit="onSubmit">
+          <q-input
+            v-model="form.login"
+            label="Identifiant"
+            :rules="rules.login"
+            autocomplete="username"
+            autofocus
+            stack-label
+          />
+          <q-input
+            v-model="form.email"
+            type="email"
+            label="Email"
+            :rules="rules.email"
+            autocomplete="email"
+            stack-label
+          />
+          <q-input
+            v-model="form.password"
+            type="password"
+            label="Mot de passe"
+            :rules="rules.password"
+            autocomplete="new-password"
+            stack-label
+          />
+          <q-input
+            v-model="form.passwordConfirmation"
+            type="password"
+            label="Confirmation du mot de passe"
+            :rules="rules.passwordConfirmation"
+            autocomplete="new-password"
+            stack-label
+          />
+          <div v-if="errorMessage" class="text-negative">{{ errorMessage }}</div>
+          <q-btn type="submit" color="primary" label="Envoyer la demande" :loading="loading" />
+        </q-form>
+      </q-card-section>
+    </q-card>
+  </q-page>
 </template>
 
 <script setup lang="ts">

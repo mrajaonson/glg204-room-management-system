@@ -1,19 +1,9 @@
 <template>
-  <div class="fullscreen bg-blue text-white text-center q-pa-md flex flex-center">
+  <q-page class="flex flex-center text-center">
     <div>
-      <div style="font-size: 30vh">404</div>
-
-      <div class="text-h2" style="opacity: 0.4">Oups. Cette page n'existe pas...</div>
-
-      <q-btn
-        class="q-mt-xl"
-        color="white"
-        text-color="blue"
-        unelevated
-        to="/"
-        label="Retour à l'accueil"
-        no-caps
-      />
+      <div class="text-h2">404</div>
+      <div class="text-h6">Oups. Cette page n'existe pas...</div>
+      <q-btn class="q-mt-md" color="primary" label="Retour à l'accueil" to="/" />
     </div>
-  </div>
+  </q-page>
 </template>

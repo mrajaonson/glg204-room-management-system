@@ -38,18 +38,27 @@ export default defineRouter(({ store }) => {
   const publicRoutes: Set<keyof RouteNamedMap> = new Set(['/', '/accounts/requests/validate']);
   // Reachable only without a session: a logged-in user is sent home
   const guestOnlyRoutes: Set<keyof RouteNamedMap> = new Set(['/login', '/register']);
+  // Reachable only by ADMIN users: others are sent home
+  const adminRoutes: Set<keyof RouteNamedMap> = new Set(['/admin/account-requests']);
 
   // Every other page requires a valid session
   Router.beforeEach((to) => {
-    const authenticated = useUserStore(store).hasValidSession();
+    const userStore = useUserStore(store);
+    const authenticated = userStore.hasValidSession();
 
     if (guestOnlyRoutes.has(to.name)) {
       return authenticated ? { path: '/' } : true;
     }
-    if (publicRoutes.has(to.name) || authenticated) {
+    if (publicRoutes.has(to.name)) {
       return true;
     }
-    return { name: '/login', query: { redirect: to.fullPath } };
+    if (!authenticated) {
+      return { name: '/login', query: { redirect: to.fullPath } };
+    }
+    if (adminRoutes.has(to.name) && !userStore.isAdmin) {
+      return { path: '/' };
+    }
+    return true;
   });
 
   // enable HMR for it

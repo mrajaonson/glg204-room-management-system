@@ -52,6 +52,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/admin/account-requests': RouteRecordInfo<
+      '/admin/account-requests',
+      '/admin/account-requests',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/login': RouteRecordInfo<
       '/login',
       '/login',
@@ -98,6 +105,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/accounts/requests/validate.vue': {
       routes:
         | '/accounts/requests/validate'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/admin/account-requests.vue': {
+      routes:
+        | '/admin/account-requests'
       views:
         | never
       pathParamNames:
