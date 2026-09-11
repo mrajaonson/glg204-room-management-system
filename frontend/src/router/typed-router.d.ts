@@ -73,6 +73,27 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/rooms/': RouteRecordInfo<
+      '/rooms/',
+      '/rooms',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/rooms/[id]/availabilities': RouteRecordInfo<
+      '/rooms/[id]/availabilities',
+      '/rooms/:id/availabilities',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
+    '/rooms/[id]/edit': RouteRecordInfo<
+      '/rooms/[id]/edit',
+      '/rooms/:id/edit',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
   }
 
   /**
@@ -129,6 +150,30 @@ declare module 'vue-router/auto-routes' {
     'src/pages/register.vue': {
       routes:
         | '/register'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/rooms/index.vue': {
+      routes:
+        | '/rooms/'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/rooms/[id]/availabilities.vue': {
+      routes:
+        | '/rooms/[id]/availabilities'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/rooms/[id]/edit.vue': {
+      routes:
+        | '/rooms/[id]/edit'
       views:
         | never
       pathParamNames:

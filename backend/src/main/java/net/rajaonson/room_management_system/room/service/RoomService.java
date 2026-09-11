@@ -14,11 +14,13 @@ import net.rajaonson.room_management_system.room.service.dto.EquipmentResponseDt
 import net.rajaonson.room_management_system.room.service.dto.RoomCreationRequestDto;
 import net.rajaonson.room_management_system.room.service.dto.RoomSearchFilterDto;
 import net.rajaonson.room_management_system.room.service.dto.RoomResponseDto;
+import net.rajaonson.room_management_system.room.service.dto.RoomUpdateRequestDto;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -54,6 +56,32 @@ public class RoomService {
                 dto.reservationRequiresApproval()));
 
         log.info("created room {}", room.getId());
+
+        return RoomResponseDto.from(room);
+    }
+
+    public RoomResponseDto getRoom(Long roomId) {
+        return RoomResponseDto.from(findRoom(roomId));
+    }
+
+    @Transactional
+    public RoomResponseDto updateRoom(Long roomId, RoomUpdateRequestDto dto) {
+        Room room = findRoom(roomId);
+
+        if (roomRepository.existsByNameAndIdNot(dto.name(), roomId)) {
+            throw ApiErrors.conflict("a room named '%s' already exists".formatted(dto.name()));
+        }
+
+        room.update(
+                dto.name(),
+                dto.location(),
+                dto.capacity(),
+                dto.type(),
+                dto.description(),
+                dto.reservationRequiresApproval());
+        roomRepository.save(room);
+
+        log.info("updated room {}", roomId);
 
         return RoomResponseDto.from(room);
     }
@@ -106,6 +134,17 @@ public class RoomService {
         log.info("added availability slot {} to room {}", slot.getId(), roomId);
 
         return AvailabilitySlotResponseDto.from(slot);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AvailabilitySlotResponseDto> listAvailabilitySlots(Long roomId) {
+        // 404 for an unknown room rather than an empty list
+        findRoom(roomId);
+
+        return availabilitySlotRepository.findByRoomIdOrderByStartAt(roomId)
+                .stream()
+                .map(AvailabilitySlotResponseDto::from)
+                .toList();
     }
 
     private Room findRoom(Long roomId) {

@@ -12,6 +12,10 @@
         <q-btn color="primary" outline label="Créer un compte" to="/register" />
       </q-card-section>
 
+      <q-card-section v-if="userStore.isManager">
+        <q-btn color="primary" label="Salles" to="/rooms" />
+      </q-card-section>
+
       <q-card-section v-if="userStore.isAdmin">
         <q-btn
           color="primary"

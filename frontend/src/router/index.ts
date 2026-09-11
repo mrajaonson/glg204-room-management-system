@@ -40,6 +40,12 @@ export default defineRouter(({ store }) => {
   const guestOnlyRoutes: Set<keyof RouteNamedMap> = new Set(['/login', '/register']);
   // Reachable only by ADMIN users: others are sent home
   const adminRoutes: Set<keyof RouteNamedMap> = new Set(['/admin/account-requests']);
+  // Reachable only by MANAGER users (admins included): others are sent home
+  const managerRoutes: Set<keyof RouteNamedMap> = new Set([
+    '/rooms/',
+    '/rooms/[id]/availabilities',
+    '/rooms/[id]/edit',
+  ]);
 
   // Every other page requires a valid session
   Router.beforeEach((to) => {
@@ -56,6 +62,9 @@ export default defineRouter(({ store }) => {
       return { name: '/login', query: { redirect: to.fullPath } };
     }
     if (adminRoutes.has(to.name) && !userStore.isAdmin) {
+      return { path: '/' };
+    }
+    if (managerRoutes.has(to.name) && !userStore.isManager) {
       return { path: '/' };
     }
     return true;

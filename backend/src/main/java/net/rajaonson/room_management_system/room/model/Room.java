@@ -42,6 +42,16 @@ public class Room extends BaseEntity {
         this.reservationRequiresApproval = reservationRequiresApproval;
     }
 
+    public void update(String name, String location, int capacity, RoomType type, String description,
+                       boolean reservationRequiresApproval) {
+        this.name = name;
+        this.location = location;
+        this.capacity = capacity;
+        this.type = type;
+        this.description = description;
+        this.reservationRequiresApproval = reservationRequiresApproval;
+    }
+
     public String getName() {
         return name;
     }
