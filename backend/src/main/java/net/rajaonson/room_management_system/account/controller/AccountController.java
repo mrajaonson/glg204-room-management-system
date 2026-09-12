@@ -37,8 +37,8 @@ public class AccountController {
     }
 
     @GetMapping("/requests")
-    public List<AccountCreationRequestResponseDto> getEmailValidatedRequests() {
-        return accountService.findEmailValidatedRequests();
+    public List<AccountCreationRequestResponseDto> getAccountCreationRequests() {
+        return accountService.findAccountCreationRequests();
     }
 
     @PutMapping("/requests/{id}/validate")

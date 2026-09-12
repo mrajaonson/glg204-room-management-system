@@ -8,12 +8,28 @@ export interface RoomResponse {
   location: string;
   capacity: number;
   type: RoomType;
-  description: string | null;
+  description: string;
   reservationRequiresApproval: boolean;
 }
 
 export async function fetchRooms(): Promise<RoomResponse[]> {
   const { data } = await http.get<RoomResponse[]>('/rooms');
+  return data;
+}
+
+export interface RoomSearchFilter {
+  name: string;
+  location: string;
+  capacityMin: number | null;
+  capacityMax: number | null;
+  type: RoomType | null;
+  equipments: string[];
+  startAt: string | null;
+  endAt: string | null;
+}
+
+export async function searchRooms(filter: RoomSearchFilter): Promise<RoomResponse[]> {
+  const { data } = await http.post<RoomResponse[]>('/rooms/search', filter);
   return data;
 }
 
@@ -63,4 +79,28 @@ export interface AvailabilitySlotResponse {
 export async function fetchAvailabilitySlots(roomId: number): Promise<AvailabilitySlotResponse[]> {
   const { data } = await http.get<AvailabilitySlotResponse[]>(`/rooms/${roomId}/availabilities`);
   return data;
+}
+
+export interface EquipmentResponse {
+  id: number;
+  name: string;
+  description: string | null;
+  roomId: number;
+}
+
+export interface EquipmentCreationRequest {
+  name: string;
+  description: string | null;
+}
+
+export async function fetchEquipments(roomId: number): Promise<EquipmentResponse[]> {
+  const { data } = await http.get<EquipmentResponse[]>(`/rooms/${roomId}/equipments`);
+  return data;
+}
+
+export async function addEquipment(
+  roomId: number,
+  request: EquipmentCreationRequest,
+): Promise<void> {
+  await http.post(`/rooms/${roomId}/equipments`, request);
 }

@@ -94,6 +94,27 @@ declare module 'vue-router/auto-routes' {
       { id: ParamValue<false> },
       | never
     >,
+    '/rooms/[id]/equipments': RouteRecordInfo<
+      '/rooms/[id]/equipments',
+      '/rooms/:id/equipments',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
+    '/rooms/[id]/reserve': RouteRecordInfo<
+      '/rooms/[id]/reserve',
+      '/rooms/:id/reserve',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
+    '/rooms/search': RouteRecordInfo<
+      '/rooms/search',
+      '/rooms/search',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -174,6 +195,30 @@ declare module 'vue-router/auto-routes' {
     'src/pages/rooms/[id]/edit.vue': {
       routes:
         | '/rooms/[id]/edit'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/rooms/[id]/equipments.vue': {
+      routes:
+        | '/rooms/[id]/equipments'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/rooms/[id]/reserve.vue': {
+      routes:
+        | '/rooms/[id]/reserve'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/rooms/search.vue': {
+      routes:
+        | '/rooms/search'
       views:
         | never
       pathParamNames:

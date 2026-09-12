@@ -1,33 +1,10 @@
 <template>
   <q-page padding>
-    <q-table
-      title="Salles"
-      :rows="rooms"
-      :columns="columns"
-      row-key="id"
-      :loading="loading"
-      no-data-label="Aucune salle"
-      flat
-      bordered
-    >
-      <template #body-cell-actions="props">
-        <q-td :props="props" class="q-gutter-sm">
-          <q-btn
-            color="primary"
-            label="Disponibilités"
-            size="sm"
-            :to="`/rooms/${props.row.id}/availabilities`"
-          />
-          <q-btn color="primary" label="Modifier" size="sm" :to="`/rooms/${props.row.id}/edit`" />
-          <!-- Disabled until the backend exposes DELETE /rooms/{id} -->
-          <q-btn color="negative" label="Supprimer" size="sm" disable />
-        </q-td>
-      </template>
-    </q-table>
+    <RoomsTable title="Salles" :rows="rooms" :loading="loading" />
 
     <div v-if="errorMessage" class="text-negative q-mt-md">{{ errorMessage }}</div>
 
-    <q-card class="q-mt-md" flat bordered>
+    <q-card v-if="userStore.isManager" class="q-mt-md" flat bordered>
       <q-card-section>
         <div class="text-h6">Nouvelle salle</div>
       </q-card-section>
@@ -47,32 +24,15 @@
 
 <script setup lang="ts">
 import { onMounted, ref, useTemplateRef } from 'vue';
-import type { QForm, QTableColumn } from 'quasar';
+import type { QForm } from 'quasar';
 import { isAxiosError } from 'axios';
-import { type RoomResponse, type RoomType, createRoom, fetchRooms } from '@/api/rooms';
+import { type RoomResponse, createRoom, fetchRooms } from '@/api/rooms';
 import RoomForm from '@/components/RoomForm.vue';
-import { emptyRoomForm, formToRequest, roomTypeLabels } from '@/components/room-form';
+import RoomsTable from '@/components/RoomsTable.vue';
+import { emptyRoomForm, formToRequest } from '@/components/room-form';
+import { useUserStore } from '@/stores/user-store';
 
-const columns: QTableColumn<RoomResponse>[] = [
-  { name: 'name', label: 'Nom', field: 'name', align: 'left' },
-  { name: 'location', label: 'Localisation', field: 'location', align: 'left' },
-  { name: 'capacity', label: 'Capacité', field: 'capacity', align: 'right' },
-  {
-    name: 'type',
-    label: 'Type',
-    field: 'type',
-    align: 'left',
-    format: (value: RoomType) => roomTypeLabels[value],
-  },
-  {
-    name: 'reservationRequiresApproval',
-    label: 'Validation des réservations',
-    field: 'reservationRequiresApproval',
-    align: 'left',
-    format: (value: boolean) => (value ? 'Oui' : 'Non'),
-  },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+const userStore = useUserStore();
 
 const rooms = ref<RoomResponse[]>([]);
 const loading = ref(false);

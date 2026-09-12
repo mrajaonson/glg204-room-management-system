@@ -16,6 +16,8 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,12 +101,22 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ReservationResponseDto> listReservations(@Nullable ReservationStatus status) {
-        List<Reservation> reservations = status == null
-                ? reservationRepository.findAllByOrderByStartAtDesc()
-                : reservationRepository.findByStatus(status);
+    public List<ReservationResponseDto> listReservations(@Nullable ReservationStatus status,
+                                                        @Nullable Long roomId,
+                                                        boolean currentUserOnly,
+                                                        String login) {
+        Account currentAccount = findAccount(login);
+        boolean ownOnly = currentUserOnly || !currentAccount.isManager();
 
-        return reservations.stream().map(ReservationResponseDto::from).toList();
+        Specification<Reservation> spec = new ReservationSpecification()
+                .status(status)
+                .room(roomId)
+                .requester(ownOnly ? currentAccount.getId() : null);
+
+        return reservationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "startAt"))
+                .stream()
+                .map(ReservationResponseDto::from)
+                .toList();
     }
 
     @Transactional

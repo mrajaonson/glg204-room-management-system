@@ -137,6 +137,16 @@ public class RoomService {
     }
 
     @Transactional(readOnly = true)
+    public List<EquipmentResponseDto> listEquipments(Long roomId) {
+        findRoom(roomId);
+
+        return equipmentRepository.findByRoomIdOrderByName(roomId)
+                .stream()
+                .map(EquipmentResponseDto::from)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<AvailabilitySlotResponseDto> listAvailabilitySlots(Long roomId) {
         // 404 for an unknown room rather than an empty list
         findRoom(roomId);

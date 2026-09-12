@@ -104,8 +104,11 @@ public class AccountService implements UserDetailsService {
         return AccountResponseDto.from(account);
     }
 
-    public List<AccountCreationRequestResponseDto> findEmailValidatedRequests() {
-        return requestRepository.findByStatus(RequestStatus.EMAIL_VALIDATED)
+    @Transactional(readOnly = true)
+    public List<AccountCreationRequestResponseDto> findAccountCreationRequests() {
+        return requestRepository
+                .findByStatusNotInOrderByCreatedAtDesc(
+                        List.of(RequestStatus.VALIDATED, RequestStatus.REFUSED))
                 .stream()
                 .map(AccountCreationRequestResponseDto::from)
                 .toList();

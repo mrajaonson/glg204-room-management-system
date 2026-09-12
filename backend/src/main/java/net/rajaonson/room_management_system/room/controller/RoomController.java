@@ -64,6 +64,11 @@ public class RoomController {
         return roomService.createEquipment(roomId, requestDto);
     }
 
+    @GetMapping("/{roomId}/equipments")
+    public List<EquipmentResponseDto> listEquipments(@PathVariable Long roomId) {
+        return roomService.listEquipments(roomId);
+    }
+
     @PostMapping("/{roomId}/availabilities")
     @ResponseStatus(HttpStatus.CREATED)
     public AvailabilitySlotResponseDto addAvailabilitySlot(

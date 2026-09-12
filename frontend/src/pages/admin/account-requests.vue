@@ -43,6 +43,16 @@ import {
   validateAccountCreationRequest,
 } from '@/api/accounts';
 
+type RequestStatus = AccountCreationRequestResponse['status'];
+
+const statusLabels: Record<RequestStatus, string> = {
+  CREATED: 'Créée',
+  EMAIL_SENT: 'Mail de confirmation envoyé',
+  EMAIL_VALIDATED: 'Mail validé',
+  VALIDATED: 'Validée',
+  REFUSED: 'Refusée',
+};
+
 const columns: QTableColumn<AccountCreationRequestResponse>[] = [
   { name: 'login', label: 'Identifiant', field: 'login', align: 'left' },
   { name: 'email', label: 'Email', field: 'email', align: 'left' },
@@ -52,6 +62,13 @@ const columns: QTableColumn<AccountCreationRequestResponse>[] = [
     field: 'createdAt',
     align: 'left',
     format: (value: string) => date.formatDate(value, 'DD/MM/YYYY HH:mm'),
+  },
+  {
+    name: 'status',
+    label: 'Statut',
+    field: 'status',
+    align: 'left',
+    format: (value: RequestStatus) => statusLabels[value],
   },
   { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
 ];
@@ -75,7 +92,7 @@ async function handle(action: (id: number) => Promise<void>, id: number) {
   errorMessage.value = null;
   try {
     await action(id);
-    await load();
+    requests.value = requests.value.filter((request) => request.id !== id);
   } catch {
     errorMessage.value = 'Impossible de traiter la demande, veuillez réessayer plus tard';
   }

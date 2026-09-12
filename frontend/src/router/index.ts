@@ -41,11 +41,7 @@ export default defineRouter(({ store }) => {
   // Reachable only by ADMIN users: others are sent home
   const adminRoutes: Set<keyof RouteNamedMap> = new Set(['/admin/account-requests']);
   // Reachable only by MANAGER users (admins included): others are sent home
-  const managerRoutes: Set<keyof RouteNamedMap> = new Set([
-    '/rooms/',
-    '/rooms/[id]/availabilities',
-    '/rooms/[id]/edit',
-  ]);
+  const managerRoutes: Set<keyof RouteNamedMap> = new Set(['/rooms/[id]/edit']);
 
   // Every other page requires a valid session
   Router.beforeEach((to) => {
