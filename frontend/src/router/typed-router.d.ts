@@ -66,6 +66,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/manager/reservation-requests': RouteRecordInfo<
+      '/manager/reservation-requests',
+      '/manager/reservation-requests',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/register': RouteRecordInfo<
       '/register',
       '/register',
@@ -97,6 +104,13 @@ declare module 'vue-router/auto-routes' {
     '/rooms/[id]/equipments': RouteRecordInfo<
       '/rooms/[id]/equipments',
       '/rooms/:id/equipments',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
+    '/rooms/[id]/planning': RouteRecordInfo<
+      '/rooms/[id]/planning',
+      '/rooms/:id/planning',
       { id: ParamValue<true> },
       { id: ParamValue<false> },
       | never
@@ -168,6 +182,14 @@ declare module 'vue-router/auto-routes' {
       pathParamNames:
         | never
     }
+    'src/pages/manager/reservation-requests.vue': {
+      routes:
+        | '/manager/reservation-requests'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
     'src/pages/register.vue': {
       routes:
         | '/register'
@@ -203,6 +225,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/rooms/[id]/equipments.vue': {
       routes:
         | '/rooms/[id]/equipments'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/rooms/[id]/planning.vue': {
+      routes:
+        | '/rooms/[id]/planning'
       views:
         | never
       pathParamNames:

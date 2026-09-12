@@ -17,6 +17,10 @@
         <q-btn color="primary" outline label="Recherche de salles" to="/rooms/search" />
       </q-card-section>
 
+      <q-card-section v-if="userStore.isManager">
+        <q-btn color="primary" label="Demandes de réservation" to="/manager/reservation-requests" />
+      </q-card-section>
+
       <q-card-section v-if="userStore.isAdmin">
         <q-btn
           color="primary"

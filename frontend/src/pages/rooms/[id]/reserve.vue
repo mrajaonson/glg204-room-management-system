@@ -1,13 +1,5 @@
 <template>
   <q-page padding>
-    <q-toggle
-      v-if="userStore.isManager"
-      v-model="currentUserOnly"
-      class="q-mb-md"
-      label="Mes réservations"
-      @update:model-value="load"
-    />
-
     <q-table
       :title="roomName ? `Réservations — ${roomName}` : 'Réservations'"
       :rows="reservations"
@@ -17,7 +9,20 @@
       no-data-label="Aucune réservation"
       flat
       bordered
-    />
+    >
+      <template #body-cell-actions="props">
+        <q-td :props="props">
+          <q-btn
+            v-if="canCancel(props.row)"
+            color="negative"
+            label="Annuler"
+            size="sm"
+            :loading="cancellingId === props.row.id"
+            @click="onCancel(props.row.id)"
+          />
+        </q-td>
+      </template>
+    </q-table>
 
     <div v-if="errorMessage" class="text-negative q-mt-md">{{ errorMessage }}</div>
 
@@ -98,22 +103,17 @@ import { isAxiosError } from 'axios';
 import {
   type ReservationResponse,
   type ReservationStatus,
+  cancelReservation,
   createReservation,
   fetchReservations,
 } from '@/api/reservations';
 import { fetchRoom } from '@/api/rooms';
+import { reservationStatusLabels } from '@/components/reservation-status';
 import { useUserStore } from '@/stores/user-store';
 
 const userStore = useUserStore();
 const route = useRoute('/rooms/[id]/reserve');
 const roomId = Number(route.params.id);
-
-const statusLabels: Record<ReservationStatus, string> = {
-  PENDING_APPROVAL: 'En attente de validation',
-  CONFIRMED: 'Confirmée',
-  REJECTED: 'Refusée',
-  CANCELLED: 'Annulée',
-};
 
 function formatDateTime(value: string): string {
   return date.formatDate(value, 'DD/MM/YYYY HH:mm');
@@ -123,27 +123,28 @@ const columns: QTableColumn<ReservationResponse>[] = [
   { name: 'startAt', label: 'Début', field: 'startAt', align: 'left', format: formatDateTime },
   { name: 'endAt', label: 'Fin', field: 'endAt', align: 'left', format: formatDateTime },
   { name: 'purpose', label: 'Objet', field: 'purpose', align: 'left' },
+  { name: 'requesterLogin', label: 'Demandeur', field: 'requesterLogin', align: 'left' },
   {
     name: 'status',
     label: 'Statut',
     field: 'status',
     align: 'left',
-    format: (value: ReservationStatus) => statusLabels[value],
+    format: (value: ReservationStatus) => reservationStatusLabels[value],
   },
+  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
 ];
 
 const roomName = ref<string | null>(null);
 const reservations = ref<ReservationResponse[]>([]);
 const loading = ref(false);
 const errorMessage = ref<string | null>(null);
-const currentUserOnly = ref(false);
 
 async function load() {
   loading.value = true;
   try {
     const [room, roomReservations] = await Promise.all([
       fetchRoom(roomId),
-      fetchReservations(roomId, currentUserOnly.value),
+      fetchReservations(roomId),
     ]);
     roomName.value = room.name;
     reservations.value = roomReservations;
@@ -155,6 +156,26 @@ async function load() {
 }
 
 onMounted(load);
+
+const cancellingId = ref<number | null>(null);
+
+function canCancel(reservation: ReservationResponse): boolean {
+  const active = reservation.status === 'PENDING_APPROVAL' || reservation.status === 'CONFIRMED';
+  return active && (userStore.isManager || reservation.requesterLogin === userStore.login);
+}
+
+async function onCancel(id: number) {
+  errorMessage.value = null;
+  cancellingId.value = id;
+  try {
+    await cancelReservation(id);
+    await load();
+  } catch {
+    errorMessage.value = 'Impossible de traiter la demande, veuillez réessayer plus tard';
+  } finally {
+    cancellingId.value = null;
+  }
+}
 
 const reservationForm = useTemplateRef<QForm>('reservationForm');
 const emptyForm = () => ({ startAt: '', endAt: '', purpose: '' });

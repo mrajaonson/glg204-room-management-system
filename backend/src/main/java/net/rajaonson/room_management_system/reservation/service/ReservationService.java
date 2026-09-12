@@ -89,29 +89,16 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
-    public ReservationResponseDto getReservation(Long id, String login) {
-        Reservation reservation = findReservation(id);
-        Account currentAccount = findAccount(login);
-
-        if (!reservation.isRequestedBy(currentAccount) && !currentAccount.isManager()) {
-            throw ApiErrors.forbidden("only the requester or a manager may read this reservation");
-        }
-
-        return ReservationResponseDto.from(reservation);
+    public ReservationResponseDto getReservation(Long id) {
+        return ReservationResponseDto.from(findReservation(id));
     }
 
     @Transactional(readOnly = true)
     public List<ReservationResponseDto> listReservations(@Nullable ReservationStatus status,
-                                                        @Nullable Long roomId,
-                                                        boolean currentUserOnly,
-                                                        String login) {
-        Account currentAccount = findAccount(login);
-        boolean ownOnly = currentUserOnly || !currentAccount.isManager();
-
+                                                        @Nullable Long roomId) {
         Specification<Reservation> spec = new ReservationSpecification()
                 .status(status)
-                .room(roomId)
-                .requester(ownOnly ? currentAccount.getId() : null);
+                .room(roomId);
 
         return reservationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "startAt"))
                 .stream()

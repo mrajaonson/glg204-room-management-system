@@ -26,10 +26,6 @@ public class ReservationSpecification implements Specification<Reservation> {
         return add(roomId, v -> (root, query, cb) -> cb.equal(root.get("room").get("id"), v));
     }
 
-    public ReservationSpecification requester(@Nullable Long accountId) {
-        return add(accountId, v -> (root, query, cb) -> cb.equal(root.get("requester").get("id"), v));
-    }
-
     @Override
     public @Nullable Predicate toPredicate(@NonNull Root<Reservation> root, @NonNull CriteriaQuery<?> query, @NonNull CriteriaBuilder cb) {
         return Specification.allOf(specifications).toPredicate(root, query, cb);

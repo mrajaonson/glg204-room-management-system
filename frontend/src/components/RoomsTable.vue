@@ -13,6 +13,9 @@
       <q-td :props="props">
         <q-btn-dropdown color="primary" label="Actions" size="sm">
           <q-list>
+            <q-item v-close-popup clickable :to="`/rooms/${props.row.id}/planning`">
+              <q-item-section>Planning</q-item-section>
+            </q-item>
             <q-item v-close-popup clickable :to="`/rooms/${props.row.id}/reserve`">
               <q-item-section>Réservations</q-item-section>
             </q-item>

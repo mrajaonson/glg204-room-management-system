@@ -40,18 +40,15 @@ public class ReservationController {
     }
 
     @GetMapping("/{id}")
-    public ReservationResponseDto getReservation(@PathVariable Long id,
-                                                 @AuthenticationPrincipal Jwt jwt) {
-        return reservationService.getReservation(id, jwt.getSubject());
+    public ReservationResponseDto getReservation(@PathVariable Long id) {
+        return reservationService.getReservation(id);
     }
 
     @GetMapping
     public List<ReservationResponseDto> listReservations(
             @RequestParam(required = false) ReservationStatus status,
-            @RequestParam(required = false) Long roomId,
-            @RequestParam(defaultValue = "false") boolean currentUserOnly,
-            @AuthenticationPrincipal Jwt jwt) {
-        return reservationService.listReservations(status, roomId, currentUserOnly, jwt.getSubject());
+            @RequestParam(required = false) Long roomId) {
+        return reservationService.listReservations(status, roomId);
     }
 
     @PutMapping("/{id}/cancel")
