@@ -1,24 +1,54 @@
 <template>
-  <q-page padding>
-    <RoomsTable title="Salles" :rows="rooms" :loading="loading" />
+  <q-page padding class="row justify-center items-start">
+    <div class="col-12 col-lg-10 col-xl-8">
+      <q-btn
+        class="q-mb-md"
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour à l'accueil"
+        to="/"
+      />
 
-    <div v-if="errorMessage" class="text-negative q-mt-md">{{ errorMessage }}</div>
+      <RoomsTable title="Salles" :rows="rooms" :loading="loading" />
 
-    <q-card v-if="userStore.isManager" class="q-mt-md" flat bordered>
-      <q-card-section>
-        <div class="text-h6">Nouvelle salle</div>
-      </q-card-section>
+      <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative q-mt-md">
+        {{ errorMessage }}
+      </q-banner>
 
-      <q-card-section>
-        <q-form ref="createForm" class="q-gutter-md" @submit="onCreate" @reset="resetForm">
-          <RoomForm v-model="form" />
-          <div v-if="createErrorMessage" class="text-negative">{{ createErrorMessage }}</div>
-          <q-btn type="submit" color="primary" label="Créer la salle" :loading="creating" />
-        </q-form>
-      </q-card-section>
-    </q-card>
+      <q-card v-if="userStore.isManager" class="q-mt-lg" flat bordered>
+        <q-card-section>
+          <div class="text-h6">Nouvelle salle</div>
+        </q-card-section>
+        <q-separator />
 
-    <q-btn class="q-mt-md" color="primary" label="Retour à l'accueil" to="/" />
+        <q-card-section>
+          <q-form
+            ref="createForm"
+            class="row q-col-gutter-md"
+            @submit="onCreate"
+            @reset="resetForm"
+          >
+            <RoomForm v-model="form" />
+            <div v-if="createErrorMessage" class="col-12 text-negative">
+              {{ createErrorMessage }}
+            </div>
+            <div class="col-12">
+              <q-btn
+                type="submit"
+                unelevated
+                no-caps
+                color="primary"
+                icon="add"
+                label="Créer la salle"
+                :loading="creating"
+              />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </div>
   </q-page>
 </template>
 

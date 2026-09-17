@@ -1,75 +1,105 @@
 <template>
-  <q-page padding>
-    <q-table
-      :title="roomName ? `Disponibilités — ${roomName}` : 'Disponibilités'"
-      :rows="slots"
-      :columns="columns"
-      row-key="id"
-      :loading="loading"
-      no-data-label="Aucune disponibilité"
-      flat
-      bordered
-    />
+  <q-page padding class="row justify-center items-start">
+    <div class="col-12 col-lg-10 col-xl-8">
+      <q-btn
+        class="q-mb-md"
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour aux salles"
+        to="/rooms"
+      />
 
-    <div v-if="errorMessage" class="text-negative q-mt-md">{{ errorMessage }}</div>
+      <q-table
+        :title="roomName ? `Disponibilités — ${roomName}` : 'Disponibilités'"
+        :rows="slots"
+        :columns="columns"
+        row-key="id"
+        :loading="loading"
+        no-data-label="Aucune disponibilité"
+        table-header-class="bg-grey-2 text-grey-8"
+        flat
+        bordered
+      />
 
-    <q-card v-if="userStore.isManager" class="q-mt-md" flat bordered>
-      <q-card-section>
-        <div class="text-h6">Ajouter une disponibilité</div>
-      </q-card-section>
+      <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative q-mt-md">
+        {{ errorMessage }}
+      </q-banner>
 
-      <q-card-section>
-        <q-form ref="slotForm" class="q-gutter-md" @submit="onSubmit" @reset="resetForm">
-          <q-input
-            v-model="form.startAt"
-            label="Début"
-            mask="####-##-## ##:##"
-            :rules="rules.startAt"
-            stack-label
-          >
-            <template #append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-date v-model="form.startAt" mask="YYYY-MM-DD HH:mm" />
-                </q-popup-proxy>
-              </q-icon>
-              <q-icon name="access_time" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-time v-model="form.startAt" mask="YYYY-MM-DD HH:mm" format24h />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+      <q-card v-if="userStore.isManager" class="q-mt-lg" flat bordered>
+        <q-card-section>
+          <div class="text-h6">Ajouter une disponibilité</div>
+        </q-card-section>
+        <q-separator />
 
-          <q-input
-            v-model="form.endAt"
-            label="Fin"
-            mask="####-##-## ##:##"
-            :rules="rules.endAt"
-            stack-label
-          >
-            <template #append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-date v-model="form.endAt" mask="YYYY-MM-DD HH:mm" />
-                </q-popup-proxy>
-              </q-icon>
-              <q-icon name="access_time" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-time v-model="form.endAt" mask="YYYY-MM-DD HH:mm" format24h />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+        <q-card-section>
+          <q-form ref="slotForm" class="row q-col-gutter-md" @submit="onSubmit" @reset="resetForm">
+            <q-input
+              v-model="form.startAt"
+              class="col-12 col-sm-6"
+              label="Début"
+              mask="####-##-## ##:##"
+              :rules="rules.startAt"
+              outlined
+              stack-label
+            >
+              <template #append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-date v-model="form.startAt" mask="YYYY-MM-DD HH:mm" />
+                  </q-popup-proxy>
+                </q-icon>
+                <q-icon name="access_time" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-time v-model="form.startAt" mask="YYYY-MM-DD HH:mm" format24h />
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
 
-          <div v-if="successMessage" class="text-positive">{{ successMessage }}</div>
-          <div v-if="createErrorMessage" class="text-negative">{{ createErrorMessage }}</div>
-          <q-btn type="submit" color="primary" label="Ajouter" :loading="creating" />
-        </q-form>
-      </q-card-section>
-    </q-card>
+            <q-input
+              v-model="form.endAt"
+              class="col-12 col-sm-6"
+              label="Fin"
+              mask="####-##-## ##:##"
+              :rules="rules.endAt"
+              outlined
+              stack-label
+            >
+              <template #append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-date v-model="form.endAt" mask="YYYY-MM-DD HH:mm" />
+                  </q-popup-proxy>
+                </q-icon>
+                <q-icon name="access_time" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-time v-model="form.endAt" mask="YYYY-MM-DD HH:mm" format24h />
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
 
-    <q-btn class="q-mt-md" color="primary" label="Retour aux salles" to="/rooms" />
+            <div v-if="successMessage" class="col-12 text-positive">{{ successMessage }}</div>
+            <div v-if="createErrorMessage" class="col-12 text-negative">
+              {{ createErrorMessage }}
+            </div>
+            <div class="col-12">
+              <q-btn
+                type="submit"
+                unelevated
+                no-caps
+                color="primary"
+                icon="add"
+                label="Ajouter"
+                :loading="creating"
+              />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </div>
   </q-page>
 </template>
 

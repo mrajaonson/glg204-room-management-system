@@ -1,43 +1,67 @@
 <template>
-  <q-page padding>
-    <div class="text-h6 q-mb-md">{{ roomName ? `Planning — ${roomName}` : 'Planning' }}</div>
+  <q-page padding class="row justify-center items-start">
+    <div class="col-12 col-lg-10 col-xl-8">
+      <q-btn
+        class="q-mb-md"
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour aux salles"
+        to="/rooms"
+      />
 
-    <div v-if="errorMessage" class="text-negative q-mb-md">{{ errorMessage }}</div>
-    <q-spinner v-if="loading" color="primary" size="md" />
-
-    <div v-else class="row q-col-gutter-md">
-      <div class="col-12 col-md-auto">
-        <q-date v-model="selectedDate" :events="eventDays" :event-color="eventColor" />
+      <div class="text-h5 text-weight-medium q-mb-md">
+        {{ roomName ? `Planning — ${roomName}` : 'Planning' }}
       </div>
 
-      <div class="col">
-        <q-list bordered separator>
-          <q-item-label header>Disponibilités</q-item-label>
-          <q-item v-for="slot in daySlots" :key="slot.id">
-            <q-item-section>{{ periodLabel(slot) }}</q-item-section>
-          </q-item>
-          <q-item v-if="daySlots.length === 0">
-            <q-item-section class="text-grey">Aucune disponibilité ce jour</q-item-section>
-          </q-item>
+      <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative q-mb-md">
+        {{ errorMessage }}
+      </q-banner>
+      <div v-if="loading" class="flex flex-center q-pa-lg">
+        <q-spinner color="primary" size="md" />
+      </div>
 
-          <q-item-label header>Réservations</q-item-label>
-          <q-item v-for="reservation in dayReservations" :key="reservation.id">
-            <q-item-section>
-              <q-item-label>{{ periodLabel(reservation) }}</q-item-label>
-              <q-item-label caption>
-                {{ reservation.purpose }} — {{ reservation.requesterLogin }} —
-                {{ reservationStatusLabels[reservation.status] }}
-              </q-item-label>
-            </q-item-section>
-          </q-item>
-          <q-item v-if="dayReservations.length === 0">
-            <q-item-section class="text-grey">Aucune réservation ce jour</q-item-section>
-          </q-item>
-        </q-list>
+      <div v-else class="row q-col-gutter-md">
+        <div class="col-12 col-md-auto">
+          <q-date
+            v-model="selectedDate"
+            :events="eventDays"
+            :event-color="eventColor"
+            flat
+            bordered
+          />
+        </div>
+
+        <div class="col">
+          <q-list bordered separator class="rounded-borders bg-white">
+            <q-item-label header class="text-weight-medium">Disponibilités</q-item-label>
+            <q-item v-for="slot in daySlots" :key="slot.id">
+              <q-item-section avatar><q-icon name="schedule" color="positive" /></q-item-section>
+              <q-item-section>{{ periodLabel(slot) }}</q-item-section>
+            </q-item>
+            <q-item v-if="daySlots.length === 0">
+              <q-item-section class="text-grey">Aucune disponibilité ce jour</q-item-section>
+            </q-item>
+
+            <q-item-label header class="text-weight-medium">Réservations</q-item-label>
+            <q-item v-for="reservation in dayReservations" :key="reservation.id">
+              <q-item-section avatar><q-icon name="event" color="primary" /></q-item-section>
+              <q-item-section>
+                <q-item-label>{{ periodLabel(reservation) }}</q-item-label>
+                <q-item-label caption>
+                  {{ reservation.purpose }} — {{ reservation.requesterLogin }} —
+                  {{ reservationStatusLabels[reservation.status] }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item v-if="dayReservations.length === 0">
+              <q-item-section class="text-grey">Aucune réservation ce jour</q-item-section>
+            </q-item>
+          </q-list>
+        </div>
       </div>
     </div>
-
-    <q-btn class="q-mt-md" color="primary" label="Retour aux salles" to="/rooms" />
   </q-page>
 </template>
 

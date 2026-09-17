@@ -1,8 +1,9 @@
 <template>
-  <q-page class="flex flex-center">
-    <q-card>
-      <q-card-section>
-        <div class="text-h6">Connexion</div>
+  <q-page class="flex flex-center q-pa-md">
+    <q-card flat bordered class="q-pa-md" style="width: 100%; max-width: 420px">
+      <q-card-section class="text-center">
+        <q-icon name="lock" color="primary" size="40px" />
+        <div class="text-h6 q-mt-sm">Connexion</div>
       </q-card-section>
 
       <q-card-section>
@@ -13,6 +14,7 @@
             :rules="[(value: string) => !!value || 'Identifiant obligatoire']"
             autocomplete="username"
             autofocus
+            outlined
             stack-label
           />
           <q-input
@@ -21,10 +23,21 @@
             label="Mot de passe"
             :rules="[(value: string) => !!value || 'Mot de passe obligatoire']"
             autocomplete="current-password"
+            outlined
             stack-label
           />
-          <div v-if="errorMessage" class="text-negative">{{ errorMessage }}</div>
-          <q-btn type="submit" color="primary" label="Se connecter" :loading="loading" />
+          <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative">
+            {{ errorMessage }}
+          </q-banner>
+          <q-btn
+            type="submit"
+            unelevated
+            no-caps
+            color="primary"
+            label="Se connecter"
+            class="full-width"
+            :loading="loading"
+          />
         </q-form>
       </q-card-section>
     </q-card>

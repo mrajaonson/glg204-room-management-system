@@ -1,14 +1,16 @@
 <template>
-  <q-page class="flex flex-center">
-    <q-card>
-      <q-card-section>
-        <div class="text-h6">Demande de création de compte</div>
+  <q-page class="flex flex-center q-pa-md">
+    <q-card flat bordered class="q-pa-md" style="width: 100%; max-width: 480px">
+      <q-card-section class="text-center">
+        <q-icon name="person_add" color="primary" size="40px" />
+        <div class="text-h6 q-mt-sm">Demande de création de compte</div>
       </q-card-section>
 
-      <q-card-section v-if="submitted">
-        <p>Votre demande a bien été enregistrée.</p>
-        <p>Un mail de confirmation a été envoyé à {{ form.email }}.</p>
-        <q-btn color="primary" label="Retour à l'accueil" to="/" />
+      <q-card-section v-if="submitted" class="text-center">
+        <q-icon name="mark_email_read" color="positive" size="48px" />
+        <p class="q-mt-md">Votre demande a bien été enregistrée.</p>
+        <p class="text-grey-7">Un mail de confirmation a été envoyé à {{ form.email }}.</p>
+        <q-btn unelevated no-caps color="primary" label="Retour à l'accueil" to="/" />
       </q-card-section>
 
       <q-card-section v-else>
@@ -19,6 +21,7 @@
             :rules="rules.login"
             autocomplete="username"
             autofocus
+            outlined
             stack-label
           />
           <q-input
@@ -27,6 +30,7 @@
             label="Email"
             :rules="rules.email"
             autocomplete="email"
+            outlined
             stack-label
           />
           <q-input
@@ -35,6 +39,7 @@
             label="Mot de passe"
             :rules="rules.password"
             autocomplete="new-password"
+            outlined
             stack-label
           />
           <q-input
@@ -43,10 +48,21 @@
             label="Confirmation du mot de passe"
             :rules="rules.passwordConfirmation"
             autocomplete="new-password"
+            outlined
             stack-label
           />
-          <div v-if="errorMessage" class="text-negative">{{ errorMessage }}</div>
-          <q-btn type="submit" color="primary" label="Envoyer la demande" :loading="loading" />
+          <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative">
+            {{ errorMessage }}
+          </q-banner>
+          <q-btn
+            type="submit"
+            unelevated
+            no-caps
+            color="primary"
+            label="Envoyer la demande"
+            class="full-width"
+            :loading="loading"
+          />
         </q-form>
       </q-card-section>
     </q-card>

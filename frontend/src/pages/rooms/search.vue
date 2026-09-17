@@ -1,112 +1,157 @@
 <template>
-  <q-page padding>
-    <q-card flat bordered>
-      <q-card-section>
-        <div class="text-h6">Recherche de salles</div>
-      </q-card-section>
+  <q-page padding class="row justify-center items-start">
+    <div class="col-12 col-lg-10 col-xl-8">
+      <q-btn
+        class="q-mb-md"
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour à l'accueil"
+        to="/"
+      />
 
-      <q-card-section>
-        <q-form class="q-gutter-md" @submit="onSearch" @reset="resetForm">
-          <q-input v-model="form.name" label="Nom" maxlength="100" stack-label />
-          <q-input v-model="form.location" label="Localisation" maxlength="255" stack-label />
-          <q-input
-            v-model.number="form.capacityMin"
-            type="number"
-            label="Capacité minimale"
-            :rules="rules.capacityMin"
-            stack-label
-          />
-          <q-input
-            v-model.number="form.capacityMax"
-            type="number"
-            label="Capacité maximale"
-            :rules="rules.capacityMax"
-            stack-label
-          />
-          <q-select
-            v-model="form.type"
-            :options="roomTypeOptions"
-            label="Type"
-            emit-value
-            map-options
-            clearable
-            stack-label
-          />
-          <q-select
-            v-model="form.equipments"
-            label="Équipements"
-            hint="Saisissez un équipement puis validez avec Entrée"
-            multiple
-            use-input
-            use-chips
-            new-value-mode="add-unique"
-            hide-dropdown-icon
-            stack-label
-          />
+      <q-card flat bordered>
+        <q-card-section>
+          <div class="text-h6">Recherche de salles</div>
+        </q-card-section>
+        <q-separator />
 
-          <q-input
-            v-model="form.startAt"
-            label="Début de la période"
-            mask="####-##-## ##:##"
-            :rules="rules.startAt"
-            clearable
-            stack-label
-          >
-            <template #append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-date v-model="form.startAt" mask="YYYY-MM-DD HH:mm" />
-                </q-popup-proxy>
-              </q-icon>
-              <q-icon name="access_time" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-time v-model="form.startAt" mask="YYYY-MM-DD HH:mm" format24h />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+        <q-card-section>
+          <q-form class="row q-col-gutter-md" @submit="onSearch" @reset="resetForm">
+            <q-input
+              v-model="form.name"
+              class="col-12 col-sm-6"
+              label="Nom"
+              maxlength="100"
+              outlined
+              stack-label
+            />
+            <q-input
+              v-model="form.location"
+              class="col-12 col-sm-6"
+              label="Localisation"
+              maxlength="255"
+              outlined
+              stack-label
+            />
+            <q-input
+              v-model.number="form.capacityMin"
+              class="col-12 col-sm-6 col-md-3"
+              type="number"
+              label="Capacité minimale"
+              :rules="rules.capacityMin"
+              outlined
+              stack-label
+            />
+            <q-input
+              v-model.number="form.capacityMax"
+              class="col-12 col-sm-6 col-md-3"
+              type="number"
+              label="Capacité maximale"
+              :rules="rules.capacityMax"
+              outlined
+              stack-label
+            />
+            <q-select
+              v-model="form.type"
+              class="col-12 col-md-6"
+              :options="roomTypeOptions"
+              label="Type"
+              emit-value
+              map-options
+              clearable
+              outlined
+              stack-label
+            />
+            <q-select
+              v-model="form.equipments"
+              class="col-12"
+              label="Équipements"
+              hint="Saisissez un équipement puis validez avec Entrée"
+              multiple
+              use-input
+              use-chips
+              new-value-mode="add-unique"
+              hide-dropdown-icon
+              outlined
+              stack-label
+            />
 
-          <q-input
-            v-model="form.endAt"
-            label="Fin de la période"
-            mask="####-##-## ##:##"
-            :rules="rules.endAt"
-            clearable
-            stack-label
-          >
-            <template #append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-date v-model="form.endAt" mask="YYYY-MM-DD HH:mm" />
-                </q-popup-proxy>
-              </q-icon>
-              <q-icon name="access_time" class="cursor-pointer">
-                <q-popup-proxy cover>
-                  <q-time v-model="form.endAt" mask="YYYY-MM-DD HH:mm" format24h />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+            <q-input
+              v-model="form.startAt"
+              class="col-12 col-sm-6"
+              label="Début de la période"
+              mask="####-##-## ##:##"
+              :rules="rules.startAt"
+              clearable
+              outlined
+              stack-label
+            >
+              <template #append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-date v-model="form.startAt" mask="YYYY-MM-DD HH:mm" />
+                  </q-popup-proxy>
+                </q-icon>
+                <q-icon name="access_time" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-time v-model="form.startAt" mask="YYYY-MM-DD HH:mm" format24h />
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
 
-          <div v-if="errorMessage" class="text-negative">{{ errorMessage }}</div>
-          <div class="q-gutter-sm">
-            <q-btn type="submit" color="primary" label="Rechercher" :loading="loading" />
-            <q-btn type="reset" color="primary" outline label="Réinitialiser" />
-          </div>
-        </q-form>
-      </q-card-section>
-    </q-card>
+            <q-input
+              v-model="form.endAt"
+              class="col-12 col-sm-6"
+              label="Fin de la période"
+              mask="####-##-## ##:##"
+              :rules="rules.endAt"
+              clearable
+              outlined
+              stack-label
+            >
+              <template #append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-date v-model="form.endAt" mask="YYYY-MM-DD HH:mm" />
+                  </q-popup-proxy>
+                </q-icon>
+                <q-icon name="access_time" class="cursor-pointer">
+                  <q-popup-proxy cover>
+                    <q-time v-model="form.endAt" mask="YYYY-MM-DD HH:mm" format24h />
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
 
-    <RoomsTable
-      v-if="searched"
-      class="q-mt-md"
-      title="Résultats"
-      :rows="rooms"
-      :loading="loading"
-      no-data-label="Aucune salle ne correspond à cette recherche"
-    />
+            <div v-if="errorMessage" class="col-12 text-negative">{{ errorMessage }}</div>
+            <div class="col-12 row justify-end q-gutter-sm">
+              <q-btn type="reset" flat no-caps color="primary" label="Réinitialiser" />
+              <q-btn
+                type="submit"
+                unelevated
+                no-caps
+                color="primary"
+                icon="search"
+                label="Rechercher"
+                :loading="loading"
+              />
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
 
-    <q-btn class="q-mt-md" color="primary" label="Retour à l'accueil" to="/" />
+      <RoomsTable
+        v-if="searched"
+        class="q-mt-lg"
+        title="Résultats"
+        :rows="rooms"
+        :loading="loading"
+        no-data-label="Aucune salle ne correspond à cette recherche"
+      />
+    </div>
   </q-page>
 </template>
 

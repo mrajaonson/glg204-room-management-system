@@ -1,12 +1,14 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <q-header elevated>
-      <q-toolbar>
-        <q-toolbar-title>Gestion de salles</q-toolbar-title>
+      <q-toolbar class="q-px-md">
+        <q-btn flat round dense icon="meeting_room" aria-label="Accueil" to="/" />
+        <q-toolbar-title class="text-weight-medium">Gestion de salles</q-toolbar-title>
 
         <div v-if="userStore.login" class="row items-center q-gutter-sm">
-          <q-icon name="account_circle" size="sm" />
-          <span>{{ userStore.login }}</span>
+          <q-chip dense color="white" text-color="primary" icon="account_circle">
+            {{ userStore.login }}
+          </q-chip>
           <q-btn flat dense round icon="logout" aria-label="Se déconnecter" @click="logout">
             <q-tooltip>Se déconnecter</q-tooltip>
           </q-btn>
@@ -14,7 +16,7 @@
       </q-toolbar>
     </q-header>
 
-    <q-page-container>
+    <q-page-container class="bg-grey-1">
       <router-view />
     </q-page-container>
   </q-layout>

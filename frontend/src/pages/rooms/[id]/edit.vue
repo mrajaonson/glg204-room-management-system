@@ -1,23 +1,46 @@
 <template>
-  <q-page class="flex flex-center">
-    <q-card>
-      <q-card-section>
-        <div class="text-h6">Modifier la salle</div>
-      </q-card-section>
+  <q-page padding class="row justify-center items-start">
+    <div class="col-12 col-md-8 col-lg-6">
+      <q-btn
+        class="q-mb-md"
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour aux salles"
+        to="/rooms"
+      />
 
-      <q-card-section>
-        <q-spinner v-if="loading" color="primary" size="md" />
-        <q-form v-else-if="form" class="q-gutter-md" @submit="onSubmit">
-          <RoomForm v-model="form" />
-          <q-btn type="submit" color="primary" label="Enregistrer" :loading="saving" />
-        </q-form>
-        <div v-if="errorMessage" class="text-negative q-mt-md">{{ errorMessage }}</div>
-      </q-card-section>
+      <q-card flat bordered>
+        <q-card-section>
+          <div class="text-h6">Modifier la salle</div>
+        </q-card-section>
+        <q-separator />
 
-      <q-card-section>
-        <q-btn color="primary" flat label="Retour aux salles" to="/rooms" />
-      </q-card-section>
-    </q-card>
+        <q-card-section>
+          <div v-if="loading" class="flex flex-center q-pa-lg">
+            <q-spinner color="primary" size="md" />
+          </div>
+          <q-form v-else-if="form" class="row q-col-gutter-md" @submit="onSubmit">
+            <RoomForm v-model="form" />
+            <div class="col-12">
+              <q-btn
+                type="submit"
+                unelevated
+                no-caps
+                color="primary"
+                icon="save"
+                label="Enregistrer"
+                :loading="saving"
+              />
+            </div>
+          </q-form>
+          <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative q-mt-md">
+            {{ errorMessage }}
+          </q-banner>
+        </q-card-section>
+      </q-card>
+    </div>
   </q-page>
 </template>
 

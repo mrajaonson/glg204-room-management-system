@@ -1,40 +1,58 @@
 <!-- Room fields shared by the create form (rooms page) and the edit page -->
 <template>
-  <q-input v-model="model.name" label="Nom" maxlength="100" :rules="rules.name" stack-label />
+  <q-input
+    v-model="model.name"
+    class="col-12 col-sm-6"
+    label="Nom"
+    maxlength="100"
+    :rules="rules.name"
+    outlined
+    stack-label
+  />
   <q-input
     v-model="model.location"
+    class="col-12 col-sm-6"
     label="Localisation"
     maxlength="255"
     :rules="rules.location"
+    outlined
     stack-label
   />
   <q-input
     v-model.number="model.capacity"
+    class="col-12 col-sm-6"
     type="number"
     label="Capacité"
     :rules="rules.capacity"
+    outlined
     stack-label
   />
   <q-select
     v-model="model.type"
+    class="col-12 col-sm-6"
     :options="roomTypeOptions"
     label="Type"
     emit-value
     map-options
     :rules="rules.type"
+    outlined
     stack-label
   />
   <q-input
     v-model="model.description"
+    class="col-12"
     type="textarea"
     label="Description"
     maxlength="500"
+    outlined
     stack-label
   />
-  <q-checkbox
-    v-model="model.reservationRequiresApproval"
-    label="Les réservations doivent être validées par un responsable"
-  />
+  <div class="col-12">
+    <q-checkbox
+      v-model="model.reservationRequiresApproval"
+      label="Les réservations doivent être validées par un responsable"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">

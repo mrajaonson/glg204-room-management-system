@@ -1,20 +1,24 @@
 <template>
-  <q-page class="flex flex-center">
-    <q-card>
+  <q-page class="flex flex-center q-pa-md">
+    <q-card flat bordered class="q-pa-md text-center" style="width: 100%; max-width: 480px">
       <q-card-section>
-        <div class="text-h6">Validation de l'adresse mail</div>
+        <q-icon name="mark_email_read" color="primary" size="40px" />
+        <div class="text-h6 q-mt-sm">Validation de l'adresse mail</div>
       </q-card-section>
 
       <q-card-section>
-        <div v-if="errorMessage" class="text-negative">{{ errorMessage }}</div>
-        <div v-else-if="validated">
-          Votre adresse mail est validée. Votre demande est maintenant en attente de validation par un administrateur.
+        <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative">
+          {{ errorMessage }}
+        </q-banner>
+        <div v-else-if="validated" class="text-grey-8">
+          Votre adresse mail est validée. Votre demande est maintenant en attente de validation par
+          un administrateur.
         </div>
         <q-spinner v-else color="primary" size="md" />
       </q-card-section>
 
       <q-card-section>
-        <q-btn color="primary" label="Retour à l'accueil" to="/" />
+        <q-btn unelevated no-caps color="primary" label="Retour à l'accueil" to="/" />
       </q-card-section>
     </q-card>
   </q-page>

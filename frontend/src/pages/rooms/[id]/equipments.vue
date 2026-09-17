@@ -1,48 +1,72 @@
 <template>
-  <q-page padding>
-    <q-table
-      :title="roomName ? `Équipements — ${roomName}` : 'Équipements'"
-      :rows="equipments"
-      :columns="columns"
-      row-key="id"
-      :loading="loading"
-      no-data-label="Aucun équipement"
-      flat
-      bordered
-    />
+  <q-page padding class="row justify-center items-start">
+    <div class="col-12 col-lg-10 col-xl-8">
+      <q-btn
+        class="q-mb-md"
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour aux salles"
+        to="/rooms"
+      />
 
-    <div v-if="errorMessage" class="text-negative q-mt-md">{{ errorMessage }}</div>
+      <q-table
+        :title="roomName ? `Équipements — ${roomName}` : 'Équipements'"
+        :rows="equipments"
+        :columns="columns"
+        row-key="id"
+        :loading="loading"
+        no-data-label="Aucun équipement"
+        table-header-class="bg-grey-2 text-grey-8"
+        flat
+        bordered
+      />
 
-    <q-card v-if="userStore.isManager" class="q-mt-md" flat bordered>
-      <q-card-section>
-        <div class="text-h6">Ajouter un équipement</div>
-      </q-card-section>
+      <q-banner v-if="errorMessage" dense rounded class="bg-red-1 text-negative q-mt-md">
+        {{ errorMessage }}
+      </q-banner>
 
-      <q-card-section>
-        <q-form ref="equipmentForm" class="q-gutter-md" @submit="onSubmit" @reset="resetForm">
-          <q-input
-            v-model="form.name"
-            label="Nom"
-            maxlength="100"
-            :rules="rules.name"
-            stack-label
-          />
-          <q-input
-            v-model="form.description"
-            type="textarea"
-            label="Description"
-            maxlength="500"
-            stack-label
-          />
+      <q-card v-if="userStore.isManager" class="q-mt-lg" flat bordered>
+        <q-card-section>
+          <div class="text-h6">Ajouter un équipement</div>
+        </q-card-section>
+        <q-separator />
 
-          <div v-if="successMessage" class="text-positive">{{ successMessage }}</div>
-          <div v-if="createErrorMessage" class="text-negative">{{ createErrorMessage }}</div>
-          <q-btn type="submit" color="primary" label="Ajouter" :loading="creating" />
-        </q-form>
-      </q-card-section>
-    </q-card>
+        <q-card-section>
+          <q-form ref="equipmentForm" class="q-gutter-md" @submit="onSubmit" @reset="resetForm">
+            <q-input
+              v-model="form.name"
+              label="Nom"
+              maxlength="100"
+              :rules="rules.name"
+              outlined
+              stack-label
+            />
+            <q-input
+              v-model="form.description"
+              type="textarea"
+              label="Description"
+              maxlength="500"
+              outlined
+              stack-label
+            />
 
-    <q-btn class="q-mt-md" color="primary" label="Retour aux salles" to="/rooms" />
+            <div v-if="successMessage" class="text-positive">{{ successMessage }}</div>
+            <div v-if="createErrorMessage" class="text-negative">{{ createErrorMessage }}</div>
+            <q-btn
+              type="submit"
+              unelevated
+              no-caps
+              color="primary"
+              icon="add"
+              label="Ajouter"
+              :loading="creating"
+            />
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </div>
   </q-page>
 </template>
 
